@@ -1,0 +1,15 @@
+solr:
+    build: solr
+    ports:
+        - "8080:8080"
+
+db:
+    build: postgresql
+
+web:
+    build: web
+    ports:
+        - "80:80"
+    links:
+        - db
+        - solr
