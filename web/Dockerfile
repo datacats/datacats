@@ -48,4 +48,4 @@ ADD ckan_default.conf /etc/apache2/sites-available/ckan_default.conf
 RUN a2ensite ckan_default
 
 CMD ["/usr/sbin/apachectl", "-DFOREGROUND"]
-EXPOSE 80 22
+EXPOSE 80
