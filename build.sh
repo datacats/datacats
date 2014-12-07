@@ -15,7 +15,7 @@ test $(docker wait $id) -eq 0
 docker run -d --name=datacats_db_test datacats_db
 
 #Run Solr
-docker run -d --name=datacats_solr_test -v $DATACATS_FILES/test/venv/src/ckan/ckan/config/solr/schema.xml datacats_solr
+docker run -d --name=datacats_solr_test -v $DATACATS_FILES/test/venv/src/ckan/ckan/config/solr/schema.xml:/etc/solr/conf/schema.xml datacats_solr
 
 #Initialize the ckan .ini files
 id=$(cat init_ini.sh | docker run -i -a stdin -v $DATACATS_FILES/test/venv:/usr/lib/ckan -v $DATACATS_FILES/test/ini:/etc/ckan/default datacats_web /bin/bash -c "cat | sh")
