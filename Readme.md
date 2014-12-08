@@ -8,5 +8,4 @@ Getting a test instance up and running
 ======================================
 
 - Have docker installed
-- Set `$DATACATS_FILES` to where you want volumes mounted
-- Run ./build.sh <name> <ckan_branch/tag>
+- Run ./build.sh <name> <ckan_branch/tag> <target_dir>
