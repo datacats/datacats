@@ -9,11 +9,6 @@ WORKDIR="$(readlink -f "${3:-.}")"
 TARGET="$WORKDIR/$NAME"
 mkdir -p $TARGET
 
-#Build the images
-docker build -t datacats_solr solr/
-docker build -t datacats_db postgresql/
-docker build -t datacats_web web/
-
 #Setup the virtualenv
 id=$(cat setup_ckan.sh | docker run -i -a stdin \
     -e "BRANCH=$BRANCH" \
