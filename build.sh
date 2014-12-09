@@ -7,7 +7,9 @@ BRANCH=${2:-master}
 WORKDIR="$(readlink -f "${3:-.}")"
 
 TARGET="$WORKDIR/$NAME"
-mkdir -p $TARGET
+mkdir -p "$TARGET"
+mkdir -p "$TARGET/ini"
+mkdir -p "$TARGET/venv"
 
 #Setup the virtualenv
 id=$(cat setup_ckan.sh | docker run -i -a stdin \
@@ -32,6 +34,9 @@ id=$(cat init_ini.sh | docker run -i -a stdin \
     datacats_web /bin/bash -c "cat | sh")
 test $(docker wait $id) -eq 0
 
+# create a writable version of the ckan INI file
+cp "$TARGET/ini/default.production.ini" "$TARGET/ini/production.ini"
+
 #Initialize the database
 id=$(docker run -i -a stdin \
     -v $TARGET/venv:/usr/lib/ckan \
@@ -41,9 +46,8 @@ id=$(docker run -i -a stdin \
     datacats_web /usr/lib/ckan/bin/paster --plugin=ckan db init -c /etc/ckan/default/production.ini)
 test $(docker wait $id) -eq 0
 
-#copy the wsgi file into the mounted host volume
-#I don't like the way this is done, but I can't think of a better way
-cp web/apache.wsgi $TARGET/ini/apache.wsgi
+# copy the wsgi file into the mounted host volume so that our user owns it
+cp web/apache.wsgi "$TARGET/ini/apache.wsgi"
 
 #Run the web container
 docker run --name="datacats_web_${NAME}" -it \
