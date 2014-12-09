@@ -4,7 +4,7 @@
 
 NAME=${1:-master}
 BRANCH=${2:-master}
-WORKDIR=${3:-.}
+WORKDIR="$(readlink -f "${3:-.}")"
 
 TARGET="$WORKDIR/$NAME"
 mkdir -p $TARGET
