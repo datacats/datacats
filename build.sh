@@ -4,8 +4,9 @@
 
 NAME=${1:-master}
 BRANCH=${2:-master}
+WORKDIR=${3:-.}
 
-TARGET="$3/$NAME"
+TARGET="$WORKDIR/$NAME"
 mkdir -p $TARGET
 
 #Build the images
