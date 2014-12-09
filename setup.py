@@ -11,8 +11,7 @@ install_requires=[
 setup(
     name='datacats',
     version='0.1',
-    description=
-        'The easiest way to develop and deploy CKAN cross-platform.'
+    description='The easiest way to develop and deploy CKAN cross-platform.',
     license='AGPL3',
     author='Boxkite',
     author_email='contact@boxkite.ca',
