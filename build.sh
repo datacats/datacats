@@ -16,7 +16,7 @@ id=$(cat setup_ckan.sh | docker run -i -a stdin \
     -e "BRANCH=$BRANCH" \
     -v $TARGET/venv:/usr/lib/ckan \
     -v $TARGET/ini:/etc/ckan/default \
-    datacats_web /bin/bash -c "cat | sh")
+    datacats_web /bin/bash)
 test $(docker wait $id) -eq 0
 
 #Run postgres
@@ -31,7 +31,7 @@ docker run -d --name="datacats_solr_${NAME}" \
 id=$(cat init_ini.sh | docker run -i -a stdin \
     -v $TARGET/venv:/usr/lib/ckan \
     -v $TARGET/ini:/etc/ckan/default \
-    datacats_web /bin/bash -c "cat | sh")
+    datacats_web /bin/bash)
 test $(docker wait $id) -eq 0
 
 # create a writable version of the ckan INI file
