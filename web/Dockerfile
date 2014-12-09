@@ -30,6 +30,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -q -y install \
 ADD apache.wsgi $CKAN_CONFIG/apache.wsgi
 ADD ckan_default.conf /etc/apache2/sites-available/ckan_default.conf
 RUN a2ensite ckan_default
+RUN a2dissite 000-default
 
 CMD ["/usr/sbin/apachectl", "-DFOREGROUND"]
 EXPOSE 80
