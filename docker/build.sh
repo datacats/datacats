@@ -1,27 +1,36 @@
 #! /bin/bash
 
 #Script that gives you a test Datacats environment, to check the workflow works
+set -e
 
-NAME=${1:-master}
-BRANCH=${2:-master}
+NAME="${1:-master}"
+BRANCH="${2:-master}"
 WORKDIR="$(readlink -f "${3:-.}")"
+DATADIR="${HOME}/.datacats/${NAME}"
 
 TARGET="$WORKDIR/$NAME"
-mkdir -p "$TARGET"
-mkdir -p "$TARGET/ini"
-mkdir -p "$TARGET/venv"
+mkdir -p "$DATADIR"
+mkdir "$DATADIR/venv"
+mkdir "$DATADIR/solr"
+mkdir "$DATADIR/db"
+mkdir "$DATADIR/storage"
+mkdir "$TARGET"
+mkdir "$TARGET/ini"
+mkdir "$TARGET/src"
 
 #Setup the virtualenv
-id=$(cat setup_ckan.sh | docker run -i -a stdin \
+docker run -i \
     -e "BRANCH=$BRANCH" \
-    -v $TARGET/venv:/usr/lib/ckan \
-    -v $TARGET/ini:/etc/ckan/default \
-    datacats_web /bin/bash)
-test $(docker wait $id) -eq 0
+    -v "$DATADIR/venv:/usr/lib/ckan" \
+    -v "$TARGET/src:/project/src" \
+    -v "$TARGET/ini:/etc/ckan/default" \
+    datacats_web /bin/bash < setup_ckan.sh
 
+echo Starting DB
 #Run postgres
 docker run -d --name="datacats_db_${NAME}" datacats_db
 
+echo Starting Solr
 #Run Solr
 docker run -d --name="datacats_solr_${NAME}" \
     -v $TARGET/venv/src/ckan/ckan/config/solr/schema.xml:/etc/solr/conf/schema.xml \
