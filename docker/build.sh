@@ -19,7 +19,7 @@ mkdir "$TARGET/ini"
 mkdir "$TARGET/src"
 
 #Setup the virtualenv  FIXME: based on ckan/master deps for now
-docker run -i \
+docker run --rm -i \
     -e "BRANCH=$BRANCH" \
     -v "$DATADIR/venv:/usr/lib/ckan" \
     -v "$TARGET/src:/project/src" \
@@ -38,7 +38,7 @@ docker run -d --name="datacats_solr_${NAME}" \
     datacats_solr
 
 #Initialize the ckan .ini files
-docker run -i \
+docker run --rm -i \
     -v "$DATADIR/venv:/usr/lib/ckan" \
     -v "$TARGET/src:/project/src" \
     -v "$TARGET/ini:/etc/ckan/default" \
@@ -48,7 +48,7 @@ docker run -i \
 cp "$TARGET/ini/default.production.ini" "$TARGET/ini/production.ini"
 
 #Initialize the database
-docker run -i \
+docker run --rm -i \
     -v "$DATADIR/venv:/usr/lib/ckan" \
     -v "$TARGET/src:/project/src" \
     -v "$TARGET/ini:/etc/ckan/default" \
