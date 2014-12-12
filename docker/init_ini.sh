@@ -1,5 +1,9 @@
 #! /bin/bash
 
+CKAN_HOME=/usr/lib/ckan
+CKAN_CONFIG=/etc/ckan/default
+CKAN_SRC=/project/src
+
 $CKAN_HOME/bin/paster make-config ckan $CKAN_CONFIG/default.production.ini
 $CKAN_HOME/bin/paster --plugin=ckan config-tool "$CKAN_CONFIG/default.production.ini" -e \
     "sqlalchemy.url             =   postgresql://ckan:password@db:5432/ckan" \

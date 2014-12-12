@@ -33,32 +33,34 @@ docker run -d --name="datacats_db_${NAME}" datacats_db
 echo Starting Solr
 #Run Solr
 docker run -d --name="datacats_solr_${NAME}" \
-    -v $TARGET/venv/src/ckan/ckan/config/solr/schema.xml:/etc/solr/conf/schema.xml \
+    -v "$DATADIR/solr:/var/lib/solr" \
+    -v "$TARGET/src/ckan/ckan/config/solr/schema.xml:/etc/solr/conf/schema.xml" \
     datacats_solr
 
 #Initialize the ckan .ini files
-id=$(cat init_ini.sh | docker run -i -a stdin \
-    -v $TARGET/venv:/usr/lib/ckan \
-    -v $TARGET/ini:/etc/ckan/default \
-    datacats_web /bin/bash)
-test $(docker wait $id) -eq 0
+docker run -i \
+    -v "$DATADIR/venv:/usr/lib/ckan" \
+    -v "$TARGET/src:/project/src" \
+    -v "$TARGET/ini:/etc/ckan/default" \
+    datacats_web /bin/bash < init_ini.sh
 
 # create a writable version of the ckan INI file
 cp "$TARGET/ini/default.production.ini" "$TARGET/ini/production.ini"
 
 #Initialize the database
-id=$(docker run -i -a stdin \
-    -v $TARGET/venv:/usr/lib/ckan \
-    -v $TARGET/ini:/etc/ckan/default \
+docker run -i \
+    -v "$DATADIR/venv:/usr/lib/ckan" \
+    -v "$TARGET/src:/project/src" \
+    -v "$TARGET/ini:/etc/ckan/default" \
     --link "datacats_solr_${NAME}":solr \
     --link "datacats_db_${NAME}":db \
-    datacats_web /usr/lib/ckan/bin/paster --plugin=ckan db init -c /etc/ckan/default/production.ini)
-test $(docker wait $id) -eq 0
+    datacats_web /usr/lib/ckan/bin/paster --plugin=ckan db init -c /etc/ckan/default/production.ini
 
 #Run the web container
 docker run --name="datacats_web_${NAME}" -it \
-    -v $TARGET/venv:/usr/lib/ckan \
-    -v $TARGET/ini:/etc/ckan/default \
+    -v "$DATADIR/venv:/usr/lib/ckan" \
+    -v "$TARGET/src:/project/src" \
+    -v "$TARGET/ini:/etc/ckan/default" \
     --link "datacats_solr_${NAME}":solr \
     --link "datacats_db_${NAME}":db \
     -p 80 \
