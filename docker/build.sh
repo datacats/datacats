@@ -44,9 +44,6 @@ docker run --rm -i \
     -v "$TARGET/ini:/etc/ckan/default" \
     datacats_web /bin/bash < init_ini.sh
 
-# create a writable version of the ckan INI file
-cp "$TARGET/ini/default.production.ini" "$TARGET/ini/production.ini"
-
 #Initialize the database
 docker run --rm -i \
     -v "$DATADIR/venv:/usr/lib/ckan" \
@@ -54,7 +51,7 @@ docker run --rm -i \
     -v "$TARGET/ini:/etc/ckan/default" \
     --link "datacats_solr_${NAME}":solr \
     --link "datacats_db_${NAME}":db \
-    datacats_web /usr/lib/ckan/bin/paster --plugin=ckan db init -c /etc/ckan/default/production.ini
+    datacats_web /usr/lib/ckan/bin/paster --plugin=ckan db init -c /etc/ckan/default/ckan.ini
 
 #Run the web container
 docker run --name="datacats_web_${NAME}" -it \
