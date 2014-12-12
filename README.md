@@ -18,7 +18,7 @@ datacats create myproject
 ```
 
 This will create a new project called "myproject" in the current
-directory, new data files in "~/.datacats/myproject and start
+directory, new data files in "~/.datacats/myproject" and start
 your project containers, serving your new site locally.
 
 Open your brower to the address shown to try out your new site.
