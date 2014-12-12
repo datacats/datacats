@@ -28,7 +28,9 @@ docker run --rm -i \
     datacats_web:master /bin/bash < init_project.sh
 
 echo Starting DB
-docker run -d --name="datacats_db_${NAME}" datacats_db
+docker run -d --name="datacats_db_${NAME}" \
+    -v "$DATADIR/db:/var/lib/postgresql/data" \
+    datacats_db
 
 echo Starting Solr
 docker run -d --name="datacats_solr_${NAME}" \
