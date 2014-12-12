@@ -7,8 +7,8 @@ The easiest way to develop and deploy CKAN cross-platform
 
 OSX | Linux | Windows
 --- | --- | ---
-install boot2docker | install docker | support coming soon
-`pip install datacats` | `pip install datacats` |
+1. Install boot2docker | 1. Install docker | Support coming soon
+2. `pip install datacats` | 2. `pip install datacats` |
 
 
 ## Start a CKAN project
