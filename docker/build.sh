@@ -18,13 +18,13 @@ mkdir "$TARGET"
 mkdir "$TARGET/ini"
 mkdir "$TARGET/src"
 
-#Setup the virtualenv
+#Setup the virtualenv  FIXME: based on ckan/master deps for now
 docker run -i \
     -e "BRANCH=$BRANCH" \
     -v "$DATADIR/venv:/usr/lib/ckan" \
     -v "$TARGET/src:/project/src" \
     -v "$TARGET/ini:/etc/ckan/default" \
-    datacats_web /bin/bash < setup_ckan.sh
+    datacats_web:master /bin/bash < init_project.sh
 
 echo Starting DB
 #Run postgres

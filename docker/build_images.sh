@@ -5,4 +5,9 @@ set -e
 docker build -t datacats_solr solr/
 docker build -t datacats_db postgresql/
 docker build -t datacats_web web/
-docker build -t datacats_web_master web_master/
+
+docker run -i --name datacats_web_master \
+    -e BRANCH=master datacats_web \
+    /bin/bash < setup_ckan.sh
+docker commit datacats_web_master datacats_web:master
+docker rm datacats_web_master
