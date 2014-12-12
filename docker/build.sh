@@ -55,9 +55,6 @@ id=$(docker run -i -a stdin \
     datacats_web /usr/lib/ckan/bin/paster --plugin=ckan db init -c /etc/ckan/default/production.ini)
 test $(docker wait $id) -eq 0
 
-# copy the wsgi file into the mounted host volume so that our user owns it
-cp web/apache.wsgi "$TARGET/ini/apache.wsgi"
-
 #Run the web container
 docker run --name="datacats_web_${NAME}" -it \
     -v $TARGET/venv:/usr/lib/ckan \
