@@ -33,12 +33,12 @@ cd myproject
 ```
 
 In this directory you will find a "src"
-directory with "ckan" and "ckanext-myproject" directories.
+directory with "ckan" and "ckanext-myproject" subdirectories.
 "ckanext-myproject" is a simple example extension that modifies the
 CKAN site header to include the text "myproject".
 
 Customize your Jinja2 templates in
-"src/myproject/ckanext/myproject/templates", using
+"src/ckanext-myproject/ckanext/myproject/templates", using
 the files in "src/ckan/ckan/templates" as a reference.
 
 Full CKAN extension possibilities are covered in the official CKAN
