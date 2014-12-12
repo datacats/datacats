@@ -25,7 +25,30 @@ Options:
 """
 
 import json
+import sys
 from docopt import docopt
 
+def option_not_yet_implemented(opts, name):
+    if not opts[name]:
+        return
+    print "Option {0} is not yet implemented.".format(name)
+    sys.exit(1)
+
+def command_not_yet_implemented(opts, name):
+    if not opts[name]:
+        return
+    print "Command {0} is not yet implemented.".format(name)
+    sys.exit(1)
+
 def main():
+    opts = docopt(__doc__)
+    option_not_yet_implemented(opts, '--project')
+    command_not_yet_implemented(opts, 'start')
+    command_not_yet_implemented(opts, 'stop')
+    command_not_yet_implemented(opts, 'deploy')
+    command_not_yet_implemented(opts, 'logs')
+    command_not_yet_implemented(opts, 'info')
+    command_not_yet_implemented(opts, 'paster')
+    command_not_yet_implemented(opts, 'purge')
+
     print json.dumps(docopt(__doc__), indent=4)
