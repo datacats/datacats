@@ -10,3 +10,5 @@ chown -R --reference=$CKAN_CONFIG $CKAN_SRC
 
 cp $CKAN_SRC/ckan/ckan/config/who.ini $CKAN_CONFIG/who.ini
 chown -R --reference=$CKAN_CONFIG $CKAN_CONFIG
+
+chown -R www-data: /var/www
