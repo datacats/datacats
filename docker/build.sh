@@ -54,6 +54,15 @@ docker run --rm -i \
     --link "datacats_db_${NAME}":db \
     datacats_web /usr/lib/ckan/bin/paster --plugin=ckan db init -c /etc/ckan/default/ckan.ini
 
+echo Creating initial sysadmin user
+docker run --rm -it \
+    -v "$DATADIR/venv:/usr/lib/ckan" \
+    -v "$TARGET/src:/project/src" \
+    -v "$TARGET/ini:/etc/ckan/default" \
+    --link "datacats_solr_${NAME}":solr \
+    --link "datacats_db_${NAME}":db \
+    datacats_web /usr/lib/ckan/bin/paster --plugin=ckan sysadmin add admin -c /etc/ckan/default/ckan.ini
+
 echo Starting web server
 docker run --name="datacats_web_${NAME}" -it \
     -v "$DATADIR/venv:/usr/lib/ckan" \
