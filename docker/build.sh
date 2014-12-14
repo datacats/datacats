@@ -1,4 +1,5 @@
 #! /bin/bash
+# vim:ts=4:sw=4:et
 
 #Script that gives you a test Datacats environment, to check the workflow works
 set -e
@@ -18,6 +19,7 @@ mkdir "$DATADIR/storage"
 mkdir "$TARGET"
 mkdir "$TARGET/ini"
 mkdir "$TARGET/src"
+mkdir "$TARGET/logs"
 
 # FIXME: based on ckan/master deps for now
 docker run --rm -i \
@@ -29,15 +31,15 @@ docker run --rm -i \
     datacats_web:master /bin/bash < init_project.sh
 
 echo Starting DB
-docker run -d --name="datacats_db_${NAME}" \
+docker run --name="datacats_db_${NAME}" \
     -v "$DATADIR/db:/var/lib/postgresql/data" \
-    datacats_db > /dev/null
+    datacats_db > "$TARGET/logs/db.log" 2>&1 &
 
 echo Starting Solr
-docker run -d --name="datacats_solr_${NAME}" \
+docker run --name="datacats_solr_${NAME}" \
     -v "$DATADIR/solr:/var/lib/solr" \
     -v "$TARGET/src/ckan/ckan/config/solr/schema.xml:/etc/solr/conf/schema.xml" \
-    datacats_solr > /dev/null
+    datacats_solr > "$TARGET/logs/solr.log" 2>&1 &
 
 echo Creating INI files
 docker run --rm -i \
@@ -67,7 +69,7 @@ docker run --rm -it \
     datacats_web /usr/lib/ckan/bin/paster --plugin=ckan sysadmin add admin -c /etc/ckan/default/ckan.ini
 
 echo Starting web server
-docker run --name="datacats_web_${NAME}" -it \
+docker run --name="datacats_web_${NAME}" \
     -v "$DATADIR/venv:/usr/lib/ckan" \
     -v "$DATADIR/storage:/var/www/storage" \
     -v "$TARGET/src:/project/src" \
@@ -75,4 +77,11 @@ docker run --name="datacats_web_${NAME}" -it \
     --link "datacats_solr_${NAME}":solr \
     --link "datacats_db_${NAME}":db \
     -p 80 \
-    datacats_web
+    datacats_web > "$TARGET/logs/web.log" 2>&1 &
+
+IP=""
+while true; do
+    IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' "datacats_web_${NAME}") 2>/dev/null || true
+    if [ "$IP" == "" ]; then sleep 0.1; continue; fi
+    break
+done
