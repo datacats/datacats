@@ -94,5 +94,5 @@ docker run --rm -it \
     -v "$TARGET/ini:/etc/ckan/default" \
     --link "datacats_search_${NAME}":solr \
     --link "datacats_data_${NAME}":db \
-    datacats_web /usr/lib/ckan/bin/paster --plugin=ckan sysadmin add admin -c /etc/ckan/default/ckan.ini
+    datacats/web /usr/lib/ckan/bin/paster --plugin=ckan sysadmin add admin -c /etc/ckan/default/ckan.ini
 
