@@ -23,11 +23,11 @@ mkdir "$TARGET/src"
 # FIXME: based on ckan/master deps for now
 docker run --rm -i \
     -e "BRANCH=$BRANCH" \
-    -v "$DATADIR/venv:/usr/lib/ckan" \
+    -v "$DATADIR/venv:/usr/lib/ckan_target" \
     -v "$DATADIR/storage:/var/www/storage" \
-    -v "$TARGET/src:/project/src" \
+    -v "$TARGET/src:/project/src_target" \
     -v "$TARGET/ini:/etc/ckan/default" \
-    datacats_web:master /bin/bash < init_project.sh
+    datacats_web_preload_master /bin/bash < init_project.sh
 
 docker run -d --name="datacats_db_${NAME}" \
     -v "$DATADIR/db:/var/lib/postgresql/data" \
