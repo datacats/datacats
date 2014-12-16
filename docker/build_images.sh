@@ -2,12 +2,12 @@
 
 set -e
 
-docker build -t datacats_solr solr/
-docker build -t datacats_db postgresql/
-docker build -t datacats_web web/
+docker build -t datacats/solr solr/
+docker build -t datacats/postgres postgres/
+docker build -t datacats/web web/
 
-docker run -i --name datacats_web_master \
+docker run -i --name datacats_preload_master \
     -e BRANCH=master datacats_web \
     /bin/bash < setup_ckan.sh
-docker commit datacats_web_master datacats_web_preload_master
-docker rm datacats_web_master
+docker commit datacats_preload_master datacats/web:preload_master
+docker rm datacats_preload_master
