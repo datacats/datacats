@@ -13,9 +13,9 @@ TARGET="$WORKDIR/$NAME"
 echo '[1/3] Creating Project "'$NAME'"'
 mkdir -p "$DATADIR"
 mkdir "$DATADIR/venv"
-mkdir "$DATADIR/solr"
-mkdir "$DATADIR/db"
-mkdir "$DATADIR/storage"
+mkdir "$DATADIR/search"
+mkdir "$DATADIR/data"
+mkdir "$DATADIR/files"
 mkdir "$TARGET"
 mkdir "$TARGET/ini"
 mkdir "$TARGET/src"
@@ -24,46 +24,46 @@ mkdir "$TARGET/src"
 docker run --rm -i \
     -e "BRANCH=$BRANCH" \
     -v "$DATADIR/venv:/usr/lib/ckan_target" \
-    -v "$DATADIR/storage:/var/www/storage" \
+    -v "$DATADIR/files:/var/www/storage" \
     -v "$TARGET/src:/project/src_target" \
     -v "$TARGET/ini:/etc/ckan/default" \
-    datacats_web_preload_master /bin/bash < init_project.sh
+    datacats/web:preload_master /bin/bash < init_project.sh
 
-docker run -d --name="datacats_db_${NAME}" \
-    -v "$DATADIR/db:/var/lib/postgresql/data" \
-    datacats_db > /dev/null
+docker run -d --name="datacats_data_${NAME}" \
+    -v "$DATADIR/data:/var/lib/postgresql/data" \
+    datacats/data > /dev/null
 
-docker run -d --name="datacats_solr_${NAME}" \
-    -v "$DATADIR/solr:/var/lib/solr" \
+docker run -d --name="datacats_search_${NAME}" \
+    -v "$DATADIR/search:/var/lib/solr" \
     -v "$TARGET/src/ckan/ckan/config/solr/schema.xml:/etc/solr/conf/schema.xml" \
-    datacats_solr > /dev/null
+    datacats/search > /dev/null
 
 echo '[2/3] Creating INI files'
 docker run --rm -i \
     -v "$DATADIR/venv:/usr/lib/ckan" \
     -v "$TARGET/src:/project/src" \
     -v "$TARGET/ini:/etc/ckan/default" \
-    datacats_web /bin/bash < init_ini.sh > /dev/null
+    datacats/web /bin/bash < init_ini.sh > /dev/null
 
 echo '[3/3] Creating DB'
 docker run --rm -i \
     -v "$DATADIR/venv:/usr/lib/ckan" \
-    -v "$DATADIR/storage:/var/www/storage" \
+    -v "$DATADIR/files:/var/www/storage" \
     -v "$TARGET/src:/project/src" \
     -v "$TARGET/ini:/etc/ckan/default" \
-    --link "datacats_solr_${NAME}":solr \
-    --link "datacats_db_${NAME}":db \
-    datacats_web /usr/lib/ckan/bin/paster --plugin=ckan db init -c /etc/ckan/default/ckan.ini > /dev/null 2>&1
+    --link "datacats_search_${NAME}":solr \
+    --link "datacats_data_${NAME}":db \
+    datacats/web /usr/lib/ckan/bin/paster --plugin=ckan db init -c /etc/ckan/default/ckan.ini > /dev/null 2>&1
 
 docker run -d --name="datacats_web_${NAME}" \
     -v "$DATADIR/venv:/usr/lib/ckan" \
-    -v "$DATADIR/storage:/var/www/storage" \
+    -v "$DATADIR/files:/var/www/storage" \
     -v "$TARGET/src:/project/src" \
     -v "$TARGET/ini:/etc/ckan/default" \
-    --link "datacats_solr_${NAME}":solr \
-    --link "datacats_db_${NAME}":db \
+    --link "datacats_search_${NAME}":solr \
+    --link "datacats_data_${NAME}":db \
     -p 80 \
-    datacats_web > /dev/null
+    datacats/web > /dev/null
 
 IP=""
 while true; do
@@ -77,10 +77,10 @@ echo
 echo Creating Initial Sysadmin User
 docker run --rm -it \
     -v "$DATADIR/venv:/usr/lib/ckan" \
-    -v "$DATADIR/storage:/var/www/storage" \
+    -v "$DATADIR/files:/var/www/storage" \
     -v "$TARGET/src:/project/src" \
     -v "$TARGET/ini:/etc/ckan/default" \
-    --link "datacats_solr_${NAME}":solr \
-    --link "datacats_db_${NAME}":db \
+    --link "datacats_search_${NAME}":solr \
+    --link "datacats_data_${NAME}":db \
     datacats_web /usr/lib/ckan/bin/paster --plugin=ckan sysadmin add admin -c /etc/ckan/default/ckan.ini
 

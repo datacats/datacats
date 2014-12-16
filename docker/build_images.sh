@@ -17,5 +17,3 @@ docker rm datacats_preload_master
 docker push datacats/web
 docker push datacats/data
 docker push datacats/search
-
-docker push datacats/web:preload_master
