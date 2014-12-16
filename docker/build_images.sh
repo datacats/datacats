@@ -11,3 +11,11 @@ docker run -i --name datacats_preload_master \
     /bin/bash < setup_ckan.sh
 docker commit datacats_preload_master datacats/web:preload_master
 docker rm datacats_preload_master
+
+[ "$1" == "push" ] || exit
+
+docker push datacats/web
+docker push datacats/data
+docker push datacats/search
+
+docker push datacats/web:preload_master
