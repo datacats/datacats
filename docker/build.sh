@@ -19,7 +19,6 @@ mkdir "$DATADIR/storage"
 mkdir "$TARGET"
 mkdir "$TARGET/ini"
 mkdir "$TARGET/src"
-mkdir "$TARGET/logs"
 
 # FIXME: based on ckan/master deps for now
 docker run --rm -i \
@@ -30,14 +29,14 @@ docker run --rm -i \
     -v "$TARGET/ini:/etc/ckan/default" \
     datacats_web:master /bin/bash < init_project.sh
 
-docker run --name="datacats_db_${NAME}" \
+docker run -d --name="datacats_db_${NAME}" \
     -v "$DATADIR/db:/var/lib/postgresql/data" \
-    datacats_db > "$TARGET/logs/db.log" 2>&1 &
+    datacats_db > /dev/null
 
-docker run --name="datacats_solr_${NAME}" \
+docker run -d --name="datacats_solr_${NAME}" \
     -v "$DATADIR/solr:/var/lib/solr" \
     -v "$TARGET/src/ckan/ckan/config/solr/schema.xml:/etc/solr/conf/schema.xml" \
-    datacats_solr > "$TARGET/logs/solr.log" 2>&1 &
+    datacats_solr > /dev/null
 
 echo '[2/3] Creating INI files'
 docker run --rm -i \
@@ -56,7 +55,7 @@ docker run --rm -i \
     --link "datacats_db_${NAME}":db \
     datacats_web /usr/lib/ckan/bin/paster --plugin=ckan db init -c /etc/ckan/default/ckan.ini > /dev/null 2>&1
 
-docker run --name="datacats_web_${NAME}" \
+docker run -d --name="datacats_web_${NAME}" \
     -v "$DATADIR/venv:/usr/lib/ckan" \
     -v "$DATADIR/storage:/var/www/storage" \
     -v "$TARGET/src:/project/src" \
@@ -64,7 +63,7 @@ docker run --name="datacats_web_${NAME}" \
     --link "datacats_solr_${NAME}":solr \
     --link "datacats_db_${NAME}":db \
     -p 80 \
-    datacats_web > "$TARGET/logs/web.log" 2>&1 &
+    datacats_web > /dev/null
 
 IP=""
 while true; do
