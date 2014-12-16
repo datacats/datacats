@@ -1,5 +1,7 @@
 from string import uppercase, lowercase, digits
 from random import SystemRandom
+from os.path import abspath, split as path_split, expanduser, isdir
+from os import makedirs
 
 from datacats.validate import valid_name
 
@@ -12,8 +14,30 @@ def generate_db_password():
     return ''.join(SystemRandom().choice(chars) for x in xrange(16))
 
 def main(opts):
-    name = opts['PROJECT']
+    workdir, name = path_split(abspath(opts['PROJECT']))
+
     if not valid_name(name):
         print 'Project name must consist of only lowercase letters and digits,'
         print 'must start with a letter and must be at least 5 characters long.'
         return
+
+    if not isdir(workdir):
+        print 'Parent directory for project does not exist!'
+        return
+
+    datadir = expanduser('~/.datacats/' + name)
+    target = workdir + '/' + name
+
+    postgres_password = generate_db_password()
+    datastore_ro_password = generate_db_password()
+    datastore_rw_password = generate_db_password()
+
+    print '[1/3] Creating project "{0}"'.format(name)
+    makedirs(datadir + '/venv', mode=0700)
+    makedirs(datadir + '/search', mode=0700)
+    makedirs(datadir + '/data', mode=0700)
+    makedirs(datadir + '/files', mode=0700)
+    makedirs(target + '/ini')
+    makedirs(target + '/src')
+
+    
