@@ -10,18 +10,20 @@ Usage:
   datacats info [-p PROJECT] [-q] [-r]
   datacats open [-p PROJECT]
   datacats paster [-p PROJECT] PASTER_COMMAND...
-  datacats install [-p PROJECT]
-  datacats purge [-p PROJECT]
+  datacats install [-p PROJECT] [-c]
+  datacats purge [-p PROJECT] [-y]
 
 Options:
-  -f --follow                     Follow logs
-  -i --image-only                 Only create the project, don't start containers
-  -r --remote                     Operate on cloud-deployed datacats instance
-  -p --project=PROJECT            Use project named PROJECT, defaults to use
-                                  project from current working directory
-  -q --quiet                      Simple text response suitable for scripting
-  -v --ckan-version=CKAN_VERSION  Use CKAN version CKAN_VERSION, defaults to
-                                  latest stable release
+  -c --clean                  Reinstall into a clean virtual environment
+  -f --follow                 Follow logs
+  -i --image-only             Only create the project, don't start containers
+  -r --remote                 Operate on cloud-deployed datacats instance
+  -p --project=PROJECT        Use project named PROJECT, defaults to use
+                              project from current working directory
+  -q --quiet                  Simple text response suitable for scripting
+  -v --version=CKAN_VERSION   Use CKAN version CKAN_VERSION, defaults to
+                              latest development release
+  -y --yes                    don't ask for confirmation
 """
 
 import json
@@ -42,6 +44,7 @@ def command_not_yet_implemented(opts, name):
 
 def main():
     opts = docopt(__doc__)
+    option_not_yet_implemented(opts, '--project')
     option_not_yet_implemented(opts, '--project')
     command_not_yet_implemented(opts, 'start')
     command_not_yet_implemented(opts, 'stop')

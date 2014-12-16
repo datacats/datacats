@@ -19,13 +19,14 @@ setup(
     packages=[
         'datacats',
         'datacats.tests',
+        'datacats.cli',
         ],
     install_requires=install_requires,
     test_suite='datacats.tests',
     zip_safe=False,
     entry_points = """
         [console_scripts]
-        datacats=datacats.cli:main
+        datacats=datacats.cli.main:main
         """
     )
 
