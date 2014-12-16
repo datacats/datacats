@@ -38,7 +38,7 @@ docker run -d --name="datacats_data_${NAME}" \
     -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
     -e CKAN_PASSWORD="$CKAN_PASSWORD" \
     -e DATASTORE_RO_PASSWORD="$DATASTORE_RO_PASSWORD" \
-    -e DATASTORE_RW_PASSWORD="$DATASTORE_RO_PASSWORD" \
+    -e DATASTORE_RW_PASSWORD="$DATASTORE_RW_PASSWORD" \
     -v "$DATADIR/data:/var/lib/postgresql/data" \
     datacats/data > /dev/null
 
@@ -51,7 +51,7 @@ echo '[2/3] Creating INI files'
 docker run --rm -i \
     -e CKAN_PASSWORD="$CKAN_PASSWORD" \
     -e DATASTORE_RO_PASSWORD="$DATASTORE_RO_PASSWORD" \
-    -e DATASTORE_RW_PASSWORD="$DATASTORE_RO_PASSWORD" \
+    -e DATASTORE_RW_PASSWORD="$DATASTORE_RW_PASSWORD" \
     -v "$DATADIR/venv:/usr/lib/ckan" \
     -v "$TARGET/src:/project/src" \
     -v "$TARGET/ini:/etc/ckan/default" \
