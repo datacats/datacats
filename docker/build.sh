@@ -10,6 +10,11 @@ WORKDIR="$(readlink -f "${3:-.}")"
 DATADIR="${HOME}/.datacats/${NAME}"
 TARGET="$WORKDIR/$NAME"
 
+POSTGRES_PASSWORD=$(</dev/urandom tr -cd '[:alnum:]' | head -c16)
+CKAN_PASSWORD=$(</dev/urandom tr -cd '[:alnum:]' | head -c16)
+DATASTORE_RO_PASSWORD=$(</dev/urandom tr -cd '[:alnum:]' | head -c16)
+DATASTORE_RW_PASSWORD=$(</dev/urandom tr -cd '[:alnum:]' | head -c16)
+
 echo '[1/3] Creating Project "'$NAME'"'
 mkdir -p "$DATADIR"
 mkdir "$DATADIR/venv"
@@ -30,6 +35,10 @@ docker run --rm -i \
     datacats/web:preload_master /bin/bash < init_project.sh
 
 docker run -d --name="datacats_data_${NAME}" \
+    -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+    -e CKAN_PASSWORD="$CKAN_PASSWORD" \
+    -e DATASTORE_RO_PASSWORD="$DATASTORE_RO_PASSWORD" \
+    -e DATASTORE_RW_PASSWORD="$DATASTORE_RO_PASSWORD" \
     -v "$DATADIR/data:/var/lib/postgresql/data" \
     datacats/data > /dev/null
 
@@ -40,12 +49,15 @@ docker run -d --name="datacats_search_${NAME}" \
 
 echo '[2/3] Creating INI files'
 docker run --rm -i \
+    -e CKAN_PASSWORD="$CKAN_PASSWORD" \
+    -e DATASTORE_RO_PASSWORD="$DATASTORE_RO_PASSWORD" \
+    -e DATASTORE_RW_PASSWORD="$DATASTORE_RO_PASSWORD" \
     -v "$DATADIR/venv:/usr/lib/ckan" \
     -v "$TARGET/src:/project/src" \
     -v "$TARGET/ini:/etc/ckan/default" \
     datacats/web /bin/bash < init_ini.sh > /dev/null
 
-echo '[3/3] Creating DB'
+echo '[3/3] Initializing Database'
 docker run --rm -i \
     -v "$DATADIR/venv:/usr/lib/ckan" \
     -v "$DATADIR/files:/var/www/storage" \

@@ -1,11 +1,25 @@
 gosu postgres postgres --single <<-EOSQL
-			CREATE USER ckan WITH PASSWORD 'password';
-            CREATE DATABASE ckan OWNER ckan;
-            CREATE USER ckan_datastore_readonly WITH PASSWORD 'password';
-            CREATE USER ckan_datastore_readwrite WITH PASSWORD 'password';
-            CREATE DATABASE ckan_datastore OWNER ckan;
-EOSQL
+CREATE USER ckan WITH PASSWORD '$CKAN_PASSWORD';
+CREATE DATABASE ckan OWNER ckan;
+CREATE USER ckan_datastore_readonly WITH PASSWORD '$DATASTORE_RO_PASSWORD';
+CREATE USER ckan_datastore_readwrite WITH PASSWORD '$DATASTORE_RW_PASSWORD';
+CREATE DATABASE ckan_datastore OWNER ckan;
 
+-- datastore permissions from ckanext/datastore/set_permissions.sql
+\CONNECT ckan_datastore
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT CREATE ON SCHEMA public TO ckan;
+GRANT USAGE ON SCHEMA public TO ckan;
+GRANT CREATE ON SCHEMA public TO ckan_datastore_readwrite;
+GRANT USAGE ON SCHEMA public TO ckan_datastore_readwrite;
+REVOKE CONNECT ON DATABASE ckan FROM ckan_datastore_readonly;
+GRANT CONNECT ON DATABASE ckan_datastore TO ckan_datastore_readonly;
+GRANT USAGE ON SCHEMA public TO ckan_datastore_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO ckan_datastore_readonly;
+ALTER DEFAULT PRIVILEGES FOR USER ckan_datastore_readwrite IN SCHEMA public
+  GRANT SELECT ON TABLES TO ckan_datastore_readonly;
+EOSQL
 
 # Adjust PostgreSQL configuration so that remote connections to the
 # database are possible.
