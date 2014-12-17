@@ -3,6 +3,7 @@ from random import SystemRandom
 from os.path import abspath, split as path_split, expanduser, isdir
 from os import makedirs
 
+from datacats.docker import docker
 from datacats.validate import valid_name
 
 def generate_db_password():
@@ -40,4 +41,17 @@ def main(opts):
     makedirs(target + '/ini')
     makedirs(target + '/src')
 
-    
+    vols = {
+        datadir + '/venv': {'bind': '/usr/lib/ckan_target', 'ro': False},
+        target + '/src': {'bind': '/project/src_target', 'ro': False},
+        target + '/ini': {'bind': '/etc/ckan/default', 'ro': False},
+    }
+    c = docker.create_container(
+        image='datacats/web:preload_master', # FIXME: only master for now
+        environment={'BRANCH': 'master'}, # FIXME
+        command='init_project.sh',
+        volumes=[v['bind'] for v in vols.itervalues()],
+        detach=False)
+    docker.start(
+        container=c['Id'],
+        binds=vols)

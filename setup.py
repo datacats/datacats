@@ -6,6 +6,7 @@ import sys
 install_requires=[
     'setuptools',
     'docopt',
+    'docker-py',
 ]
 
 setup(
