@@ -15,7 +15,7 @@ CKAN_PASSWORD=$(</dev/urandom tr -cd '[:alnum:]' | head -c16)
 DATASTORE_RO_PASSWORD=$(</dev/urandom tr -cd '[:alnum:]' | head -c16)
 DATASTORE_RW_PASSWORD=$(</dev/urandom tr -cd '[:alnum:]' | head -c16)
 
-echo '[1/3] Creating Project "'$NAME'"'
+echo '[1/2] Creating Project "'$NAME'"'
 mkdir -p "$DATADIR"
 mkdir "$DATADIR/venv"
 mkdir "$DATADIR/search"
@@ -34,6 +34,15 @@ docker run --rm -i \
     -v "$TARGET/conf:/etc/ckan/default" \
     datacats/web:preload_master /bin/bash < init_project.sh
 
+docker run --rm -i \
+    -e CKAN_PASSWORD="$CKAN_PASSWORD" \
+    -e DATASTORE_RO_PASSWORD="$DATASTORE_RO_PASSWORD" \
+    -e DATASTORE_RW_PASSWORD="$DATASTORE_RW_PASSWORD" \
+    -v "$DATADIR/venv:/usr/lib/ckan" \
+    -v "$TARGET/src:/project/src" \
+    -v "$TARGET/conf:/etc/ckan/default" \
+    datacats/web /bin/bash < init_ini.sh > /dev/null
+
 docker run -d --name="datacats_data_${NAME}" \
     -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
     -e CKAN_PASSWORD="$CKAN_PASSWORD" \
@@ -47,17 +56,7 @@ docker run -d --name="datacats_search_${NAME}" \
     -v "$TARGET/conf/schema.xml:/etc/solr/conf/schema.xml" \
     datacats/search > /dev/null
 
-echo '[2/3] Creating INI files'
-docker run --rm -i \
-    -e CKAN_PASSWORD="$CKAN_PASSWORD" \
-    -e DATASTORE_RO_PASSWORD="$DATASTORE_RO_PASSWORD" \
-    -e DATASTORE_RW_PASSWORD="$DATASTORE_RW_PASSWORD" \
-    -v "$DATADIR/venv:/usr/lib/ckan" \
-    -v "$TARGET/src:/project/src" \
-    -v "$TARGET/conf:/etc/ckan/default" \
-    datacats/web /bin/bash < init_ini.sh > /dev/null
-
-echo '[3/3] Initializing Database'
+echo '[2/2] Initializing Database'
 docker run --rm -i \
     -v "$DATADIR/venv:/usr/lib/ckan" \
     -v "$DATADIR/files:/var/www/storage" \
