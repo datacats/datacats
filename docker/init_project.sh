@@ -10,6 +10,7 @@ cp -a $CKAN_SRC/. /project/src_target/.
 cp $CKAN_SRC/ckan/ckan/config/who.ini \
     $CKAN_SRC/ckan/ckan/config/solr/schema.xml $CKAN_CONFIG/.
 chown -R --reference=$CKAN_CONFIG /usr/lib/ckan_target/. /project/src_target/.
+chown -R www-data: /var/www/storage
 
 $CKAN_HOME/bin/paster make-config ckan $CKAN_CONFIG/ckan.ini > /dev/null
 $CKAN_HOME/bin/paster --plugin=ckan config-tool "$CKAN_CONFIG/ckan.ini" -e \
