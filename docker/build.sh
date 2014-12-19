@@ -28,20 +28,14 @@ mkdir "$TARGET/src"
 # FIXME: based on ckan/master deps for now
 docker run --rm -i \
     -e "BRANCH=$BRANCH" \
+    -e CKAN_PASSWORD="$CKAN_PASSWORD" \
+    -e DATASTORE_RO_PASSWORD="$DATASTORE_RO_PASSWORD" \
+    -e DATASTORE_RW_PASSWORD="$DATASTORE_RW_PASSWORD" \
     -v "$DATADIR/venv:/usr/lib/ckan_target" \
     -v "$DATADIR/files:/var/www/storage" \
     -v "$TARGET/src:/project/src_target" \
     -v "$TARGET/conf:/etc/ckan/default" \
     datacats/web:preload_master /bin/bash < init_project.sh
-
-docker run --rm -i \
-    -e CKAN_PASSWORD="$CKAN_PASSWORD" \
-    -e DATASTORE_RO_PASSWORD="$DATASTORE_RO_PASSWORD" \
-    -e DATASTORE_RW_PASSWORD="$DATASTORE_RW_PASSWORD" \
-    -v "$DATADIR/venv:/usr/lib/ckan" \
-    -v "$TARGET/src:/project/src" \
-    -v "$TARGET/conf:/etc/ckan/default" \
-    datacats/web /bin/bash < init_ini.sh > /dev/null
 
 docker run -d --name="datacats_data_${NAME}" \
     -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
