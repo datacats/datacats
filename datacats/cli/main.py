@@ -1,7 +1,7 @@
 """datacats command line interface
 
 Usage:
-  datacats create (. | PROJECT) [--ckan=CKAN_VERSION] [-i]
+  datacats create (. | PROJECT) [-i] [-n] [--ckan=CKAN_VERSION]
   datacats start [-p PROJECT] [-r]
   datacats stop [-p PROJECT] [-r]
   datacats restart [-p PROJECT] [-r]
@@ -20,6 +20,7 @@ Options:
   -f --follow                 Follow logs
   -i --image-only             Only create the project, don't start containers
   -r --remote                 Operate on cloud-deployed datacats instance
+  -n --no-sysadmin            Don't create an initial sysadmin user account
   -p --project=PROJECT        Use project named PROJECT, defaults to use
                               project from current working directory
   -q --quiet                  Simple text response suitable for scripting

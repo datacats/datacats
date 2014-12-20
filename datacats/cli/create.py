@@ -24,8 +24,8 @@ def main(opts):
     workdir, name = path_split(abspath(opts['PROJECT']))
 
     if not valid_name(name):
-        print 'Project name must consist of only lowercase letters and digits,'
-        print 'must start with a letter and must be at least 5 characters long.'
+        print 'Please choose a project name starting with a letter and'
+        print 'includig only lowercase letters and digits'
         return
 
     if not isdir(workdir):
@@ -35,11 +35,20 @@ def main(opts):
     datadir = expanduser('~/.datacats/' + name)
     target = workdir + '/' + name
 
+    if isdir(datadir):
+        print 'Project data directory {0} already exists.'.format(datadir)
+        return
+    if isdir(target):
+        print 'Project directory already exists.'
+        return
+
     postgres_password = generate_db_password()
+    ckan_password = generate_db_password()
     datastore_ro_password = generate_db_password()
     datastore_rw_password = generate_db_password()
 
-    write('[1/1] Creating project "{0}"'.format(name))
+    write('Creating project "{0}"'.format(name))
+
     makedirs(datadir, mode=0700)
     makedirs(datadir + '/venv')
     makedirs(datadir + '/search')
@@ -97,7 +106,7 @@ def main(opts):
             '/etc/ckan/default/ckan.ini',
             '-e',
             'sqlalchemy.url = postgresql://ckan:{0}@db:5432/ckan'.format(
-                postgres_password),
+                ckan_password),
             'ckan.datastore.read_url = postgresql://ckan_datastore_readonly:'
                 '{0}@db:5432/ckan_datastore'.format(datastore_ro_password),
             'ckan.datastore.write_url = postgresql://ckan_datastore_readwrite:'
@@ -119,3 +128,57 @@ def main(opts):
             target + '/conf': '/etc/ckan/default'})
     write('.')
 
+    # postgres container needs all its user passwords on first run
+    start_container(
+        name='datacats_data_' + name,
+        image='datacats/data',
+        env={'POSTGRES_PASSWORD': postgres_password,
+            'CKAN_PASSWORD': ckan_password,
+            'DATASTORE_RO_PASSWORD': datastore_ro_password,
+            'DATASTORE_RW_PASSWORD': datastore_rw_password},
+        rw={datadir + '/data': '/var/lib/postgresql/data'})
+    start_container(
+        name='datacats_search_' + name,
+        image='datacats/search',
+        rw={datadir + '/search': '/var/lib/solr'},
+        ro={target + '/conf/schema.xml': '/etc/solr/conf/schema.xml'})
+    write('.')
+
+    # ckan db init
+    web_command(
+        command='/usr/lib/ckan/bin/paster --plugin=ckan db init'
+            ' -c /etc/ckan/default/ckan.ini',
+        ro={datadir + '/venv': '/usr/lib/ckan',
+            target + '/src': '/project/src',
+            target + '/conf': '/etc/ckan/default'})
+        link={'datacats_search_' + name: 'solr',
+            'datacats_data_' + name: 'db'})
+    write('.')
+
+    if opts['--image-only']:
+        stop_container('datacats_data_' + name)
+        stop_container('datacats_search_' + name)
+        write('\n')
+    else:
+        start_container(
+            name='datacats_web_' + name,
+            rw={datadir + '/files': '/var/www/storage'},
+            ro={datadir + '/venv': '/usr/lib/ckan',
+                target + '/src': '/project/src',
+                target + '/conf': '/etc/ckan/default'})
+        write('.\n')
+        info = inspect_container(name='datacats_web_' + name)
+        write('Site available at http://{0}/\n'.format(info))
+
+    if opts['--no-sysadmin']:
+        return
+
+    web_command(
+        command='/usr/lib/ckan/bin/paster --plugin=ckan sysadmin add admin'
+            ' -c /etc/ckan/default/ckan.ini',
+        ro={datadir + '/venv': '/usr/lib/ckan',
+            target + '/src': '/project/src',
+            target + '/conf': '/etc/ckan/default'})
+        link={'datacats_search_' + name: 'solr',
+            'datacats_data_' + name: 'db'},
+        interactive=True)
