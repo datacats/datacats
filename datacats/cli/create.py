@@ -179,6 +179,7 @@ def main(opts):
     if opts['--no-sysadmin']:
         return
 
+    write('\n')
     # FIXME: consider switching this to dockerpty
     # using subprocess for docker client's interactive session
     subprocess.call([
