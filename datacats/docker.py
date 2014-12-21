@@ -32,7 +32,8 @@ def binds_to_volumes(volumes):
     """
     return [v['bind'] for v in volumes.itervalues()]
 
-def web_command(command, ro=None, rw=None, preload_ckan_version=None):
+def web_command(command, ro=None, rw=None, links=None,
+        preload_ckan_version=None):
     """
     Run a single command in a web image preloaded with the ckan
     source and virtual envrionment.
@@ -40,22 +41,45 @@ def web_command(command, ro=None, rw=None, preload_ckan_version=None):
     :param command: command to execute
     :param ro: {localdir: binddir} dict for read-only volumes
     :param rw: {localdir: binddir} dict for read-write volumes
-    :param preload_ckan_version:
+    :param links: links passed to start
+    :param preload_ckan_version: 'master' for preload image
     """
-    binds = ro_rw_to_binds(ro, rw)
-
     image = 'datacats/web'
     if preload_ckan_version:
         image='datacats/web:preload_{0}'.format(preload_ckan_version)
 
-    c = _docker.create_container(
+    c = run_container(
+        name=None,
         image=image,
-        command=command,
-        volumes=binds_to_volumes(binds),
+        ro=ro,
+        rw=rw,
+        links=links,
         detach=False)
-    _docker.start(
-        container=c['Id'],
-        binds=binds)
     if _docker.wait(c['Id']):
         raise WebCommandError(command)
     _docker.remove_container(container=c['Id'])
+
+def run_container(name, image, command=None, environment=None,
+        ro=None, rw=None, links=None, detach=True):
+    """
+    simple wrapper for docker create_container, start calls
+    """
+    binds = ro_rw_to_binds(ro, rw)
+    c = _docker.create_container(
+        name=name,
+        image=image,
+        command=command,
+        environment=environment,
+        volumes=binds_to_volumes(binds),
+        detach=detach)
+    _docker.start(
+        container=c['Id'],
+        links=links,
+        binds=binds)
+    return c
+
+def remove_container(name, force=True):
+    """
+    simple wrapper for docker remove_container
+    """
+    _docker.remove_container(name, force=force)

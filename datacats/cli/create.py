@@ -5,7 +5,7 @@ from os import makedirs
 import sys
 import shutil
 
-from datacats.docker import web_command
+from datacats.docker import web_command, run_container, remove_container
 from datacats.validate import valid_name
 
 def generate_db_password():
@@ -132,7 +132,7 @@ def main(opts):
     start_container(
         name='datacats_data_' + name,
         image='datacats/data',
-        env={'POSTGRES_PASSWORD': postgres_password,
+        environment={'POSTGRES_PASSWORD': postgres_password,
             'CKAN_PASSWORD': ckan_password,
             'DATASTORE_RO_PASSWORD': datastore_ro_password,
             'DATASTORE_RW_PASSWORD': datastore_rw_password},
@@ -150,14 +150,14 @@ def main(opts):
             ' -c /etc/ckan/default/ckan.ini',
         ro={datadir + '/venv': '/usr/lib/ckan',
             target + '/src': '/project/src',
-            target + '/conf': '/etc/ckan/default'})
-        link={'datacats_search_' + name: 'solr',
+            target + '/conf': '/etc/ckan/default'},
+        links={'datacats_search_' + name: 'solr',
             'datacats_data_' + name: 'db'})
     write('.')
 
     if opts['--image-only']:
-        stop_container('datacats_data_' + name)
-        stop_container('datacats_search_' + name)
+        remove_container('datacats_data_' + name)
+        remove_container('datacats_search_' + name)
         write('\n')
     else:
         start_container(
@@ -178,7 +178,7 @@ def main(opts):
             ' -c /etc/ckan/default/ckan.ini',
         ro={datadir + '/venv': '/usr/lib/ckan',
             target + '/src': '/project/src',
-            target + '/conf': '/etc/ckan/default'})
-        link={'datacats_search_' + name: 'solr',
+            target + '/conf': '/etc/ckan/default'},
+        links={'datacats_search_' + name: 'solr',
             'datacats_data_' + name: 'db'},
         interactive=True)
