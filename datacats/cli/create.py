@@ -82,6 +82,22 @@ def main(opts):
         target + '/conf')
     write('.')
 
+    # postgres container needs all its user passwords on first run
+    run_container(
+        name='datacats_data_' + name,
+        image='datacats/data',
+        environment={'POSTGRES_PASSWORD': postgres_password,
+            'CKAN_PASSWORD': ckan_password,
+            'DATASTORE_RO_PASSWORD': datastore_ro_password,
+            'DATASTORE_RW_PASSWORD': datastore_rw_password},
+        rw={datadir + '/data': '/var/lib/postgresql/data'})
+    run_container(
+        name='datacats_search_' + name,
+        image='datacats/search',
+        rw={datadir + '/search': '/var/lib/solr'},
+        ro={target + '/conf/schema.xml': '/etc/solr/conf/schema.xml'})
+    write('.')
+
     # set ownership of file storage dir to container apache user id
     web_command(
         command='/bin/chown -R www-data: /var/www/storage',
@@ -128,22 +144,6 @@ def main(opts):
         rw={datadir + '/venv': '/usr/lib/ckan',
             target + '/src': '/project/src',
             target + '/conf': '/etc/ckan/default'})
-    write('.')
-
-    # postgres container needs all its user passwords on first run
-    run_container(
-        name='datacats_data_' + name,
-        image='datacats/data',
-        environment={'POSTGRES_PASSWORD': postgres_password,
-            'CKAN_PASSWORD': ckan_password,
-            'DATASTORE_RO_PASSWORD': datastore_ro_password,
-            'DATASTORE_RW_PASSWORD': datastore_rw_password},
-        rw={datadir + '/data': '/var/lib/postgresql/data'})
-    run_container(
-        name='datacats_search_' + name,
-        image='datacats/search',
-        rw={datadir + '/search': '/var/lib/solr'},
-        ro={target + '/conf/schema.xml': '/etc/solr/conf/schema.xml'})
     write('.')
 
     # ckan db init
