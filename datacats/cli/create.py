@@ -4,8 +4,10 @@ from os.path import abspath, split as path_split, expanduser, isdir
 from os import makedirs
 import sys
 import shutil
+import subprocess
 
-from datacats.docker import web_command, run_container, remove_container
+from datacats.docker import (web_command, run_container, remove_container,
+    inspect_container)
 from datacats.validate import valid_name
 
 def generate_db_password():
@@ -129,7 +131,7 @@ def main(opts):
     write('.')
 
     # postgres container needs all its user passwords on first run
-    start_container(
+    run_container(
         name='datacats_data_' + name,
         image='datacats/data',
         environment={'POSTGRES_PASSWORD': postgres_password,
@@ -137,7 +139,7 @@ def main(opts):
             'DATASTORE_RO_PASSWORD': datastore_ro_password,
             'DATASTORE_RW_PASSWORD': datastore_rw_password},
         rw={datadir + '/data': '/var/lib/postgresql/data'})
-    start_container(
+    run_container(
         name='datacats_search_' + name,
         image='datacats/search',
         rw={datadir + '/search': '/var/lib/solr'},
@@ -160,25 +162,31 @@ def main(opts):
         remove_container('datacats_search_' + name)
         write('\n')
     else:
-        start_container(
+        run_container(
             name='datacats_web_' + name,
+            image='datacats/web',
             rw={datadir + '/files': '/var/www/storage'},
             ro={datadir + '/venv': '/usr/lib/ckan',
                 target + '/src': '/project/src',
-                target + '/conf': '/etc/ckan/default'})
+                target + '/conf': '/etc/ckan/default'},
+            links={'datacats_search_' + name: 'solr',
+                'datacats_data_' + name: 'db'})
         write('.\n')
-        info = inspect_container(name='datacats_web_' + name)
-        write('Site available at http://{0}/\n'.format(info))
+        info = inspect_container('datacats_web_' + name)
+        ip = info['NetworkSettings']['IPAddress']
+        write('Site available at http://{0}/\n'.format(ip))
 
     if opts['--no-sysadmin']:
         return
 
-    web_command(
-        command='/usr/lib/ckan/bin/paster --plugin=ckan sysadmin add admin'
-            ' -c /etc/ckan/default/ckan.ini',
-        ro={datadir + '/venv': '/usr/lib/ckan',
-            target + '/src': '/project/src',
-            target + '/conf': '/etc/ckan/default'},
-        links={'datacats_search_' + name: 'solr',
-            'datacats_data_' + name: 'db'},
-        interactive=True)
+    # FIXME: consider switching this to dockerpty
+    # using subprocess for docker client's interactive session
+    subprocess.call([
+        '/usr/bin/docker', 'run', '--rm', '-it',
+        '-v', datadir + '/venv:/usr/lib/ckan:ro',
+        '-v', target + '/src:/project/src:ro',
+        '-v', target + '/conf:/etc/ckan/default:ro',
+        '--link', 'datacats_search_' + name + ':solr',
+        '--link', 'datacats_data_' + name + ':db',
+        'datacats/web', '/usr/lib/ckan/bin/paster', '--plugin=ckan',
+        'sysadmin', 'add', 'admin', '-c' '/etc/ckan/default/ckan.ini'])

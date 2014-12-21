@@ -48,13 +48,16 @@ def web_command(command, ro=None, rw=None, links=None,
     if preload_ckan_version:
         image='datacats/web:preload_{0}'.format(preload_ckan_version)
 
-    c = run_container(
-        name=None,
+    binds = ro_rw_to_binds(ro, rw)
+    c = _docker.create_container(
         image=image,
-        ro=ro,
-        rw=rw,
-        links=links,
+        command=command,
+        volumes=binds_to_volumes(binds),
         detach=False)
+    _docker.start(
+        container=c['Id'],
+        links=links,
+        binds=binds)
     if _docker.wait(c['Id']):
         raise WebCommandError(command)
     _docker.remove_container(container=c['Id'])
@@ -83,3 +86,5 @@ def remove_container(name, force=True):
     simple wrapper for docker remove_container
     """
     _docker.remove_container(name, force=force)
+
+inspect_container = _docker.inspect_container
