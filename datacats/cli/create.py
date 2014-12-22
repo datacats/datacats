@@ -10,13 +10,14 @@ def main(opts):
     try:
         project = Project.new(opts['PROJECT'], 'master')
     except ProjectError as e:
-        print e.message.format(*e.format_args)
+        print e
         return
 
     write('Creating project "{0}"'.format(project.name))
 
     for fn in (
             project.create_directories,
+            project.save,
             project.create_virtualenv,
             project.create_source,
             project.start_data_and_search,

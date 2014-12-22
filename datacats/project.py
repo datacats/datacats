@@ -1,9 +1,10 @@
-from os.path import abspath, split as path_split, expanduser, isdir
-from os import makedirs
+from os.path import abspath, split as path_split, expanduser, isdir, exists
+from os import makedirs, getcwd
 import subprocess
 import shutil
 from string import uppercase, lowercase, digits
 from random import SystemRandom
+from ConfigParser import SafeConfigParser, Error as ConfigParserError
 
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
@@ -15,18 +16,34 @@ class ProjectError(Exception):
         self.format_args = format_args
         super(ProjectError, self).__init__(message, format_args)
 
+    def __str__(self):
+        return self.message.format(*self.format_args)
+
 
 class Project(object):
     """
     DataCats project settings object
 
-    Create with Project.new(path) or Project.open(path)
+    Create with Project.new(path) or Project.load(path)
     """
     def __init__(self, name, target, datadir, ckan_version):
         self.name = name
         self.target = target
         self.datadir = datadir
         self.ckan_version = ckan_version
+
+    def save(self):
+        """
+        Save project settings into project directory
+        """
+        cp = SafeConfigParser()
+        cp.add_section('datacats')
+        cp.set('datacats', 'name', self.name)
+        cp.set('datacats', 'ckan_version', self.ckan_version)
+        cp.add_section('passwords')
+        for n in sorted(self.passwords):
+            cp.set('passwords', n.lower(), self.passwords[n])
+        cp.write(open(self.target + '/.datacats-project', 'w'))
 
     @classmethod
     def new(cls, path, ckan_version):
@@ -43,21 +60,60 @@ class Project(object):
 
         if not valid_name(name):
             raise ProjectError('Please choose a project name starting with a '
-                'letter and including only lowercase letters and digits.')
+                'letter and including only lowercase letters and digits')
         if not isdir(workdir):
-            raise ProjectError('Parent directory for project does not exist.')
+            raise ProjectError('Parent directory for project does not exist')
 
         datadir = expanduser('~/.datacats/' + name)
         target = workdir + '/' + name
 
         if isdir(datadir):
-            raise ProjectError('Project data directory {0} already exists.',
+            raise ProjectError('Project data directory {0} already exists',
                 (datadir,))
         if isdir(target):
-            raise ProjectError('Project directory already exists.')
+            raise ProjectError('Project directory already exists')
 
         project = cls(name, target, datadir, ckan_version)
         project._generate_passwords()
+        return project
+
+    @classmethod
+    def load(cls, project_name=None):
+        """
+        Return a Project object based on an existing project.
+
+        :params project_name: exising project name or None to look in
+            current or parent directories for project
+
+        Raises ProjectError if project can't be found or if there is an
+        error parsing the project information.
+        """
+        if project_name is None:
+            wd = abspath(getcwd())
+            while not exists(wd + '/.datacats-project'):
+                oldwd = wd
+                wd, ignore = path_split(wd)
+                if wd == oldwd:
+                    raise ProjectError(
+                        'Project not found in current directory')
+        else:
+            assert 0, 'TBD'
+
+        cp = SafeConfigParser()
+        try:
+            cp.read([wd + '/.datacats-project'])
+        except ConfigParserError:
+            raise ProjectError('Error reading project information')
+
+        name = cp.get('datacats', 'name')
+        datadir = expanduser('~/.datacats/' + name)
+        ckan_version = cp.get('datacats', 'ckan_version')
+        passwords = {}
+        for n in cp.options('passwords'):
+            passwords[n.upper()] = cp.get('passwords', n)
+
+        project = cls(name, wd, datadir, ckan_version)
+        project.passwords = passwords
         return project
 
     def create_directories(self):
@@ -212,6 +268,12 @@ class Project(object):
                 self.target + '/conf': '/etc/ckan/default'},
             links={'datacats_search_' + self.name: 'solr',
                 'datacats_data_' + self.name: 'db'})
+
+    def stop_web(self):
+        """
+        Stop and remove the web container
+        """
+        remove_container('datacats_web_' + self.name)
 
     def web_ipaddress(self):
         """

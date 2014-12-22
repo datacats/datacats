@@ -31,7 +31,7 @@ import json
 import sys
 from docopt import docopt
 
-from datacats.cli import create
+from datacats.cli import create, manage
 
 def option_not_yet_implemented(opts, name):
     if not opts[name]:
@@ -50,7 +50,6 @@ def main():
     option_not_yet_implemented(opts, '--project')
     option_not_yet_implemented(opts, '--ckan')
     command_not_yet_implemented(opts, 'start')
-    command_not_yet_implemented(opts, 'stop')
     command_not_yet_implemented(opts, 'deploy')
     command_not_yet_implemented(opts, 'logs')
     command_not_yet_implemented(opts, 'info')
@@ -60,5 +59,7 @@ def main():
 
     if opts['create']:
         return create.main(opts)
+    if opts['stop']:
+        return manage.stop(opts)
 
     print json.dumps(docopt(__doc__), indent=4)
