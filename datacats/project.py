@@ -159,7 +159,7 @@ class Project(object):
         """
         # users are created when data dir is blank so we must pass
         # all the user passwords as environment vars
-        run_container(
+        c = run_container(
             name='datacats_data_' + self.name,
             image='datacats/data',
             environment=self.passwords,
@@ -277,9 +277,12 @@ class Project(object):
 
     def web_ipaddress(self):
         """
-        Return the IP address of the web server
+        Return the IP address of the web server or None if not running
         """
+
         info = inspect_container('datacats_web_' + self.name)
+        if info is None:
+            return None
         return info['NetworkSettings']['IPAddress']
 
     def interactive_set_admin_password(self):

@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from os import environ
 
 from docker import Client
+from docker.errors import APIError
 
 docker_host = environ.get('DOCKER_HOST', 'unix://var/run/docker.sock')
 _docker = Client(base_url=docker_host)
@@ -66,15 +67,20 @@ def run_container(name, image, command=None, environment=None,
         ro=None, rw=None, links=None, detach=True):
     """
     simple wrapper for docker create_container, start calls
+
+    :returns: container info dict or None if container couldn't be created
     """
     binds = ro_rw_to_binds(ro, rw)
-    c = _docker.create_container(
-        name=name,
-        image=image,
-        command=command,
-        environment=environment,
-        volumes=binds_to_volumes(binds),
-        detach=detach)
+    try:
+        c = _docker.create_container(
+            name=name,
+            image=image,
+            command=command,
+            environment=environment,
+            volumes=binds_to_volumes(binds),
+            detach=detach)
+    except APIError as e:
+        return None
     _docker.start(
         container=c['Id'],
         links=links,
@@ -83,8 +89,24 @@ def run_container(name, image, command=None, environment=None,
 
 def remove_container(name, force=True):
     """
-    simple wrapper for docker remove_container
-    """
-    _docker.remove_container(name, force=force)
+    Wrapper for docker remove_container
 
-inspect_container = _docker.inspect_container
+    :returns: True if container was found and removed
+    """
+
+    try:
+        _docker.remove_container(name, force=force)
+        return True
+    except APIError as e:
+        return False
+
+def inspect_container(name):
+    """
+    Wrapper for docker inspect_container
+
+    :returns: container info dict or None if not found
+    """
+    try:
+        return _docker.inspect_container(name)
+    except APIError as e:
+        return None

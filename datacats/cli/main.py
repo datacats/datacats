@@ -32,6 +32,7 @@ import sys
 from docopt import docopt
 
 from datacats.cli import create, manage
+from datacats.project import Project, ProjectError
 
 def option_not_yet_implemented(opts, name):
     if not opts[name]:
@@ -49,7 +50,6 @@ def main():
     opts = docopt(__doc__)
     option_not_yet_implemented(opts, '--project')
     option_not_yet_implemented(opts, '--ckan')
-    command_not_yet_implemented(opts, 'start')
     command_not_yet_implemented(opts, 'deploy')
     command_not_yet_implemented(opts, 'logs')
     command_not_yet_implemented(opts, 'info')
@@ -59,7 +59,16 @@ def main():
 
     if opts['create']:
         return create.main(opts)
-    if opts['stop']:
-        return manage.stop(opts)
+
+    try:
+        project = Project.load(opts['PROJECT'])
+
+        if opts['stop']:
+            return manage.stop(project)
+        if opts['start']:
+            return manage.start(project)
+    except ProjectError as e:
+        print e
+        return
 
     print json.dumps(docopt(__doc__), indent=4)
