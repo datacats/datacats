@@ -3,10 +3,10 @@ from __future__ import absolute_import
 from os import environ
 
 from docker import Client
+from docker.utils import kwargs_from_env
 from docker.errors import APIError
 
-docker_host = environ.get('DOCKER_HOST', 'unix://var/run/docker.sock')
-_docker = Client(base_url=docker_host)
+_docker = Client(**kwargs_from_env())
 
 class WebCommandError(Exception):
     pass
