@@ -9,4 +9,5 @@ def stop(opts):
         print e
         return
 
-    print project.name
+    project.stop_web()
+    project.stop_data_and_search()
