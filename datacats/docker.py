@@ -6,11 +6,15 @@ from docker import Client
 from docker.utils import kwargs_from_env
 from docker.errors import APIError
 
-_docker = Client(**kwargs_from_env())
+_docker_kwargs = kwargs_from_env()
+_docker = Client(**_docker_kwargs)
 
 class WebCommandError(Exception):
     pass
 
+
+def is_boot2docker():
+    return 'boot2docker' in _docker_kwargs.get('base_url', '')
 
 def ro_rw_to_binds(ro, rw):
     """
