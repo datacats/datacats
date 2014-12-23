@@ -68,7 +68,7 @@ def web_command(command, ro=None, rw=None, links=None,
     _docker.remove_container(container=c['Id'])
 
 def run_container(name, image, command=None, environment=None,
-        ro=None, rw=None, links=None, detach=True):
+        ro=None, rw=None, links=None, detach=True, volumes_from=None):
     """
     simple wrapper for docker create_container, start calls
 
@@ -88,7 +88,8 @@ def run_container(name, image, command=None, environment=None,
     _docker.start(
         container=c['Id'],
         links=links,
-        binds=binds)
+        binds=binds,
+        volumes_from=volumes_from)
     return c
 
 def remove_container(name, force=True):
@@ -114,3 +115,21 @@ def inspect_container(name):
         return _docker.inspect_container(name)
     except APIError as e:
         return None
+
+def data_only_container(name, volumes):
+    """
+    create "data-only container" if it doesn't already exist.
+
+    We'd like to avoid these, but postgres + boot2docker make
+    it difficult, see issue #5
+    """
+    info = inspect_container(name)
+    if info:
+        return
+    c = _docker.create_container(
+        name=name,
+        image='scratch', # minimal container
+        command='true',
+        volumes=volumes,
+        detach=True)
+    return c

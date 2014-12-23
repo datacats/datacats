@@ -8,7 +8,7 @@ from ConfigParser import SafeConfigParser, Error as ConfigParserError
 
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
-    inspect_container, is_boot2docker)
+    inspect_container, is_boot2docker, data_only_container)
 
 class ProjectError(Exception):
     def __init__(self, message, format_args=()):
@@ -123,7 +123,8 @@ class Project(object):
         makedirs(self.datadir, mode=0o700)
         makedirs(self.datadir + '/venv')
         makedirs(self.datadir + '/search')
-        makedirs(self.datadir + '/data')
+        if not is_boot2docker():
+            makedirs(self.datadir + '/data')
         makedirs(self.datadir + '/files')
         makedirs(self.target + '/conf')
         makedirs(self.target + '/src')
@@ -157,22 +158,30 @@ class Project(object):
         """
         run the postgres and solr containers
         """
+        # complicated because postgres needs hard links to
+        # work on its data volume. see issue #5
+        if is_boot2docker():
+            data_only_container('datacats_dataonly_' + self.name,
+                ['/var/lib/postgresql/data'])
+            rw = {}
+            volumes_from='datacats_dataonly_' + self.name
+        else:
+            rw = {self.datadir + '/data': '/var/lib/postgresql/data'}
+            volumes_from=None
+
         # users are created when data dir is blank so we must pass
         # all the user passwords as environment vars
-        c = run_container(
+        run_container(
             name='datacats_data_' + self.name,
             image='datacats/data',
             environment=self.passwords,
-            rw=self._postgres_rw())
+            rw=rw,
+            volumes_from=volumes_from)
         run_container(
             name='datacats_search_' + self.name,
             image='datacats/search',
             rw={self.datadir + '/search': '/var/lib/solr'},
             ro={self.target + '/conf/schema.xml': '/etc/solr/conf/schema.xml'})
-
-    def _postgres_rw(self):
-        if not is_boot2docker():
-            return {self.datadir + '/data': '/var/lib/postgresql/data'}
 
     def stop_data_and_search(self):
         """
