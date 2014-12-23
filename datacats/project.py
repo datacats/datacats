@@ -56,7 +56,7 @@ class Project(object):
         Raises ProjectError if directories or project with same
         name already exits.
         """
-        workdir, name = path_split(abspath(path))
+        workdir, name = path_split(abspath(expanduser(path)))
 
         if not valid_name(name):
             raise ProjectError('Please choose a project name starting with a '
