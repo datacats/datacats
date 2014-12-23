@@ -1,7 +1,7 @@
 """datacats command line interface
 
 Usage:
-  datacats create (. | PROJECT) [-i] [-n] [--ckan=CKAN_VERSION]
+  datacats create PROJECT [-i] [-n] [--ckan=CKAN_VERSION]
   datacats start [-p PROJECT] [-r]
   datacats stop [-p PROJECT] [-r]
   datacats restart [-p PROJECT] [-r]
@@ -55,20 +55,21 @@ def main():
     command_not_yet_implemented(opts, 'info')
     command_not_yet_implemented(opts, 'paster')
     command_not_yet_implemented(opts, 'purge')
-    command_not_yet_implemented(opts, '.')
 
     if opts['create']:
         return create.main(opts)
 
     try:
         project = Project.load(opts['PROJECT'])
-
-        if opts['stop']:
-            return manage.stop(project)
-        if opts['start']:
-            return manage.start(project)
     except ProjectError as e:
         print e
         return
+
+    if opts['stop']:
+        return manage.stop(project)
+    if opts['start']:
+        return manage.start(project)
+    if opts['restrt']:
+        return manage.restart(project)
 
     print json.dumps(docopt(__doc__), indent=4)
