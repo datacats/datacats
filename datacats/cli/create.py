@@ -6,7 +6,7 @@ def write(s):
     sys.stdout.write(s)
     sys.stdout.flush()
 
-def main(opts):
+def create(opts):
     try:
         project = Project.new(opts['PROJECT'], 'master')
     except ProjectError as e:

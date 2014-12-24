@@ -31,7 +31,7 @@ import json
 import sys
 from docopt import docopt
 
-from datacats.cli import create, manage
+from datacats.cli import create, manage, install
 from datacats.project import Project, ProjectError
 
 def option_not_yet_implemented(opts, name):
@@ -57,7 +57,7 @@ def main():
     command_not_yet_implemented(opts, 'purge')
 
     if opts['create']:
-        return create.main(opts)
+        return create.create(opts)
 
     try:
         project = Project.load(opts['PROJECT'])
@@ -71,5 +71,7 @@ def main():
         return manage.start(project)
     if opts['reload']:
         return manage.reload(project)
+    if opts['install']:
+        return install.main(project, op)
 
     print json.dumps(docopt(__doc__), indent=4)
