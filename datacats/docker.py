@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from os import environ
+import json
 
 from docker import Client
 from docker.utils import kwargs_from_env
@@ -115,3 +116,9 @@ def inspect_container(name):
         return _docker.inspect_container(name)
     except APIError as e:
         return None
+
+def pull_stream(image):
+    """
+    Return generator of pull status objects
+    """
+    return (json.loads(s) for s in _docker.pull(image, stream=True))

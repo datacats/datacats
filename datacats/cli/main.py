@@ -1,6 +1,7 @@
 """datacats command line interface
 
 Usage:
+  datacats pull
   datacats create PROJECT [-i] [-n] [--ckan=CKAN_VERSION]
   datacats start [-p PROJECT] [-r]
   datacats stop [-p PROJECT] [-r]
@@ -31,7 +32,7 @@ import json
 import sys
 from docopt import docopt
 
-from datacats.cli import create, manage, install
+from datacats.cli import create, manage, install, pull
 from datacats.project import Project, ProjectError
 
 def option_not_yet_implemented(opts, name):
@@ -56,6 +57,8 @@ def main():
     command_not_yet_implemented(opts, 'paster')
     command_not_yet_implemented(opts, 'purge')
 
+    if opts['pull']:
+        return pull.pull(opts)
     if opts['create']:
         return create.create(opts)
 
