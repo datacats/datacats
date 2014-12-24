@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from os import environ
+from urlparse import urlparse
 
 from docker import Client
 from docker.utils import kwargs_from_env
@@ -13,8 +14,19 @@ class WebCommandError(Exception):
     pass
 
 
+_boot2docker = None
 def is_boot2docker():
-    return 'boot2docker' in _docker_kwargs.get('base_url', '')
+    global _boot2docker
+    if _boot2docker is None:
+        _boot2docker = 'Boot2Docker' in _docker.info()['OperatingSystem']
+    return _boot2docker
+
+def docker_host():
+    url = _docker_kwargs.get('base_url')
+    if not url:
+        return 'localhost'
+    return urlparse(url).netloc.split(':')[0]
+
 
 def ro_rw_to_binds(ro, rw):
     """

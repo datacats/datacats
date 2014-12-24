@@ -8,7 +8,7 @@ from ConfigParser import SafeConfigParser, Error as ConfigParserError
 
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
-    inspect_container, is_boot2docker, data_only_container)
+    inspect_container, is_boot2docker, data_only_container, docker_host)
 
 class ProjectError(Exception):
     def __init__(self, message, format_args=()):
@@ -272,6 +272,7 @@ class Project(object):
         """
         Start the apache server or paster serve
         """
+        port_bindings = {80: None} if is_boot2docker() else {80: ('127.0.0.1',)}
         run_container(
             name='datacats_web_' + self.name,
             image='datacats/web',
@@ -281,7 +282,7 @@ class Project(object):
                 self.target + '/conf': '/etc/ckan/default'},
             links={'datacats_search_' + self.name: 'solr',
                 'datacats_data_' + self.name: 'db'},
-            port_bindings={80:('127.0.0.1',)},
+            port_bindings=port_bindings,
             )
 
     def stop_web(self):
@@ -299,7 +300,7 @@ class Project(object):
         if info is None:
             return None
         port = info['NetworkSettings']['Ports']['80/tcp'][0]['HostPort']
-        return 'http://localhost:{0}/'.format(port)
+        return 'http://{0}:{1}/'.format(docker_host(), port)
 
     def interactive_set_admin_password(self):
         """
