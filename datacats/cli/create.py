@@ -36,8 +36,7 @@ def create(opts):
     else:
         project.start_web()
         write('.\n')
-        ip = project.web_ipaddress()
-        write('Site available at http://{0}/\n'.format(ip))
+        write('Site available at {0}\n'.format(project.web_address()))
 
     if opts['--no-sysadmin']:
         return

@@ -2,15 +2,31 @@ from __future__ import absolute_import
 
 from os import environ
 import json
+from urlparse import urlparse
 
 from docker import Client
 from docker.utils import kwargs_from_env
 from docker.errors import APIError
 
-_docker = Client(**kwargs_from_env())
+_docker_kwargs = kwargs_from_env()
+_docker = Client(**_docker_kwargs)
 
 class WebCommandError(Exception):
     pass
+
+
+_boot2docker = None
+def is_boot2docker():
+    global _boot2docker
+    if _boot2docker is None:
+        _boot2docker = 'Boot2Docker' in _docker.info()['OperatingSystem']
+    return _boot2docker
+
+def docker_host():
+    url = _docker_kwargs.get('base_url')
+    if not url:
+        return 'localhost'
+    return urlparse(url).netloc.split(':')[0]
 
 
 def ro_rw_to_binds(ro, rw):
@@ -65,7 +81,8 @@ def web_command(command, ro=None, rw=None, links=None,
     _docker.remove_container(container=c['Id'])
 
 def run_container(name, image, command=None, environment=None,
-        ro=None, rw=None, links=None, detach=True):
+        ro=None, rw=None, links=None, detach=True, volumes_from=None,
+        port_bindings=None):
     """
     simple wrapper for docker create_container, start calls
 
@@ -79,13 +96,16 @@ def run_container(name, image, command=None, environment=None,
             command=command,
             environment=environment,
             volumes=binds_to_volumes(binds),
-            detach=detach)
+            detach=detach,
+            ports=list(port_bindings) if port_bindings else None)
     except APIError as e:
         return None
     _docker.start(
         container=c['Id'],
         links=links,
-        binds=binds)
+        binds=binds,
+        volumes_from=volumes_from,
+        port_bindings=port_bindings)
     return c
 
 def remove_container(name, force=False):
@@ -122,3 +142,21 @@ def pull_stream(image):
     Return generator of pull status objects
     """
     return (json.loads(s) for s in _docker.pull(image, stream=True))
+
+def data_only_container(name, volumes):
+    """
+    create "data-only container" if it doesn't already exist.
+
+    We'd like to avoid these, but postgres + boot2docker make
+    it difficult, see issue #5
+    """
+    info = inspect_container(name)
+    if info:
+        return
+    c = _docker.create_container(
+        name=name,
+        image='scratch', # minimal container
+        command='true',
+        volumes=volumes,
+        detach=True)
+    return c

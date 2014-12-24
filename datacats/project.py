@@ -8,7 +8,7 @@ from ConfigParser import SafeConfigParser, Error as ConfigParserError
 
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
-    inspect_container)
+    inspect_container, is_boot2docker, data_only_container, docker_host)
 
 class ProjectError(Exception):
     def __init__(self, message, format_args=()):
@@ -56,7 +56,7 @@ class Project(object):
         Raises ProjectError if directories or project with same
         name already exits.
         """
-        workdir, name = path_split(abspath(path))
+        workdir, name = path_split(abspath(expanduser(path)))
 
         if not valid_name(name):
             raise ProjectError('Please choose a project name starting with a '
@@ -123,7 +123,8 @@ class Project(object):
         makedirs(self.datadir, mode=0o700)
         makedirs(self.datadir + '/venv')
         makedirs(self.datadir + '/search')
-        makedirs(self.datadir + '/data')
+        if not is_boot2docker():
+            makedirs(self.datadir + '/data')
         makedirs(self.datadir + '/files')
         makedirs(self.target + '/conf')
         makedirs(self.target + '/src')
@@ -157,13 +158,25 @@ class Project(object):
         """
         run the postgres and solr containers
         """
+        # complicated because postgres needs hard links to
+        # work on its data volume. see issue #5
+        if is_boot2docker():
+            data_only_container('datacats_dataonly_' + self.name,
+                ['/var/lib/postgresql/data'])
+            rw = {}
+            volumes_from='datacats_dataonly_' + self.name
+        else:
+            rw = {self.datadir + '/data': '/var/lib/postgresql/data'}
+            volumes_from=None
+
         # users are created when data dir is blank so we must pass
         # all the user passwords as environment vars
-        c = run_container(
+        run_container(
             name='datacats_data_' + self.name,
             image='datacats/data',
             environment=self.passwords,
-            rw={self.datadir + '/data': '/var/lib/postgresql/data'})
+            rw=rw,
+            volumes_from=volumes_from)
         run_container(
             name='datacats_search_' + self.name,
             image='datacats/search',
@@ -259,6 +272,7 @@ class Project(object):
         """
         Start the apache server or paster serve
         """
+        port_bindings = {80: None} if is_boot2docker() else {80: ('127.0.0.1',)}
         run_container(
             name='datacats_web_' + self.name,
             image='datacats/web',
@@ -267,7 +281,9 @@ class Project(object):
                 self.target + '/src': '/project/src',
                 self.target + '/conf': '/etc/ckan/default'},
             links={'datacats_search_' + self.name: 'solr',
-                'datacats_data_' + self.name: 'db'})
+                'datacats_data_' + self.name: 'db'},
+            port_bindings=port_bindings,
+            )
 
     def stop_web(self):
         """
@@ -275,15 +291,16 @@ class Project(object):
         """
         remove_container('datacats_web_' + self.name, force=True)
 
-    def web_ipaddress(self):
+    def web_address(self):
         """
-        Return the IP address of the web server or None if not running
+        Return the url of the web server or None if not running
         """
 
         info = inspect_container('datacats_web_' + self.name)
         if info is None:
             return None
-        return info['NetworkSettings']['IPAddress']
+        port = info['NetworkSettings']['Ports']['80/tcp'][0]['HostPort']
+        return 'http://{0}:{1}/'.format(docker_host(), port)
 
     def interactive_set_admin_password(self):
         """
