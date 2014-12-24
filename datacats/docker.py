@@ -68,7 +68,8 @@ def web_command(command, ro=None, rw=None, links=None,
     _docker.remove_container(container=c['Id'])
 
 def run_container(name, image, command=None, environment=None,
-        ro=None, rw=None, links=None, detach=True, volumes_from=None):
+        ro=None, rw=None, links=None, detach=True, volumes_from=None,
+        port_bindings=None):
     """
     simple wrapper for docker create_container, start calls
 
@@ -82,14 +83,16 @@ def run_container(name, image, command=None, environment=None,
             command=command,
             environment=environment,
             volumes=binds_to_volumes(binds),
-            detach=detach)
+            detach=detach,
+            ports=list(port_bindings) if port_bindings else None)
     except APIError as e:
         return None
     _docker.start(
         container=c['Id'],
         links=links,
         binds=binds,
-        volumes_from=volumes_from)
+        volumes_from=volumes_from,
+        port_bindings=port_bindings)
     return c
 
 def remove_container(name, force=True):

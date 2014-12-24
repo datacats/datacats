@@ -280,7 +280,9 @@ class Project(object):
                 self.target + '/src': '/project/src',
                 self.target + '/conf': '/etc/ckan/default'},
             links={'datacats_search_' + self.name: 'solr',
-                'datacats_data_' + self.name: 'db'})
+                'datacats_data_' + self.name: 'db'},
+            port_bindings={80:('127.0.0.1',)},
+            )
 
     def stop_web(self):
         """
@@ -288,15 +290,16 @@ class Project(object):
         """
         remove_container('datacats_web_' + self.name)
 
-    def web_ipaddress(self):
+    def web_address(self):
         """
-        Return the IP address of the web server or None if not running
+        Return the url of the web server or None if not running
         """
 
         info = inspect_container('datacats_web_' + self.name)
         if info is None:
             return None
-        return info['NetworkSettings']['IPAddress']
+        port = info['NetworkSettings']['Ports']['80/tcp'][0]['HostPort']
+        return 'http://localhost:{0}/'.format(port)
 
     def interactive_set_admin_password(self):
         """
