@@ -273,7 +273,7 @@ class Project(object):
         """
         Stop and remove the web container
         """
-        remove_container('datacats_web_' + self.name)
+        remove_container('datacats_web_' + self.name, force=True)
 
     def web_ipaddress(self):
         """

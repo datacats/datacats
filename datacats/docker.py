@@ -87,7 +87,7 @@ def run_container(name, image, command=None, environment=None,
         binds=binds)
     return c
 
-def remove_container(name, force=True):
+def remove_container(name, force=False):
     """
     Wrapper for docker remove_container
 
@@ -95,7 +95,12 @@ def remove_container(name, force=True):
     """
 
     try:
-        _docker.remove_container(name, force=force)
+        if not force:
+            _docker.stop(name)
+    except APIError as e:
+        pass
+    try:
+        _docker.remove_container(name, force=True)
         return True
     except APIError as e:
         return False
