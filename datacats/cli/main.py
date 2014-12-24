@@ -4,7 +4,7 @@ Usage:
   datacats create PROJECT [-i] [-n] [--ckan=CKAN_VERSION]
   datacats start [-p PROJECT] [-r]
   datacats stop [-p PROJECT] [-r]
-  datacats restart [-p PROJECT] [-r]
+  datacats reload [-p PROJECT] [-r]
   datacats deploy [-p PROJECT]
   datacats logs [-p PROJECT] [-f]
   datacats info [-p PROJECT] [-q] [-r]
@@ -69,7 +69,7 @@ def main():
         return manage.stop(project)
     if opts['start']:
         return manage.start(project)
-    if opts['restrt']:
-        return manage.restart(project)
+    if opts['reload']:
+        return manage.reload(project)
 
     print json.dumps(docopt(__doc__), indent=4)
