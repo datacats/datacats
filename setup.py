@@ -1,7 +1,15 @@
 #!/usr/bin/env python
 
 from setuptools import setup
+from setuptools.command.install import install
 import sys
+
+class DataCatsInstall(install):
+    def run(self):
+        install.run(self)
+        from datacats.cli.pull import pull
+        print 'Downloading images. This may take a few minutes.'
+        pull({})
 
 install_requires=[
     'setuptools',
@@ -28,6 +36,7 @@ setup(
     entry_points = """
         [console_scripts]
         datacats=datacats.cli.main:main
-        """
+        """,
+    cmdclass={'install': DataCatsInstall},
     )
 
