@@ -358,7 +358,9 @@ class Project(object):
                 '/usr/lib/ckan/bin/pip', 'install', '-e',
                 '/project/src/' + src_package
                 ],
-            rw={self.datadir + '/venv': '/usr/lib/ckan'},
+            rw={self.datadir + '/venv': '/usr/lib/ckan',
+                self.target + '/src/{0}/{0}.egg-info'.format(src_package):
+                    '/project/src/{0}/{0}.egg-info'.format(src_package)},
             ro={self.target + '/src': '/project/src'},
             )
 
