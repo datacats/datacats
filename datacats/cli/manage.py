@@ -14,3 +14,8 @@ def start(project):
     project.start_data_and_search()
     project.start_web()
     print 'Now available at {0}'.format(project.web_address())
+
+def reload(project):
+    project.stop_web()
+    project.start_web()
+    print 'Now available at {0}'.format(project.web_address())
