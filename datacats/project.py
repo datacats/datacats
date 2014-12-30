@@ -235,6 +235,8 @@ class Project(object):
             'solr_url = http://solr:8080/solr',
             'ckan.storage_path = /var/www/storage',
             'ckan.plugins = ' + (self.name + '_skin') if skin else '',
+            'ckan.site_title = ' + self.name,
+            'ckan.site_logo = ',
             ]
         web_command(
             command=command,
