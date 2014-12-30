@@ -17,6 +17,7 @@ def ckan_extension_template(name, target_src):
         (setupdir + '/.gitignore', DOT_GITIGNORE),
         (setupdir + '/ckanext/__init__.py', NAMESPACE_PACKAGE),
         (extdir + '/__init__.py', ''),
+        (extdir + '/plugins.py', PLUGINS_PY),
         (templatedir + '/home/snippets/promoted.html', PROMOTED_SNIPPET),
         ]
 
@@ -52,6 +53,17 @@ setup(
         ##name##_skin = ckanext.##name##.plugins:CustomSkin
     """
 )
+'''
+
+PLUGINS_PY = '''
+from ckan.plugins import toolkit, IConfigurer, SingletonPlugin, implements
+
+class CustomSkin(SingletonPlugin):
+    implements(IConfigurer)
+
+    def update_config(self, config):
+        toolkit.add_template_directory(config, "templates")
+        toolkit.add_public_directory(config, "static")
 '''
 
 DOT_GITIGNORE = '''
