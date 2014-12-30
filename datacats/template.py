@@ -99,21 +99,8 @@ PROMOTED_SNIPPET = '''{% set intro = g.site_intro_text %}
       </p>
       <p>
         {% trans %}
-        Edit your catalog configuration such as the
-        site title by opening the <code>"conf/ckan.ini"</code>
-        file in a text editor. Reload your configuration
-        with the command: <code>datacats reload</code>
-        {% endtrans %}
-      </p>
-      <p>
-        {% trans %}
-        This site has been customized by a new CKAN extension
-        created for you: <code>ckanext-##name##</code>.
-        This extension redefines some HTML templates and adds
-        static image files. Edit these files and add your own
-        to the directories:
-        <code>src/ckanext-##name##/ckanext/##name##/templates</code>
-        and <code>src/ckanext-##name##/ckanext/##name##/static</code>
+        Customize this site by editing the site configuration,
+        templates and static files in your project directory
         then reload your changes with: <code>datacats reload</code>
         {% endtrans %}
       </p>
