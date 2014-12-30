@@ -51,21 +51,17 @@ def binds_to_volumes(volumes):
     return [v['bind'] for v in volumes.itervalues()]
 
 def web_command(command, ro=None, rw=None, links=None,
-        preload_ckan_version=None):
+        image='datacats/web'):
     """
-    Run a single command in a web image preloaded with the ckan
+    Run a single command in a web image optionally preloaded with the ckan
     source and virtual envrionment.
 
     :param command: command to execute
     :param ro: {localdir: binddir} dict for read-only volumes
     :param rw: {localdir: binddir} dict for read-write volumes
     :param links: links passed to start
-    :param preload_ckan_version: 'master' for preload image
+    :param image: docker image name to use
     """
-    image = 'datacats/web'
-    if preload_ckan_version:
-        image='datacats/web:preload_{0}'.format(preload_ckan_version)
-
     binds = ro_rw_to_binds(ro, rw)
     c = _docker.create_container(
         image=image,

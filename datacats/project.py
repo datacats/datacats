@@ -129,6 +129,12 @@ class Project(object):
         makedirs(self.target + '/conf')
         makedirs(self.target + '/src')
 
+    def _preload_image(self):
+        """
+        Return the preloaded ckan src and venv image name
+        """
+        return 'datacats/web:preload_{0}'.format(self.ckan_version)
+
     def create_virtualenv(self):
         """
         Populate venv directory from preloaded image
@@ -136,7 +142,7 @@ class Project(object):
         web_command(
             command='/bin/cp -a /usr/lib/ckan/. /usr/lib/ckan_target/.',
             rw={self.datadir + '/venv': '/usr/lib/ckan_target'},
-            preload_ckan_version=self.ckan_version)
+            image=self._preload_image())
 
     def create_source(self):
         """
@@ -146,7 +152,7 @@ class Project(object):
         web_command(
             command='/bin/cp -a /project/src/. /project/src_target/.',
             rw={self.target + '/src': '/project/src_target'},
-            preload_ckan_version=self.ckan_version)
+            image=self._preload_image())
         shutil.copy(
             self.target + '/src/ckan/ckan/config/who.ini',
             self.target + '/conf')
