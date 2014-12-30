@@ -324,6 +324,44 @@ class Project(object):
             'datacats/web', '/usr/lib/ckan/bin/paster', '--plugin=ckan',
             'sysadmin', 'add', 'admin', '-c' '/etc/ckan/default/ckan.ini'])
 
+    def install_package_requirements(self, src_package):
+        """
+        Install from requirements.txt file found in src_package
+
+        :param src_package: name of directory under project src directory
+        """
+        package = self.target + '/src/' + src_package
+        assert isdir(package), package
+        if not exists(package + '/requirements.txt'):
+            return
+        web_command(
+            command=[
+                '/usr/lib/ckan/bin/pip', 'install', '-r',
+                '/project/src/' + src_package + '/requirements.txt'
+                ],
+            rw={self.datadir + '/venv': '/usr/lib/ckan'},
+            ro={self.target + '/src': '/project/src'},
+            )
+
+    def install_package_develop(self, src_package):
+        """
+        Install a src package in place (setup.py develop)
+
+        :param src_package: name of directory under project src directory
+        """
+        package = self.target + '/src/' + src_package
+        assert isdir(package), package
+        if not exists(package + '/setup.py'):
+            return
+        web_command(
+            command=[
+                '/usr/lib/ckan/bin/pip', 'install', '-e',
+                '/project/src/' + src_package
+                ],
+            rw={self.datadir + '/venv': '/usr/lib/ckan'},
+            ro={self.target + '/src': '/project/src'},
+            )
+
 
 def generate_db_password():
     """
