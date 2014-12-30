@@ -12,8 +12,9 @@ _docker_kwargs = kwargs_from_env()
 _docker = Client(**_docker_kwargs)
 
 class WebCommandError(Exception):
-    pass
-
+    def __str__(self):
+        return ('Command failed: {0}\n View command output:'
+            ' docker logs {1}'.format(*self.args))
 
 _boot2docker = None
 def is_boot2docker():
@@ -73,7 +74,7 @@ def web_command(command, ro=None, rw=None, links=None,
         links=links,
         binds=binds)
     if _docker.wait(c['Id']):
-        raise WebCommandError(command)
+        raise WebCommandError(command, c['Id'][:12])
     _docker.remove_container(container=c['Id'])
 
 def run_container(name, image, command=None, environment=None,
