@@ -25,6 +25,7 @@ def create(opts):
             project.create_ckan_ini,
             project.update_ckan_ini,
             project.fix_project_permissions,
+            project.create_install_template_skin,
             project.ckan_db_init,
             ):
         fn()

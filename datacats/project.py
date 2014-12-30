@@ -9,6 +9,7 @@ from ConfigParser import SafeConfigParser, Error as ConfigParserError
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host)
+from datacats.template import ckan_extension_template
 
 class ProjectError(Exception):
     def __init__(self, message, format_args=()):
@@ -215,9 +216,11 @@ class Project(object):
                 self.target + '/src': '/project/src'},
             rw={self.target + '/conf': '/etc/ckan/default'})
 
-    def update_ckan_ini(self):
+    def update_ckan_ini(self, skin=True):
         """
         Use config-tool to update ckan.ini with our project settings
+
+        :param skin: use project template skin plugin True/False
         """
         p = self.passwords
         command = [
@@ -231,12 +234,21 @@ class Project(object):
                 '{DATASTORE_RW_PASSWORD}@db:5432/ckan_datastore'.format(**p),
             'solr_url = http://solr:8080/solr',
             'ckan.storage_path = /var/www/storage',
+            'ckan.plugins = ' + (self.name + '_skin') if skin else '',
             ]
         web_command(
             command=command,
             ro={self.datadir + '/venv': '/usr/lib/ckan',
                 self.target + '/src': '/project/src'},
             rw={self.target + '/conf': '/etc/ckan/default'})
+
+    def create_install_template_skin(self):
+        """
+        Create an example ckan extension for this project and install it
+        """
+        ckan_extension_template(self.name, self.target + '/src')
+        self.install_package_develop('ckanext-' + self.name)
+
 
     def fix_project_permissions(self):
         """
@@ -353,15 +365,25 @@ class Project(object):
         assert isdir(package), package
         if not exists(package + '/setup.py'):
             return
+        einfo = src_package + '/' + src_package.replace('-', '_') + '.egg-info'
+        if not isdir(package + '/' + einfo):
+            makedirs(package + '/' + einfo)
         web_command(
             command=[
                 '/usr/lib/ckan/bin/pip', 'install', '-e',
                 '/project/src/' + src_package
                 ],
             rw={self.datadir + '/venv': '/usr/lib/ckan',
-                self.target + '/src/{0}/{0}.egg-info'.format(src_package):
-                    '/project/src/{0}/{0}.egg-info'.format(src_package)},
+                self.target + '/src/' + einfo: '/project/src/' + einfo},
             ro={self.target + '/src': '/project/src'},
+            )
+        # .egg-info permissions
+        # XXX: This seems wrong. Consider moving egg-infos to project data dir
+        web_command(
+            command=['/bin/chown', '-R', '--reference=/etc/ckan/default',
+                '/project/src/' + einfo],
+            rw={self.target + '/src/' + einfo: '/project/src/' + einfo},
+            ro={self.target + '/conf': '/etc/ckan/default'},
             )
 
 

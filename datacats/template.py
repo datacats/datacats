@@ -17,11 +17,11 @@ def ckan_extension_template(name, target_src):
         (setupdir + '/.gitignore', DOT_GITIGNORE),
         (setupdir + '/ckanext/__init__.py', NAMESPACE_PACKAGE),
         (extdir + '/__init__.py', ''),
-        (templatedir + '/header.html', HEADER_HTML),
+        (templatedir + '/home/snippets/promoted.html', PROMOTED_SNIPPET),
         ]
 
     for filename, content in filecontents:
-        with open(filename) as f:
+        with open(filename, 'w') as f:
             f.write(content.replace('##name##', name))
 
 NAMESPACE_PACKAGE = '''# this is a namespace package
@@ -44,8 +44,8 @@ setup(
     author='',
     author_email='',
     url='',
-    namespace_packages=['ckanext']
-    packages=['ckanext.##name##']
+    namespace_packages=['ckanext'],
+    packages=['ckanext.##name##'],
     zip_safe=False,
     entry_points = """
         [ckan.plugins]
@@ -97,7 +97,7 @@ PROMOTED_SNIPPET = '''{% set intro = g.site_intro_text %}
         to the directories:
         <code>src/ckanext-##name##custom/ckanext/##name##/templates</code>
         and <code>src/ckanext-##name##custom/ckanext/##name##/static</code>
-        then restart with the command: <code>datacats restart</code>
+        then reload your changes with: <code>datacats reload</code>
         {% endtrans %}
       </p>
     {% endif %}
@@ -116,4 +116,3 @@ PROMOTED_SNIPPET = '''{% set intro = g.site_intro_text %}
 </div>
 '''
 
-ABOUT_TEXT_SNIPPET
