@@ -75,6 +75,6 @@ def main():
     if opts['reload']:
         return manage.reload(project)
     if opts['install']:
-        return install.main(project, op)
+        return install.install(project, opts)
 
     print json.dumps(docopt(__doc__), indent=4)
