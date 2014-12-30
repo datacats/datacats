@@ -83,32 +83,30 @@ PROMOTED_SNIPPET = '''{% set intro = g.site_intro_text %}
       <h1 class="page-heading">{{ _("New Data Catalog") }}</h1>
       <p>
         {% trans %}
-        Welcome to your new data catalog! To get started
-        <a href="/user/login">log in</a> with the
-        <code>admin</code> account password you created. Then create a
+        Welcome to your new data catalog!
+        <a href="/user/login">Log in</a> with the
+        "admin" account password you created, then create a
         <a href="/dataset/new">new dataset</a> or a
         <a href="/organization/new">new organization</a>.
-        To reset your admin password run the command:
         {% endtrans %}
-        <code>datacats admin</code>
       </p>
       <p>
         {% trans %}
-        Your site configuration may be edited in the project
-        directory you created: <code>conf/ckan.ini</code>.
-        Edit this file then restart your site with
-        the command: <code>datacats restart</code>
+        Edit your catalog configuration such as the
+        site title by opening the <code>"conf/ckan.ini"</code>
+        file in a text editor. Reload your configuration
+        with the command: <code>datacats reload</code>
         {% endtrans %}
       </p>
       <p>
         {% trans %}
         This site has been customized by a new CKAN extension
-        created for you: <code>ckanext-##name##custom</code>.
+        created for you: <code>ckanext-##name##</code>.
         This extension redefines some HTML templates and adds
         static image files. Edit these files and add your own
         to the directories:
-        <code>src/ckanext-##name##custom/ckanext/##name##/templates</code>
-        and <code>src/ckanext-##name##custom/ckanext/##name##/static</code>
+        <code>src/ckanext-##name##/ckanext/##name##/templates</code>
+        and <code>src/ckanext-##name##/ckanext/##name##/static</code>
         then reload your changes with: <code>datacats reload</code>
         {% endtrans %}
       </p>
