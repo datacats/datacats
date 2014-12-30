@@ -25,6 +25,7 @@ def ckan_extension_template(name, target_src):
         (extdir + '/__init__.py', ''),
         (extdir + '/plugins.py', PLUGINS_PY),
         (templatedir + '/home/snippets/promoted.html', PROMOTED_SNIPPET),
+        (templatedir + '/footer.html', FOOTER_HTML),
         ]
 
     for filename, content in filecontents:
@@ -132,3 +133,15 @@ PROMOTED_SNIPPET = '''{% set intro = g.site_intro_text %}
 </div>
 '''
 
+FOOTER_HTML = '''{% ckan_extends %}
+
+{% block footer_attribution %}
+  <!-- FIXME: I can't even CSS -->
+  <style>
+    .ckan-footer-logo {margin: 2px 0 0 120px}
+    .datacats-footer-logo {margin: -43px 0 0 0}
+  </style>
+  <p>{% trans %}<strong>Powered by</strong> <a class="hide-text ckan-footer-logo" href="http://ckan.org">CKAN</a>{% endtrans %}
+  <img class="datacats-footer-logo" src="{{ h.url_for_static('/datacats/datacats-footer.png') }}"/></p>
+{% endblock %}
+'''
