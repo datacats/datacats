@@ -1,4 +1,6 @@
 from os import makedirs
+from os.path import dirname
+from shutil import copyfile
 
 def ckan_extension_template(name, target_src):
     """
@@ -11,6 +13,10 @@ def ckan_extension_template(name, target_src):
 
     makedirs(templatedir + '/home/snippets')
     makedirs(staticdir)
+
+    here = dirname(__file__)
+    copyfile(here + '/chart.png', staticdir + '/chart.png')
+    copyfile(here + '/datacats-footer.png', staticdir + '/datacats-footer.png')
 
     filecontents = [
         (setupdir + '/setup.py', SETUP_PY),
@@ -118,7 +124,7 @@ PROMOTED_SNIPPET = '''{% set intro = g.site_intro_text %}
       <h2 class="media-heading">{% block home_image_caption %}{{ _("This is a featured section") }}{% endblock %}</h2>
       {% block home_image_content %}
         <a class="media-image" href="#">
-          <img src="{{ h.url_for_static('/datacats/images/chart.png') }}" alt="Example chart" width="420" height="220" />
+          <img src="{{ h.url_for_static('/datacats/chart.png') }}" alt="Example chart" width="420" height="220" />
         </a>
       {% endblock %}
     </section>
