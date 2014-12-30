@@ -87,7 +87,7 @@ PROMOTED_SNIPPET = '''{% set intro = g.site_intro_text %}
     {% if intro %}
       {{ h.render_markdown(intro) }}
     {% else %}
-      <h1 class="page-heading">{{ _("New Data Catalog") }}</h1>
+      <h1 class="page-heading">{{ _("New DataCats Project") }}</h1>
       <p>
         {% trans %}
         Welcome to your new data catalog!
