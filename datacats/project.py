@@ -108,7 +108,6 @@ class Project(object):
                 if wd == oldwd:
                     raise ProjectError(
                         'Project not found in current directory')
-            self._update_saved_project_dir()
         else:
             datadir = expanduser('~/.datacats/' + project_name)
             if not isdir(datadir):
@@ -137,6 +136,10 @@ class Project(object):
 
         project = cls(name, wd, datadir, ckan_version)
         project.passwords = passwords
+
+        if project_name is None:
+            project._update_saved_project_dir()
+
         return project
 
     def create_directories(self):
