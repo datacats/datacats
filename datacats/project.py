@@ -367,24 +367,20 @@ class Project(object):
         assert isdir(package), package
         if not exists(package + '/setup.py'):
             return
-        einfo = src_package + '/' + src_package.replace('-', '_') + '.egg-info'
-        if not isdir(package + '/' + einfo):
-            makedirs(package + '/' + einfo)
+        psrc = 'src/' + src_package
         web_command(
             command=[
-                '/usr/lib/ckan/bin/pip', 'install', '-e',
-                '/project/src/' + src_package
+                '/usr/lib/ckan/bin/pip', 'install', '-e', '/project/' + psrc
                 ],
             rw={self.datadir + '/venv': '/usr/lib/ckan',
-                self.target + '/src/' + einfo: '/project/src/' + einfo},
+                self.target + '/' + psrc: '/project/' + psrc},
             ro={self.target + '/src': '/project/src'},
             )
         # .egg-info permissions
-        # XXX: This seems wrong. Consider moving egg-infos to project data dir
         web_command(
             command=['/bin/chown', '-R', '--reference=/etc/ckan/default',
-                '/project/src/' + einfo],
-            rw={self.target + '/src/' + einfo: '/project/src/' + einfo},
+                '/project/' + psrc],
+            rw={self.target + '/' + psrc: '/project/' + psrc},
             ro={self.target + '/conf': '/etc/ckan/default'},
             )
 
