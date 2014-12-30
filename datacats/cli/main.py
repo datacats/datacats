@@ -49,7 +49,6 @@ def command_not_yet_implemented(opts, name):
 
 def main():
     opts = docopt(__doc__)
-    option_not_yet_implemented(opts, '--project')
     option_not_yet_implemented(opts, '--ckan')
     command_not_yet_implemented(opts, 'deploy')
     command_not_yet_implemented(opts, 'logs')
@@ -63,7 +62,7 @@ def main():
         return create.create(opts)
 
     try:
-        project = Project.load(opts['PROJECT'])
+        project = Project.load(opts['--project'])
     except ProjectError as e:
         print e
         return

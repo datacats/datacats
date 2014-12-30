@@ -44,7 +44,18 @@ class Project(object):
         cp.add_section('passwords')
         for n in sorted(self.passwords):
             cp.set('passwords', n.lower(), self.passwords[n])
-        cp.write(open(self.target + '/.datacats-project', 'w'))
+        with open(self.target + '/.datacats-project', 'w') as config:
+            cp.write(config)
+
+        self._update_saved_project_dir()
+
+    def _update_saved_project_dir(self):
+        """
+        Store the last place we've seen this project so the user
+        can use "datacats -p ..." to specify a project by name
+        """
+        with open(self.datadir + '/project-dir', 'w') as pdir:
+            pdir.write(self.target)
 
     @classmethod
     def new(cls, path, ckan_version):
@@ -97,8 +108,19 @@ class Project(object):
                 if wd == oldwd:
                     raise ProjectError(
                         'Project not found in current directory')
+            self._update_saved_project_dir()
         else:
-            assert 0, 'TBD'
+            datadir = expanduser('~/.datacats/' + project_name)
+            if not isdir(datadir):
+                raise ProjectError('No project found with that name')
+            with open(datadir + '/project-dir') as pd:
+                wd = pd.read()
+            if not exists(wd + '/.datacats-project'):
+                raise ProjectError(
+                    'Project data found but project directory is missing.'
+                    ' Try again without "-p" from the new project directory'
+                    ' location or remove this project data with'
+                    ' "datacats purge"')
 
         cp = SafeConfigParser()
         try:
