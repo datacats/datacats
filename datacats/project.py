@@ -351,21 +351,34 @@ class Project(object):
             port_bindings=port_bindings,
             )
 
+        # stick with the first port chosen for us
+        if not self.port:
+            self.port = self._current_web_port()
+            self.save()
+
     def stop_web(self):
         """
         Stop and remove the web container
         """
         remove_container('datacats_web_' + self.name, force=True)
 
+    def _current_web_port(self):
+        """
+        return just the port number for the web container, or None if
+        not running
+        """
+        info = inspect_container('datacats_web_' + self.name)
+        if info is None:
+            return None
+        return info['NetworkSettings']['Ports']['80/tcp'][0]['HostPort']
+
     def web_address(self):
         """
         Return the url of the web server or None if not running
         """
-
-        info = inspect_container('datacats_web_' + self.name)
-        if info is None:
+        port = self._current_web_port()
+        if port is None:
             return None
-        port = info['NetworkSettings']['Ports']['80/tcp'][0]['HostPort']
         return 'http://{0}:{1}/'.format(docker_host(), port)
 
     def interactive_set_admin_password(self):
