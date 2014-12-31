@@ -24,7 +24,7 @@ def install(project, opts):
         print 'ckan not found in project src directory'
         return
 
-    write('Installing')
+    write('Installing all packages in src')
 
     srcdirs = ['ckan'] + sorted(srcdirs)
     for s in srcdirs:
