@@ -14,7 +14,7 @@ def write(s):
 
 def create(opts):
     try:
-        project = Project.new(opts['PROJECT'], 'master')
+        project = Project.new(opts['PROJECT'], 'master', opts['PORT'])
     except ProjectError as e:
         print e
         return

@@ -8,8 +8,8 @@
 
 Usage:
   datacats pull
-  datacats create PROJECT [-b] [-i] [-n] [--ckan=CKAN_VERSION]
-  datacats start [-p PROJECT] [-r]
+  datacats create PROJECT [PORT] [-bin] [--ckan=CKAN_VERSION]
+  datacats start [-p PROJECT] [PORT | -r]
   datacats stop [-p PROJECT] [-r]
   datacats reload [-p PROJECT] [-r]
   datacats deploy [-p PROJECT]
@@ -56,6 +56,7 @@ def command_not_yet_implemented(opts, name):
 def main():
     opts = docopt(__doc__)
     option_not_yet_implemented(opts, '--ckan')
+    option_not_yet_implemented(opts, '--remote')
     command_not_yet_implemented(opts, 'deploy')
     command_not_yet_implemented(opts, 'logs')
     command_not_yet_implemented(opts, 'info')
@@ -76,7 +77,7 @@ def main():
     if opts['stop']:
         return manage.stop(project)
     if opts['start']:
-        return manage.start(project)
+        return manage.start(project, opts)
     if opts['reload']:
         return manage.reload(project)
     if opts['install']:

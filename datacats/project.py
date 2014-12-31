@@ -10,7 +10,8 @@ import subprocess
 import shutil
 from string import uppercase, lowercase, digits
 from random import SystemRandom
-from ConfigParser import SafeConfigParser, Error as ConfigParserError
+from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
+    NoOptionError)
 
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
@@ -33,20 +34,25 @@ class Project(object):
 
     Create with Project.new(path) or Project.load(path)
     """
-    def __init__(self, name, target, datadir, ckan_version):
+    def __init__(self, name, target, datadir, ckan_version, port=None):
         self.name = name
         self.target = target
         self.datadir = datadir
         self.ckan_version = ckan_version
+        self.port = int(port) if port else None
 
     def save(self):
         """
         Save project settings into project directory
         """
         cp = SafeConfigParser()
+
         cp.add_section('datacats')
         cp.set('datacats', 'name', self.name)
         cp.set('datacats', 'ckan_version', self.ckan_version)
+        if self.port:
+            cp.set('datacats', 'port', str(self.port))
+
         cp.add_section('passwords')
         for n in sorted(self.passwords):
             cp.set('passwords', n.lower(), self.passwords[n])
@@ -64,12 +70,14 @@ class Project(object):
             pdir.write(self.target)
 
     @classmethod
-    def new(cls, path, ckan_version):
+    def new(cls, path, ckan_version, port=None):
         """
         Return a Project object with settings for a new project.
         No directories or containers are created by this call.
 
         :params path: location for new project directory, may be relative
+        :params ckan_version: release of CKAN to install
+        :params port: preferred port for local instance
 
         Raises ProjectError if directories or project with same
         name already exits.
@@ -91,7 +99,7 @@ class Project(object):
         if isdir(target):
             raise ProjectError('Project directory already exists')
 
-        project = cls(name, target, datadir, ckan_version)
+        project = cls(name, target, datadir, ckan_version, port)
         project._generate_passwords()
         return project
 
@@ -136,6 +144,10 @@ class Project(object):
         name = cp.get('datacats', 'name')
         datadir = expanduser('~/.datacats/' + name)
         ckan_version = cp.get('datacats', 'ckan_version')
+        try:
+            port = cp.getint('datacats', 'port')
+        except NoOptionError:
+            port = None
         passwords = {}
         for n in cp.options('passwords'):
             passwords[n.upper()] = cp.get('passwords', n)
@@ -323,7 +335,10 @@ class Project(object):
         """
         Start the apache server or paster serve
         """
-        port_bindings = {80: None} if is_boot2docker() else {80: ('127.0.0.1',)}
+        if is_boot2docker():
+            port_bindings = {80: self.port}
+        else:
+            port_bindings = {80: ('127.0.0.1', self.port)}
         run_container(
             name='datacats_web_' + self.name,
             image='datacats/web',
