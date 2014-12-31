@@ -8,6 +8,8 @@ import sys
 from os import listdir
 from os.path import isdir
 
+from datacats.cli import manage
+
 def write(s):
     sys.stdout.write(s)
     sys.stdout.flush()
@@ -34,3 +36,7 @@ def install(project, opts):
         project.install_package_develop(s)
         write('.')
     write('\n')
+
+    address = project.web_address()
+    if address is not None:
+        manage.reload(project)
