@@ -12,7 +12,7 @@ Usage:
   datacats open [-p PROJECT]
   datacats paster [-p PROJECT] PASTER_COMMAND...
   datacats install [-p PROJECT] [-c]
-  datacats purge [-p PROJECT] [-y]
+  datacats purge [-p PROJECT]
 
 Options:
   -c --clean                  Reinstall into a clean virtual environment
@@ -25,7 +25,6 @@ Options:
   -p --project=PROJECT        Use project named PROJECT, defaults to use
                               project from current working directory
   -q --quiet                  Simple text response suitable for scripting
-  -y --yes                    don't ask for confirmation
 """
 
 import json
