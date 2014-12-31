@@ -265,7 +265,7 @@ class Project(object):
                 '{DATASTORE_RW_PASSWORD}@db:5432/ckan_datastore'.format(**p),
             'solr_url = http://solr:8080/solr',
             'ckan.storage_path = /var/www/storage',
-            'ckan.plugins = ' + (self.name + '_skin') if skin else '',
+            'ckan.plugins = ' + (self.name + '_skin' if skin else ''),
             'ckan.site_title = ' + self.name,
             'ckan.site_logo = ',
             ]

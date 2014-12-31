@@ -8,7 +8,7 @@
 
 Usage:
   datacats pull
-  datacats create PROJECT [-i] [-n] [--ckan=CKAN_VERSION]
+  datacats create PROJECT [-b] [-i] [-n] [--ckan=CKAN_VERSION]
   datacats start [-p PROJECT] [-r]
   datacats stop [-p PROJECT] [-r]
   datacats reload [-p PROJECT] [-r]
@@ -21,6 +21,7 @@ Usage:
   datacats purge [-p PROJECT]
 
 Options:
+  -b --bare                   Bare CKAN site with no example extension
   -c --clean                  Reinstall into a clean virtual environment
   --ckan=CKAN_VERSION         Use CKAN version CKAN_VERSION, defaults to
                               latest development release
