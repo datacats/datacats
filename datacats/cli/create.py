@@ -21,7 +21,7 @@ def create(opts):
 
     write('Creating project "{0}"'.format(project.name))
 
-    steps = (
+    steps = [
         project.create_directories,
         project.save,
         project.create_virtualenv,
@@ -29,22 +29,14 @@ def create(opts):
         project.start_data_and_search,
         project.fix_storage_permissions,
         project.create_ckan_ini,
-        )
-    if opts['--bare']:
-        steps = steps + (
-            lambda: project.update_ckan_ini(skin=False),
-            project.fix_project_permissions,
-            project.ckan_db_init,
-            )
-    else:
-        steps = steps + (
-            project.update_ckan_ini,
-            project.fix_project_permissions,
-            project.create_install_template_skin,
-            project.ckan_db_init,
-            )
-    if not opts['--image-only']:
-        steps = steps + (project.start_web,)
+        lambda: project.update_ckan_ini(skin=not opts['--bare']),
+        project.fix_project_permissions,
+        ]
+
+    if not opts['--bare']:
+        steps.append(project.create_install_template_skin)
+
+    steps.append(project.ckan_db_init)
 
     for fn in steps:
         fn()
