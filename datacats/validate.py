@@ -10,7 +10,13 @@ NAME_RE = r'[a-z][a-z0-9]*$'
 DATACATS_NAME_RE = r'[a-z][a-z0-9]{4,}$'
 
 def valid_name(n):
+    """
+    Return True for project names that may be used locally
+    """
     return bool(re.match(NAME_RE, n))
 
 def valid_datacats_name(n):
+    """
+    Return True for project names that may be deployed to datacats site
+    """
     return bool(re.match(DATACATS_NAME_RE, n))
