@@ -15,7 +15,8 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
 
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
-    inspect_container, is_boot2docker, data_only_container, docker_host)
+    inspect_container, is_boot2docker, data_only_container, docker_host,
+    PortAllocatedError)
 from datacats.template import ckan_extension_template
 
 class ProjectError(Exception):
@@ -335,21 +336,28 @@ class Project(object):
         """
         Start the apache server or paster serve
         """
-        if is_boot2docker():
-            port_bindings = {80: self.port}
-        else:
-            port_bindings = {80: ('127.0.0.1', self.port)}
-        run_container(
-            name='datacats_web_' + self.name,
-            image='datacats/web',
-            rw={self.datadir + '/files': '/var/www/storage'},
-            ro={self.datadir + '/venv': '/usr/lib/ckan',
-                self.target + '/src': '/project/src',
-                self.target + '/conf': '/etc/ckan/default'},
-            links={'datacats_search_' + self.name: 'solr',
-                'datacats_data_' + self.name: 'db'},
-            port_bindings=port_bindings,
-            )
+        port = self.port
+        def bindings():
+            return {80: port if is_boot2docker() else ('127.0.0.1', port)}
+        while True:
+            try:
+                run_container(
+                    name='datacats_web_' + self.name,
+                    image='datacats/web',
+                    rw={self.datadir + '/files': '/var/www/storage'},
+                    ro={self.datadir + '/venv': '/usr/lib/ckan',
+                        self.target + '/src': '/project/src',
+                        self.target + '/conf': '/etc/ckan/default'},
+                    links={'datacats_search_' + self.name: 'solr',
+                        'datacats_data_' + self.name: 'db'},
+                    port_bindings=bindings(),
+                    )
+            except PortAllocatedError:
+                # let docker choose the port this time
+                if port:
+                    port = None
+                    continue
+            break
 
         # stick with the first port chosen for us
         if not self.port:

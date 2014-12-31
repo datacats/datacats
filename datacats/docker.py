@@ -23,6 +23,9 @@ class WebCommandError(Exception):
             ' docker logs {1}\n  Remove stopped container:'
             ' docker rm {1}'.format(*self.args))
 
+class PortAllocatedError(Exception):
+    pass
+
 _boot2docker = None
 def is_boot2docker():
     global _boot2docker
@@ -88,9 +91,12 @@ def run_container(name, image, command=None, environment=None,
         ro=None, rw=None, links=None, detach=True, volumes_from=None,
         port_bindings=None):
     """
-    simple wrapper for docker create_container, start calls
+    Wrapper for docker create_container, start calls
 
     :returns: container info dict or None if container couldn't be created
+
+    Raises PortAllocatedError if container couldn't start on the
+    requested port.
     """
     binds = ro_rw_to_binds(ro, rw)
     try:
@@ -104,12 +110,18 @@ def run_container(name, image, command=None, environment=None,
             ports=list(port_bindings) if port_bindings else None)
     except APIError as e:
         return None
-    _docker.start(
-        container=c['Id'],
-        links=links,
-        binds=binds,
-        volumes_from=volumes_from,
-        port_bindings=port_bindings)
+    try:
+        _docker.start(
+            container=c['Id'],
+            links=links,
+            binds=binds,
+            volumes_from=volumes_from,
+            port_bindings=port_bindings)
+    except APIError as e:
+        if 'port is already allocated' in e.explanation:
+            _docker.remove_container(name, force=True)
+            raise PortAllocatedError()
+        raise
     return c
 
 def remove_container(name, force=False):
