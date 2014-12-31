@@ -19,8 +19,9 @@ _docker = Client(**_docker_kwargs)
 
 class WebCommandError(Exception):
     def __str__(self):
-        return ('Command failed: {0}\n View command output:'
-            ' docker logs {1}'.format(*self.args))
+        return ('Command failed: {0}\n  View output:'
+            ' docker logs {1}\n  Remove stopped container:'
+            ' docker rm {1}'.format(*self.args))
 
 _boot2docker = None
 def is_boot2docker():
