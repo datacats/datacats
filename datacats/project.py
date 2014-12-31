@@ -152,7 +152,7 @@ class Project(object):
         for n in cp.options('passwords'):
             passwords[n.upper()] = cp.get('passwords', n)
 
-        project = cls(name, wd, datadir, ckan_version)
+        project = cls(name, wd, datadir, ckan_version, port)
         project.passwords = passwords
 
         if project_name is None:
