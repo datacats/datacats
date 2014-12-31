@@ -115,7 +115,7 @@ PROMOTED_SNIPPET = '''{% set intro = g.site_intro_text %}
 
   {% block home_image %}
     <section class="featured media-overlay hidden-phone">
-      <h2 class="media-heading">{% block home_image_caption %}{{ _("This is a featured section") }}{% endblock %}</h2>
+      <h2 class="media-heading">{% block home_image_caption %}{{ _("Feature datasets here") }}{% endblock %}</h2>
       {% block home_image_content %}
         <a class="media-image" href="#">
           <img src="{{ h.url_for_static('/datacats/chart.png') }}" alt="Example chart" width="420" height="220" />
