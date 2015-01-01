@@ -35,7 +35,7 @@ class Project(object):
 
     Create with Project.new(path) or Project.load(path)
     """
-    def __init__(self, name, target, datadir, ckan_version, port=None):
+    def __init__(self, name, target, datadir, ckan_version=None, port=None):
         self.name = name
         self.target = target
         self.datadir = datadir
@@ -105,12 +105,14 @@ class Project(object):
         return project
 
     @classmethod
-    def load(cls, project_name=None):
+    def load(cls, project_name=None, data_only=False):
         """
         Return a Project object based on an existing project.
 
-        :params project_name: exising project name or None to look in
+        :param project_name: exising project name or None to look in
             current or parent directories for project
+        :param data_only: set to True to only load from data dir, not
+            the project directory. used for purging project data.
 
         Raises ProjectError if project can't be found or if there is an
         error parsing the project information.
@@ -129,12 +131,15 @@ class Project(object):
                 raise ProjectError('No project found with that name')
             with open(datadir + '/project-dir') as pd:
                 wd = pd.read()
-            if not exists(wd + '/.datacats-project'):
+            if not data_only and not exists(wd + '/.datacats-project'):
                 raise ProjectError(
                     'Project data found but project directory is missing.'
                     ' Try again without "-p" from the new project directory'
                     ' location or remove this project data with'
                     ' "datacats purge"')
+
+        if data_only and project_name:
+            return cls(project_name, None, datadir)
 
         cp = SafeConfigParser()
         try:
@@ -450,6 +455,21 @@ class Project(object):
             rw={self.target + '/' + psrc: '/project/' + psrc},
             ro={self.target + '/conf': '/etc/ckan/default'},
             )
+
+    def purge_data(self):
+        """
+        Remove uploaded files, postgres db, solr index, venv
+        """
+        web_command(
+            command=['/bin/rm', '-r',
+                '/project/data/data',
+                '/project/data/files',
+                '/project/data/search',
+                '/project/data/venv',
+                ],
+            rw={self.datadir: '/project/data'},
+            )
+        shutil.rmtree(self.datadir)
 
 
 def generate_db_password():

@@ -18,11 +18,12 @@ Usage:
   datacats open [-p PROJECT]
   datacats paster [-p PROJECT] PASTER_COMMAND...
   datacats install [-p PROJECT] [-c]
-  datacats purge [-p PROJECT]
+  datacats purge [-p PROJECT [-d]]
 
 Options:
   -b --bare                   Bare CKAN site with no example extension
   -c --clean                  Reinstall into a clean virtual environment
+  -d --delete-project         Delete project folder as well as its data
   --ckan=CKAN_VERSION         Use CKAN version CKAN_VERSION, defaults to
                               latest development release
   -f --follow                 Follow logs
@@ -38,7 +39,7 @@ import json
 import sys
 from docopt import docopt
 
-from datacats.cli import create, manage, install, pull
+from datacats.cli import create, manage, install, pull, purge
 from datacats.project import Project, ProjectError
 
 def option_not_yet_implemented(opts, name):
@@ -61,12 +62,13 @@ def main():
     command_not_yet_implemented(opts, 'logs')
     command_not_yet_implemented(opts, 'info')
     command_not_yet_implemented(opts, 'paster')
-    command_not_yet_implemented(opts, 'purge')
 
     if opts['pull']:
         return pull.pull(opts)
     if opts['create']:
         return create.create(opts)
+    if opts['purge']:
+        return purge.purge(opts)
 
     try:
         project = Project.load(opts['--project'])
