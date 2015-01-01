@@ -41,6 +41,8 @@ def info(project, opts):
         return
 
     print '    Project name: ' + project.name
+    print '    CKAN version: ' + project.ckan_version
+    print '    Default port: ' + str(project.port)
     print '     Project dir: ' + project.target
     print '        Data dir: ' + project.datadir
     print '      Containers: ' + ' '.join(project.containers_running())
