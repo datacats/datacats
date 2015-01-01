@@ -28,3 +28,7 @@ def reload(project):
     project.stop_web()
     project.start_web()
     print 'Now available at {0}'.format(project.web_address())
+
+def shell(project):
+    project.start_data_and_search()
+    project.interactive_shell()

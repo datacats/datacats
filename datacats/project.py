@@ -410,6 +410,26 @@ class Project(object):
             'datacats/web', '/usr/lib/ckan/bin/paster', '--plugin=ckan',
             'sysadmin', 'add', 'admin', '-c' '/etc/ckan/default/ckan.ini'])
 
+    def interactive_shell(self):
+        """
+        launch interactive shell (bash) session with all writable volumes
+        """
+        # FIXME: consider switching this to dockerpty
+        # using subprocess for docker client's interactive session
+        subprocess.call([
+            '/usr/bin/docker', 'run', '--rm', '-it',
+            '-v', self.datadir + '/venv:/usr/lib/ckan:rw',
+            '-v', self.target + '/src:/project/src:rw',
+            '-v', self.target + '/conf:/etc/ckan/default:rw',
+            '-v', self.datadir + '/files:/var/www/storage:rw',
+            '--link', 'datacats_search_' + self.name + ':solr',
+            '--link', 'datacats_data_' + self.name + ':db',
+            'datacats/web', '/bin/bash', '-c',
+            'cd /project/src/ckan; source /usr/lib/ckan/bin/activate '
+            '; /bin/bash'])
+        # in case different user inside container created project files:
+        self.fix_project_permissions()
+
     def install_package_requirements(self, src_package):
         """
         Install from requirements.txt file found in src_package

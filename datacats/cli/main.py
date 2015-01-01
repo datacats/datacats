@@ -16,7 +16,7 @@ Usage:
   datacats logs [PROJECT] [-f]
   datacats info [PROJECT] [-qr]
   datacats open [PROJECT]
-  datacats paster PROJECT PASTER_COMMAND...
+  datacats shell [PROJECT]
   datacats install [PROJECT] [-c]
   datacats purge [PROJECT [-d]]
 
@@ -62,7 +62,6 @@ def main():
     command_not_yet_implemented(opts, 'deploy')
     command_not_yet_implemented(opts, 'logs')
     command_not_yet_implemented(opts, 'info')
-    command_not_yet_implemented(opts, 'paster')
 
     if opts['pull']:
         return pull.pull(opts)
@@ -83,6 +82,8 @@ def main():
         return manage.start(project, opts)
     if opts['reload']:
         return manage.reload(project)
+    if opts['shell']:
+        return manage.shell(project)
     if opts['install']:
         return install.install(project, opts)
 
