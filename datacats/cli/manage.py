@@ -32,3 +32,18 @@ def reload(project):
 def shell(project):
     project.start_data_and_search()
     project.interactive_shell()
+
+def info(project, opts):
+    addr = project.web_address()
+    if opts['--quiet']:
+        if addr:
+            print addr
+        return
+
+    print 'Name:               ' + project.name
+    print 'Project directory:  ' + project.target
+    print 'Data directory:     ' + project.datadir
+    print 'Containers running: ' + ' '.join(project.containers_running())
+    if not addr:
+        return
+    print 'Running at:         ' + addr

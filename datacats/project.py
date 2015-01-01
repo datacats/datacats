@@ -385,6 +385,17 @@ class Project(object):
             return None
         return info['NetworkSettings']['Ports']['80/tcp'][0]['HostPort']
 
+    def containers_running(self):
+        """
+        Return a list including 0 or more of ['web', 'data', 'search']
+        for containers tracked by this project that are running
+        """
+        running = []
+        for n in ['web', 'data', 'search']:
+            if inspect_container('datacats_' + n + '_' + self.name):
+                running.append(n)
+        return running
+
     def web_address(self):
         """
         Return the url of the web server or None if not running

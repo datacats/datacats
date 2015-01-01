@@ -61,7 +61,6 @@ def main():
     option_not_yet_implemented(opts, '--remote')
     command_not_yet_implemented(opts, 'deploy')
     command_not_yet_implemented(opts, 'logs')
-    command_not_yet_implemented(opts, 'info')
 
     if opts['pull']:
         return pull.pull(opts)
@@ -84,6 +83,8 @@ def main():
         return manage.reload(project)
     if opts['shell']:
         return manage.shell(project)
+    if opts['info']:
+        return manage.info(project, opts)
     if opts['install']:
         return install.install(project, opts)
 
