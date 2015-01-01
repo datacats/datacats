@@ -9,16 +9,16 @@
 Usage:
   datacats pull
   datacats create PROJECT [PORT] [-bin] [--ckan=CKAN_VERSION]
-  datacats start [-p PROJECT] [PORT | -r]
-  datacats stop [-p PROJECT] [-r]
-  datacats reload [-p PROJECT] [-r]
-  datacats deploy [-p PROJECT]
-  datacats logs [-p PROJECT] [-f]
-  datacats info [-p PROJECT] [-q] [-r]
-  datacats open [-p PROJECT]
-  datacats paster [-p PROJECT] PASTER_COMMAND...
-  datacats install [-p PROJECT] [-c]
-  datacats purge [-p PROJECT [-d]]
+  datacats start [PROJECT [PORT] | [PROJECT] -r]
+  datacats stop [PROJECT] [-r]
+  datacats reload [PROJECT] [-r]
+  datacats deploy [PROJECT]
+  datacats logs [PROJECT] [-f]
+  datacats info [PROJECT] [-qr]
+  datacats open [PROJECT]
+  datacats paster PROJECT PASTER_COMMAND...
+  datacats install [PROJECT] [-c]
+  datacats purge [PROJECT [-d]]
 
 Options:
   -b --bare                   Bare CKAN site with no example extension
@@ -30,9 +30,10 @@ Options:
   -i --image-only             Only create the project, don't start containers
   -r --remote                 Operate on cloud-deployed datacats instance
   -n --no-sysadmin            Don't create an initial sysadmin user account
-  -p --project=PROJECT        Use project named PROJECT, defaults to use
-                              project from current working directory
   -q --quiet                  Simple text response suitable for scripting
+
+Create PROJECT must be a path. Other PROJECT values may be a project name
+or a path to the project directory. Project defaults to '.' if not given.
 """
 
 import json
@@ -71,7 +72,7 @@ def main():
         return purge.purge(opts)
 
     try:
-        project = Project.load(opts['--project'])
+        project = Project.load(opts['PROJECT'])
     except ProjectError as e:
         print e
         return

@@ -11,10 +11,10 @@ from datacats.project import Project, ProjectError
 
 def purge(opts):
     try:
-        project = Project.load(opts['--project'])
+        project = Project.load(opts['PROJECT'])
     except ProjectError as e:
         try:
-            project = Project.load(opts['--project'], data_only=True)
+            project = Project.load(opts['PROJECT'], data_only=True)
         except ProjectError:
             print e  # first error, not the second one
             return
