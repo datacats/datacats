@@ -40,10 +40,10 @@ def info(project, opts):
             print addr
         return
 
-    print 'Name:               ' + project.name
-    print 'Project directory:  ' + project.target
-    print 'Data directory:     ' + project.datadir
-    print 'Containers running: ' + ' '.join(project.containers_running())
+    print '    Project name: ' + project.name
+    print '     Project dir: ' + project.target
+    print '        Data dir: ' + project.datadir
+    print '      Containers: ' + ' '.join(project.containers_running())
     if not addr:
         return
-    print 'Running at:         ' + addr
+    print '    Available at: ' + addr
