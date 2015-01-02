@@ -153,6 +153,25 @@ def inspect_container(name):
     except APIError as e:
         return None
 
+def container_logs(name, tail, follow, timestamps):
+    """
+    Wrapper for docker logs, attach commands.
+    """
+    if follow:
+        return _docker.attach(
+            name,
+            stdout=True,
+            stderr=True,
+            stream=True
+            )
+    return _docker.logs(
+        name,
+        stdout=True,
+        stderr=True,
+        tail=tail,
+        timestamps=timestamps,
+        )
+
 def pull_stream(image):
     """
     Return generator of pull status objects

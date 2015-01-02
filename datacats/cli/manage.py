@@ -55,3 +55,22 @@ def info(project, opts):
 def list():
     for p in sorted(listdir(expanduser('~/.datacats'))):
         print p
+
+def logs(project, opts):
+    container = 'web'
+    if opts['--search-logs']:
+        container = 'search'
+    if opts['--data-logs']:
+        container = 'data'
+    tail = opts['--tail']
+    if tail != 'all':
+        tail = int(tail)
+    l = project.logs(container, tail, opts['--follow'], opts['--timestamps'])
+    if not opts['--follow']:
+        print l
+        return
+    try:
+        for message in l:
+            print message
+    except KeyboardInterrupt:
+        print

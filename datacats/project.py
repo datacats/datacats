@@ -16,7 +16,7 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
-    PortAllocatedError)
+    PortAllocatedError, container_logs)
 from datacats.template import ckan_extension_template
 
 class ProjectError(Exception):
@@ -494,6 +494,19 @@ class Project(object):
             rw={self.datadir: '/project/data'},
             )
         shutil.rmtree(self.datadir)
+
+    def logs(self, container, tail='all', follow=False, timestamps=False):
+        """
+        :param container: 'web', 'search' or 'data'
+        :param tail: number of lines to show
+        :param follow: True to return generator instead of list
+        :param timestamps: True to include timestamps
+        """
+        return container_logs(
+            'datacats_' + container + '_' + self.name,
+            tail,
+            follow,
+            timestamps)
 
 
 def generate_db_password():

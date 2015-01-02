@@ -13,23 +13,27 @@ Usage:
   datacats stop [PROJECT] [-r]
   datacats reload [PROJECT] [-r]
   datacats deploy [PROJECT]
-  datacats logs [PROJECT] [-f]
+  datacats logs [PROJECT] [-f | [-t] [--tail=LINES]] [-d | -s]
   datacats info [PROJECT] [-qr]
   datacats list
   datacats open [PROJECT]
   datacats shell [PROJECT]
   datacats install [PROJECT] [-c]
-  datacats purge [PROJECT [-d]]
+  datacats purge [PROJECT [-p]]
 
 Options:
   -b --bare                   Bare CKAN site with no example extension
   -c --clean                  Reinstall into a clean virtual environment
-  -d --delete-project         Delete project folder as well as its data
   --ckan=CKAN_VERSION         Use CKAN version CKAN_VERSION, defaults to
                               latest development release
-  -f --follow                 Follow logs
+  -d --data-logs              Show database logs instead of web logs
+  -p --delete-project         Delete project folder as well as its data
+  -f --follow                 Follow logs instead of exiting immediately
   -i --image-only             Only create the project, don't start containers
   -r --remote                 Operate on cloud-deployed datacats instance
+  -s --search-logs            Show search logs instead of web logs
+  -t --timestamps             Include timestamps in logs
+  --tail=LINES                Number of lines to show [default: all]
   -n --no-sysadmin            Don't create an initial sysadmin user account
   -q --quiet                  Simple text response suitable for scripting
 
@@ -60,8 +64,8 @@ def main():
     opts = docopt(__doc__)
     option_not_yet_implemented(opts, '--ckan')
     option_not_yet_implemented(opts, '--remote')
+    option_not_yet_implemented(opts, '--clean')
     command_not_yet_implemented(opts, 'deploy')
-    command_not_yet_implemented(opts, 'logs')
 
     if opts['pull']:
         return pull.pull(opts)
@@ -88,6 +92,8 @@ def main():
         return manage.shell(project)
     if opts['info']:
         return manage.info(project, opts)
+    if opts['logs']:
+        return manage.logs(project, opts)
     if opts['install']:
         return install.install(project, opts)
 
