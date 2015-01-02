@@ -491,13 +491,15 @@ class Project(object):
         """
         Remove uploaded files, postgres db, solr index, venv
         """
+        datadirs = ['files', 'search', 'venv']
+        if is_boot2docker():
+            remove_container('datacats_dataonly_' + self.name)
+        else:
+            datadirs.append('data')
+
         web_command(
-            command=['/bin/rm', '-r',
-                '/project/data/data',
-                '/project/data/files',
-                '/project/data/search',
-                '/project/data/venv',
-                ],
+            command=['/bin/rm', '-r']
+                + ['/project/data/' + d for d in datadirs],
             rw={self.datadir: '/project/data'},
             )
         shutil.rmtree(self.datadir)
