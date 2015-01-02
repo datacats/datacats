@@ -15,4 +15,4 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -q -y install solr-tomcat
 #ADD schema.xml /etc/solr/conf/schema.xml
 
 EXPOSE 8080
-CMD ["$CATALINA_HOME/bin/catalina.sh", "run"]
+CMD ["/usr/share/tomcat6/bin/catalina.sh", "run"]
