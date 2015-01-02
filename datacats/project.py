@@ -195,7 +195,7 @@ class Project(object):
 
     def create_source(self):
         """
-        Populate src/ckan directory from preloaded image and copy
+        Populate ckan directory from preloaded image and copy
         who.ini and schema.xml info conf directory
         """
         web_command(
@@ -294,7 +294,7 @@ class Project(object):
         """
         Create an example ckan extension for this project and install it
         """
-        ckan_extension_template(self.name, self.target + '/src')
+        ckan_extension_template(self.name, self.target)
         self.install_package_develop('ckanext-' + self.name)
 
 
@@ -428,48 +428,47 @@ class Project(object):
             '--link', 'datacats_search_' + self.name + ':solr',
             '--link', 'datacats_data_' + self.name + ':db',
             'datacats/web', '/bin/bash', '-c',
-            'cd /project/src/ckan; source /usr/lib/ckan/bin/activate '
+            'cd /project/ckan; source /usr/lib/ckan/bin/activate '
             '; /bin/bash'])
         # in case different user inside container created project files:
         self.fix_project_permissions()
 
-    def install_package_requirements(self, src_package):
+    def install_package_requirements(self, psrc):
         """
         Install from requirements.txt file found in src_package
 
         :param src_package: name of directory under project src directory
         """
-        package = self.target + '/src/' + src_package
+        package = self.target + '/' + psrc
         assert isdir(package), package
         if not exists(package + '/requirements.txt'):
             return
         web_command(
             command=[
                 '/usr/lib/ckan/bin/pip', 'install', '-r',
-                '/project/src/' + src_package + '/requirements.txt'
+                '/project/' + psrc + '/requirements.txt'
                 ],
             rw={self.datadir + '/venv': '/usr/lib/ckan'},
-            ro={self.target + '/src': '/project/src'},
+            ro={self.target: '/project'},
             )
 
-    def install_package_develop(self, src_package):
+    def install_package_develop(self, psrc):
         """
         Install a src package in place (setup.py develop)
 
-        :param src_package: name of directory under project src directory
+        :param psrc: name of directory under project directory
         """
-        package = self.target + '/src/' + src_package
+        package = self.target + '/' + psrc
         assert isdir(package), package
         if not exists(package + '/setup.py'):
             return
-        psrc = 'src/' + src_package
         web_command(
             command=[
                 '/usr/lib/ckan/bin/pip', 'install', '-e', '/project/' + psrc
                 ],
             rw={self.datadir + '/venv': '/usr/lib/ckan',
                 self.target + '/' + psrc: '/project/' + psrc},
-            ro={self.target + '/src': '/project/src'},
+            ro={self.target: '/project'},
             )
         # .egg-info permissions
         web_command(

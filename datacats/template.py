@@ -8,11 +8,11 @@ from os import makedirs
 from os.path import dirname
 from shutil import copyfile
 
-def ckan_extension_template(name, target_src):
+def ckan_extension_template(name, target):
     """
-    Create ckanext-(name) in target_src directory.
+    Create ckanext-(name) in target directory.
     """
-    setupdir = '{0}/ckanext-{1}'.format(target_src, name)
+    setupdir = '{0}/ckanext-{1}'.format(target, name)
     extdir = setupdir + '/ckanext/{0}'.format(name)
     templatedir = extdir + '/templates/'
     staticdir = extdir + '/static/datacats'
