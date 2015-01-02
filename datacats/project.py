@@ -176,8 +176,7 @@ class Project(object):
         if not is_boot2docker():
             makedirs(self.datadir + '/data')
         makedirs(self.datadir + '/files')
-        makedirs(self.target + '/conf')
-        makedirs(self.target + '/src')
+        makedirs(self.target)
 
     def _preload_image(self):
         """
@@ -200,15 +199,15 @@ class Project(object):
         who.ini and schema.xml info conf directory
         """
         web_command(
-            command='/bin/cp -a /project/src/. /project/src_target/.',
-            rw={self.target + '/src': '/project/src_target'},
+            command='/bin/cp -a /project/ckan /project_target/ckan',
+            rw={self.target: '/project_target'},
             image=self._preload_image())
         shutil.copy(
-            self.target + '/src/ckan/ckan/config/who.ini',
-            self.target + '/conf')
+            self.target + '/ckan/ckan/config/who.ini',
+            self.target)
         shutil.copy(
-            self.target + '/src/ckan/ckan/config/solr/schema.xml',
-            self.target + '/conf')
+            self.target + '/ckan/ckan/config/solr/schema.xml',
+            self.target)
 
     def start_data_and_search(self):
         """
@@ -237,7 +236,7 @@ class Project(object):
             name='datacats_search_' + self.name,
             image='datacats/search',
             rw={self.datadir + '/search': '/var/lib/solr'},
-            ro={self.target + '/conf/schema.xml': '/etc/solr/conf/schema.xml'})
+            ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
     def stop_data_and_search(self):
         """
@@ -260,10 +259,9 @@ class Project(object):
         """
         web_command(
             command='/usr/lib/ckan/bin/paster make-config'
-                ' ckan /etc/ckan/default/ckan.ini',
-            ro={self.datadir + '/venv': '/usr/lib/ckan',
-                self.target + '/src': '/project/src'},
-            rw={self.target + '/conf': '/etc/ckan/default'})
+                ' ckan /project/ckan.ini',
+            ro={self.datadir + '/venv': '/usr/lib/ckan'},
+            rw={self.target: '/project'})
 
     def update_ckan_ini(self, skin=True):
         """
@@ -274,7 +272,7 @@ class Project(object):
         p = self.passwords
         command = [
             '/usr/lib/ckan/bin/paster', '--plugin=ckan', 'config-tool',
-            '/etc/ckan/default/ckan.ini', '-e',
+            '/project/ckan.ini', '-e',
             'sqlalchemy.url = postgresql://ckan:'
                 '{CKAN_PASSWORD}@db:5432/ckan'.format(**p),
             'ckan.datastore.read_url = postgresql://ckan_datastore_readonly:'
@@ -289,9 +287,8 @@ class Project(object):
             ]
         web_command(
             command=command,
-            ro={self.datadir + '/venv': '/usr/lib/ckan',
-                self.target + '/src': '/project/src'},
-            rw={self.target + '/conf': '/etc/ckan/default'})
+            ro={self.datadir + '/venv': '/usr/lib/ckan'},
+            rw={self.target: '/project'})
 
     def create_install_template_skin(self):
         """
@@ -307,11 +304,10 @@ class Project(object):
         move and delete them freely.
         """
         web_command(
-            command='/bin/chown -R --reference=/etc/ckan/default'
-                ' /usr/lib/ckan /project/src /etc/ckan/default',
+            command='/bin/chown -R --reference=/project'
+                ' /usr/lib/ckan /project',
             rw={self.datadir + '/venv': '/usr/lib/ckan',
-                self.target + '/src': '/project/src',
-                self.target + '/conf': '/etc/ckan/default'})
+                self.target: '/project'})
 
     def ckan_db_init(self):
         """
@@ -319,10 +315,9 @@ class Project(object):
         """
         web_command(
             command='/usr/lib/ckan/bin/paster --plugin=ckan db init'
-                ' -c /etc/ckan/default/ckan.ini',
+                ' -c /project/ckan.ini',
             ro={self.datadir + '/venv': '/usr/lib/ckan',
-                self.target + '/src': '/project/src',
-                self.target + '/conf': '/etc/ckan/default'},
+                self.target: '/project'},
             links={'datacats_search_' + self.name: 'solr',
                 'datacats_data_' + self.name: 'db'})
 
@@ -351,8 +346,7 @@ class Project(object):
                     image='datacats/web',
                     rw={self.datadir + '/files': '/var/www/storage'},
                     ro={self.datadir + '/venv': '/usr/lib/ckan',
-                        self.target + '/src': '/project/src',
-                        self.target + '/conf': '/etc/ckan/default'},
+                        self.target: '/project/'},
                     links={'datacats_search_' + self.name: 'solr',
                         'datacats_data_' + self.name: 'db'},
                     port_bindings=bindings(),
@@ -414,12 +408,11 @@ class Project(object):
         subprocess.call([
             '/usr/bin/docker', 'run', '--rm', '-it',
             '-v', self.datadir + '/venv:/usr/lib/ckan:ro',
-            '-v', self.target + '/src:/project/src:ro',
-            '-v', self.target + '/conf:/etc/ckan/default:ro',
+            '-v', self.target + ':/project:ro',
             '--link', 'datacats_search_' + self.name + ':solr',
             '--link', 'datacats_data_' + self.name + ':db',
             'datacats/web', '/usr/lib/ckan/bin/paster', '--plugin=ckan',
-            'sysadmin', 'add', 'admin', '-c' '/etc/ckan/default/ckan.ini'])
+            'sysadmin', 'add', 'admin', '-c' '/project/ckan.ini'])
 
     def interactive_shell(self):
         """
@@ -430,8 +423,7 @@ class Project(object):
         subprocess.call([
             '/usr/bin/docker', 'run', '--rm', '-it',
             '-v', self.datadir + '/venv:/usr/lib/ckan:rw',
-            '-v', self.target + '/src:/project/src:rw',
-            '-v', self.target + '/conf:/etc/ckan/default:rw',
+            '-v', self.target + ':/project:rw',
             '-v', self.datadir + '/files:/var/www/storage:rw',
             '--link', 'datacats_search_' + self.name + ':solr',
             '--link', 'datacats_data_' + self.name + ':db',
@@ -481,10 +473,10 @@ class Project(object):
             )
         # .egg-info permissions
         web_command(
-            command=['/bin/chown', '-R', '--reference=/etc/ckan/default',
+            command=['/bin/chown', '-R', '--reference=/project',
                 '/project/' + psrc],
             rw={self.target + '/' + psrc: '/project/' + psrc},
-            ro={self.target + '/conf': '/etc/ckan/default'},
+            ro={self.target: '/project'},
             )
 
     def purge_data(self):
