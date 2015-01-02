@@ -6,7 +6,7 @@
 
 import sys
 from os import listdir
-from os.path import isdir
+from os.path import isdir, exists
 
 from datacats.cli import manage
 
@@ -19,7 +19,14 @@ def install(project, opts):
     Install all packages found in the project src directory
     and their requirements.txt files
     """
-    srcdirs = set(listdir(project.target + '/src'))
+    srcdirs = set()
+    for d in listdir(project.target):
+        fulld = project.target + '/' + d
+        if not isdir(fulld):
+            continue
+        if not exists(fulld + '/setup.py'):
+            continue
+        srcdirs.add(d)
     try:
         srcdirs.remove('ckan')
     except KeyError:
