@@ -343,7 +343,7 @@ class Project(object):
         """
         port = self.port
         def bindings():
-            return {80: port if is_boot2docker() else ('127.0.0.1', port)}
+            return {5000: port if is_boot2docker() else ('127.0.0.1', port)}
         while True:
             try:
                 run_container(
@@ -383,7 +383,7 @@ class Project(object):
         info = inspect_container('datacats_web_' + self.name)
         if info is None:
             return None
-        return info['NetworkSettings']['Ports']['80/tcp'][0]['HostPort']
+        return info['NetworkSettings']['Ports']['5000/tcp'][0]['HostPort']
 
     def containers_running(self):
         """
