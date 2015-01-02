@@ -10,6 +10,8 @@ import subprocess
 import shutil
 from string import uppercase, lowercase, digits
 from random import SystemRandom
+from sha import sha
+from struct import unpack
 from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
     NoOptionError)
 
@@ -40,7 +42,7 @@ class Project(object):
         self.target = target
         self.datadir = datadir
         self.ckan_version = ckan_version
-        self.port = int(port) if port else None
+        self.port = int(port if port else self._choose_port())
 
     def save(self):
         """
@@ -51,8 +53,7 @@ class Project(object):
         cp.add_section('datacats')
         cp.set('datacats', 'name', self.name)
         cp.set('datacats', 'ckan_version', self.ckan_version)
-        if self.port:
-            cp.set('datacats', 'port', str(self.port))
+        cp.set('datacats', 'port', str(self.port))
 
         cp.add_section('passwords')
         for n in sorted(self.passwords):
@@ -332,11 +333,14 @@ class Project(object):
             'DATASTORE_RW_PASSWORD': generate_db_password(),
             }
 
-    def start_web(self):
+    def start_web(self, production=False):
         """
         Start the apache server or paster serve
+
+        :param production: True for apache, False for paster serve + debug on
         """
         port = self.port
+
         def bindings():
             return {5000: port if is_boot2docker() else ('127.0.0.1', port)}
         while True:
@@ -352,16 +356,27 @@ class Project(object):
                     port_bindings=bindings(),
                     )
             except PortAllocatedError:
-                # let docker choose the port this time
-                if port:
-                    port = None
-                    continue
+                port = self._next_port(port)
+                continue
             break
 
-        # stick with the first port chosen for us
-        if not self.port:
-            self.port = self._current_web_port()
-            self.save()
+    def _choose_port(self):
+        """
+        Return a port number from 5000-5999 based on the project name
+        to be used as a default when the user hasn't selected one.
+        """
+        # instead of random let's base it on the name chosen
+        return 5000 + unpack('Q',
+            sha(self.name.decode('ascii')).digest()[:8])[0] % 1000
+
+    def _next_port(self, port):
+        """
+        Return another port from the 5000-5999 range
+        """
+        port = 5000 + (port + 1) % 1000
+        if port == self.port:
+            raise ProjectError('Too many instances running')
+        return port
 
     def stop_web(self):
         """
