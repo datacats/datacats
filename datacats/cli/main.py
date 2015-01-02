@@ -15,6 +15,7 @@ Usage:
   datacats deploy [PROJECT]
   datacats logs [PROJECT] [-f]
   datacats info [PROJECT] [-qr]
+  datacats list
   datacats open [PROJECT]
   datacats shell [PROJECT]
   datacats install [PROJECT] [-c]
@@ -68,6 +69,8 @@ def main():
         return create.create(opts)
     if opts['purge']:
         return purge.purge(opts)
+    if opts['list']:
+        return manage.list()
 
     try:
         project = Project.load(opts['PROJECT'])
