@@ -20,6 +20,7 @@ def install(project, opts):
     and their requirements.txt files
     """
     srcdirs = set()
+    reqdirs = set()
     for d in listdir(project.target):
         fulld = project.target + '/' + d
         if not isdir(fulld):
@@ -27,22 +28,23 @@ def install(project, opts):
         if not exists(fulld + '/setup.py'):
             continue
         srcdirs.add(d)
+        if exists(fulld + '/requirements.txt'):
+            reqdirs.add(d)
     try:
         srcdirs.remove('ckan')
+        reqdirs.remove('ckan')
     except KeyError:
-        print 'ckan not found in project src directory'
+        print 'ckan not found in project directory'
         return
 
-    write('Installing all packages in src')
-
-    srcdirs = ['ckan'] + sorted(srcdirs)
-    for s in srcdirs:
+    for s in ['ckan'] + sorted(reqdirs):
+        write('Installing ' + s + ' requirements')
         project.install_package_requirements(s)
-        write('.')
-    for s in srcdirs:
+        write('\n')
+    for s in ['ckan'] + sorted(srcdirs):
+        write('Installing ' + s)
         project.install_package_develop(s)
-        write('.')
-    write('\n')
+        write('\n')
 
     if 'web' in project.containers_running():
         # FIXME: reload without changing debug setting?
