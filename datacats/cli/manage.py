@@ -23,12 +23,12 @@ def start(project, opts):
         project.port = int(opts['PORT'])
         project.save()
     project.start_data_and_search()
-    project.start_web()
+    project.start_web(opts['--production'])
     print 'Now available at {0}'.format(project.web_address())
 
-def reload(project):
+def reload(project, opts):
     project.stop_web()
-    project.start_web()
+    project.start_web(opts['--production'])
     print 'Now available at {0}'.format(project.web_address())
 
 def shell(project):

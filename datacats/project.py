@@ -177,6 +177,7 @@ class Project(object):
         if not is_boot2docker():
             makedirs(self.datadir + '/data')
         makedirs(self.datadir + '/files')
+        makedirs(self.datadir + '/run')
         makedirs(self.target)
 
     def _preload_image(self):
@@ -344,13 +345,15 @@ class Project(object):
         def bindings():
             return {5000: port if is_boot2docker() else ('127.0.0.1', port)}
         while True:
+            self._create_run_ini(port, production)
             try:
                 run_container(
                     name='datacats_web_' + self.name,
                     image='datacats/web',
                     rw={self.datadir + '/files': '/var/www/storage'},
                     ro={self.datadir + '/venv': '/usr/lib/ckan',
-                        self.target: '/project/'},
+                        self.target: '/project/',
+                        self.datadir + '/run/ckan.ini': '/project/ckan.ini'},
                     links={'datacats_search_' + self.name: 'solr',
                         'datacats_data_' + self.name: 'db'},
                     port_bindings=bindings(),
@@ -359,6 +362,25 @@ class Project(object):
                 port = self._next_port(port)
                 continue
             break
+
+    def _create_run_ini(self, port, production):
+        """
+        Create run/ckan.ini in datadir with debug and site_url overridden
+        """
+        cp = SafeConfigParser()
+        try:
+            cp.read([self.target + '/ckan.ini'])
+        except ConfigParserError:
+            raise ProjectError('Error reading ckan.ini')
+
+        cp.set('DEFAULT', 'debug', 'false' if production else 'true')
+        site_url = 'http://{0}:{1}/'.format(docker_host(), port)
+        cp.set('app:main', 'ckan.site_url', site_url)
+
+        if not isdir(self.datadir + '/run'):
+            makedirs(self.datadir + '/run')  # upgrade old datadir
+        with open(self.datadir + '/run/ckan.ini', 'w') as runini:
+            cp.write(runini)
 
     def _choose_port(self):
         """

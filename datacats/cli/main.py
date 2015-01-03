@@ -9,9 +9,9 @@
 Usage:
   datacats pull
   datacats create PROJECT [PORT] [-bin] [--ckan=CKAN_VERSION]
-  datacats start [PROJECT [PORT] | [PROJECT] -r]
+  datacats start [PROJECT [PORT] [-p] | -p | [PROJECT] -r]
   datacats stop [PROJECT] [-r]
-  datacats reload [PROJECT] [-r]
+  datacats reload [PROJECT] [-p | -r]
   datacats deploy [PROJECT]
   datacats logs [PROJECT] [-f | [-t] [--tail=LINES]] [-d | -s]
   datacats info [PROJECT] [-qr]
@@ -19,7 +19,7 @@ Usage:
   datacats open [PROJECT]
   datacats shell [PROJECT]
   datacats install [PROJECT] [-c]
-  datacats purge [PROJECT [-p]]
+  datacats purge [PROJECT [--delete-project]]
 
 Options:
   -b --bare                   Bare CKAN site with no example extension
@@ -27,14 +27,16 @@ Options:
   --ckan=CKAN_VERSION         Use CKAN version CKAN_VERSION, defaults to
                               latest development release
   -d --data-logs              Show database logs instead of web logs
-  -p --delete-project         Delete project folder as well as its data
+  --delete-project            Delete project folder as well as its data
   -f --follow                 Follow logs instead of exiting immediately
   -i --image-only             Only create the project, don't start containers
-  -r --remote                 Operate on cloud-deployed datacats instance
+  -r --remote                 Operate on cloud-deployed production datacats
+                              instance
   -s --search-logs            Show search logs instead of web logs
   -t --timestamps             Include timestamps in logs
   --tail=LINES                Number of lines to show [default: all]
   -n --no-sysadmin            Don't create an initial sysadmin user account
+  -p --production             Run in production mode instead of debug mode
   -q --quiet                  Simple text response suitable for scripting
 
 Create PROJECT must be a path. Other PROJECT values may be a project name
@@ -87,7 +89,7 @@ def main():
     if opts['start']:
         return manage.start(project, opts)
     if opts['reload']:
-        return manage.reload(project)
+        return manage.reload(project, opts)
     if opts['shell']:
         return manage.shell(project)
     if opts['info']:
