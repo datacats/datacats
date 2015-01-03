@@ -341,6 +341,10 @@ class Project(object):
         :param production: True for apache, False for paster serve + debug on
         """
         port = self.port
+        command = None
+        if not production:
+            command = ['/usr/lib/ckan/bin/paster', '--plugin=ckan',
+                'serve', '/project/ckan.ini', '--reload']
 
         def bindings():
             return {5000: port if is_boot2docker() else ('127.0.0.1', port)}
@@ -356,6 +360,7 @@ class Project(object):
                         self.datadir + '/run/ckan.ini': '/project/ckan.ini'},
                     links={'datacats_search_' + self.name: 'solr',
                         'datacats_data_' + self.name: 'db'},
+                    command=command,
                     port_bindings=bindings(),
                     )
             except PortAllocatedError:
