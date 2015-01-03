@@ -8,35 +8,41 @@
 
 set -e
 
+HERE="$(dirname $(readlink -f $0))"
+
 docker build -t datacats/search search/
 docker build -t datacats/data data/
 docker build -t datacats/web web/
 
-docker rm datacats_preload_interim || true
-docker run -i --name datacats_preload_interim \
+docker rm datacats_preload_1 || true
+docker run -i --name datacats_preload_1 \
     -e BRANCH=master datacats/web \
-    /bin/bash < setup_ckan.sh
-docker commit datacats_preload_interim lessc_interim
+    /bin/bash < "$HERE/setup_ckan.sh"
+docker rmi datacats_preload_1_image || true
+docker commit datacats_preload_1 datacats_preload_1_image
 
-CKAN_COPY="$(dirname $(readlink -f $0))/src"
-docker cp datacats_preload_interim:/project/ckan \
-    "$CKAN_COPY"
+docker cp datacats_preload_1:/project/ckan \
+    "$HERE/src"
+
+rm -rf "$HERE/src" || true
+mkdir "$HERE/src"
 
 docker run -i --rm \
-    -v "$CKAN_COPY/ckan:/project/ckan" \
+    -v "$HERE/src/ckan:/project/ckan:ro" \
     node:0.10-slim \
-    /bin/bash < compile_css.sh > "$CKAN_COPY/main.debug.css"
+    /bin/bash < "$HERE/compile_less.sh" > "$HERE/src/main.debug.css"
 
-docker rm datacats_preload_master || true
-docker run -i --name datacats_preload_master \
-    lessc_interim \
+docker rm datacats_preload_2 || true
+docker run -i --name datacats_preload_2 \
+    datacats_preload_1_image \
     /bin/bash -c \
     'cat > /project/ckan/ckan/public/base/css/main.debug.css' \
-    < "$CKAN_COPY/main.debug.css"
-docker commit datacats_preload_master datacats/web:preload_master
+    < "$HERE/src/main.debug.css"
+docker rmi datacats/web:preload_master
+docker commit datacats_preload_2 datacats/web:preload_master
 
-docker rm datacats_preload_interim
-docker rm datacats_preload_master
+docker rm -f datacats_preload_1
+docker rm -f datacats_preload_2
 
 [ "$1" == "push" ] || exit
 

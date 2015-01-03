@@ -1,5 +1,3 @@
-#! /bin/bash
-
 # Copyright 2014-2015 Boxkite Inc.
 
 # This file is part of the DataCats package and is released under
