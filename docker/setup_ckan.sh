@@ -15,5 +15,6 @@ git clone --depth 1 --branch $BRANCH \
     https://github.com/ckan/ckan.git /project/ckan
 $CKAN_HOME/bin/pip install -r /project/ckan/requirements.txt
 $CKAN_HOME/bin/pip install -e /project/ckan/
+$CKAN_HOME/bin/pip install ckanapi
 
 exit
