@@ -44,7 +44,6 @@ def install(project, opts):
         write('.')
     write('\n')
 
-    address = project.web_address()
-    if address is not None:
+    if 'web' in project.containers_running():
         # FIXME: reload without changing debug setting?
         manage.reload(project, {'--production': False})
