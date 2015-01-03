@@ -21,11 +21,11 @@ docker run -i --name datacats_preload_1 \
 docker rmi datacats_preload_1_image || true
 docker commit datacats_preload_1 datacats_preload_1_image
 
-docker cp datacats_preload_1:/project/ckan \
-    "$HERE/src"
-
 rm -rf "$HERE/src" || true
 mkdir "$HERE/src"
+
+docker cp datacats_preload_1:/project/ckan \
+    "$HERE/src"
 
 docker run -i --rm \
     -v "$HERE/src/ckan:/project/ckan:ro" \
@@ -41,6 +41,7 @@ docker run -i --name datacats_preload_2 \
 docker rmi datacats/web:preload_master
 docker commit datacats_preload_2 datacats/web:preload_master
 
+rm -rf "$HERE/src"
 docker rm -f datacats_preload_1
 docker rm -f datacats_preload_2
 
