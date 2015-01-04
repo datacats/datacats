@@ -352,8 +352,10 @@ class Project(object):
         port = self.port
         command = None
         if not production:
-            command = ['/usr/lib/ckan/bin/paster', '--plugin=ckan',
-                'serve', '/project/development.ini', '--reload']
+            command = [
+                '/bin/su', 'www-data', '-s', '/bin/sh', '-c',
+                '/usr/lib/ckan/bin/paster --plugin=ckan'
+                ' serve /project/development.ini --reload']
 
         def bindings():
             return {5000: port if is_boot2docker() else ('127.0.0.1', port)}
