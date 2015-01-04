@@ -5,6 +5,7 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 import sys
+from getpass import getpass
 
 from datacats.project import Project, ProjectError
 
@@ -48,9 +49,20 @@ def create(opts):
         write('Site available at {0}\n'.format(project.web_address()))
 
     if not opts['--no-sysadmin']:
-        write('\n')
-        project.interactive_set_admin_password()
+        adminpw = confirm_password()
+        project.create_admin_set_password(adminpw)
 
     if opts['--image-only']:
         project.stop_data_and_search()
         write('.\n')
+
+def confirm_password():
+    while True:
+        p1 = getpass('admin user password:')
+        if len(p1) < 4:
+            print 'At least 4 characters are required'
+            continue
+        p2 = getpass('confirm password:')
+        if p1 == p2:
+            return p1
+        print 'Passwords do not match'

@@ -5,9 +5,10 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from os.path import abspath, split as path_split, expanduser, isdir, exists
-from os import makedirs, getcwd
+from os import makedirs, getcwd, remove
 import subprocess
 import shutil
+import json
 from string import uppercase, lowercase, digits
 from random import SystemRandom
 from sha import sha
@@ -441,20 +442,27 @@ class Project(object):
             return None
         return 'http://{0}:{1}/'.format(docker_host(), port)
 
-    def interactive_set_admin_password(self):
+    def create_admin_set_password(self, password):
         """
-        launch docker client interactively to set the admin password
+        create 'admin' account with given password
         """
-        # FIXME: consider switching this to dockerpty
-        # using subprocess for docker client's interactive session
-        subprocess.call([
-            '/usr/bin/docker', 'run', '--rm', '-it',
-            '-v', self.datadir + '/venv:/usr/lib/ckan:ro',
-            '-v', self.target + ':/project:ro',
-            '--link', 'datacats_search_' + self.name + ':solr',
-            '--link', 'datacats_data_' + self.name + ':db',
-            'datacats/web', '/usr/lib/ckan/bin/paster', '--plugin=ckan',
-            'sysadmin', 'add', 'admin', '-c' '/project/ckan.ini'])
+        with open(self.datadir + '/run/admin.json', 'w') as out:
+            json.dump({
+                'name': 'admin',
+                'email': 'none',
+                'password': password,
+                'sysadmin': True},
+                out)
+        web_command(
+            command=['/bin/bash', '-c',
+                '/usr/lib/ckan/bin/ckanapi -c /project/ckan.ini '
+                'action user_create -i < /input/admin.json'],
+            ro={self.datadir + '/venv': '/usr/lib/ckan',
+                self.target: '/project',
+                self.datadir + '/run/admin.json': '/input/admin.json'},
+            links={'datacats_search_' + self.name: 'solr',
+                'datacats_data_' + self.name: 'db'})
+        remove(self.datadir + '/run/admin.json')
 
     def interactive_shell(self):
         """
