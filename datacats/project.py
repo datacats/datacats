@@ -258,24 +258,24 @@ class Project(object):
 
     def create_ckan_ini(self):
         """
-        Use make-config to generate an initial ckan.ini file
+        Use make-config to generate an initial development.ini file
         """
         web_command(
             command='/usr/lib/ckan/bin/paster make-config'
-                ' ckan /project/ckan.ini',
+                ' ckan /project/development.ini',
             ro={self.datadir + '/venv': '/usr/lib/ckan'},
             rw={self.target: '/project'})
 
     def update_ckan_ini(self, skin=True):
         """
-        Use config-tool to update ckan.ini with our project settings
+        Use config-tool to update development.ini with our project settings
 
         :param skin: use project template skin plugin True/False
         """
         p = self.passwords
         command = [
             '/usr/lib/ckan/bin/paster', '--plugin=ckan', 'config-tool',
-            '/project/ckan.ini', '-e',
+            '/project/development.ini', '-e',
             'sqlalchemy.url = postgresql://ckan:'
                 '{CKAN_PASSWORD}@db:5432/ckan'.format(**p),
             'ckan.datastore.read_url = postgresql://ckan_datastore_readonly:'
@@ -318,7 +318,7 @@ class Project(object):
         """
         web_command(
             command='/usr/lib/ckan/bin/paster --plugin=ckan db init'
-                ' -c /project/ckan.ini',
+                ' -c /project/development.ini',
             ro={self.datadir + '/venv': '/usr/lib/ckan',
                 self.target: '/project'},
             links={'datacats_search_' + self.name: 'solr',
@@ -345,7 +345,7 @@ class Project(object):
         command = None
         if not production:
             command = ['/usr/lib/ckan/bin/paster', '--plugin=ckan',
-                'serve', '/project/ckan.ini', '--reload']
+                'serve', '/project/development.ini', '--reload']
 
         def bindings():
             return {5000: port if is_boot2docker() else ('127.0.0.1', port)}
@@ -358,7 +358,8 @@ class Project(object):
                     rw={self.datadir + '/files': '/var/www/storage'},
                     ro={self.datadir + '/venv': '/usr/lib/ckan',
                         self.target: '/project/',
-                        self.datadir + '/run/ckan.ini': '/project/ckan.ini'},
+                        self.datadir + '/run/development.ini':
+                            '/project/development.ini'},
                     links={'datacats_search_' + self.name: 'solr',
                         'datacats_data_' + self.name: 'db'},
                     command=command,
@@ -371,13 +372,13 @@ class Project(object):
 
     def _create_run_ini(self, port, production):
         """
-        Create run/ckan.ini in datadir with debug and site_url overridden
+        Create run/development.ini in datadir with debug and site_url overridden
         """
         cp = SafeConfigParser()
         try:
-            cp.read([self.target + '/ckan.ini'])
+            cp.read([self.target + '/development.ini'])
         except ConfigParserError:
-            raise ProjectError('Error reading ckan.ini')
+            raise ProjectError('Error reading development.ini')
 
         cp.set('DEFAULT', 'debug', 'false' if production else 'true')
         site_url = 'http://{0}:{1}/'.format(docker_host(), port)
@@ -385,7 +386,7 @@ class Project(object):
 
         if not isdir(self.datadir + '/run'):
             makedirs(self.datadir + '/run')  # upgrade old datadir
-        with open(self.datadir + '/run/ckan.ini', 'w') as runini:
+        with open(self.datadir + '/run/development.ini', 'w') as runini:
             cp.write(runini)
 
     def _choose_port(self):
@@ -455,7 +456,7 @@ class Project(object):
                 out)
         web_command(
             command=['/bin/bash', '-c',
-                '/usr/lib/ckan/bin/ckanapi -c /project/ckan.ini '
+                '/usr/lib/ckan/bin/ckanapi -c /project/development.ini '
                 'action user_create -i < /input/admin.json'],
             ro={self.datadir + '/venv': '/usr/lib/ckan',
                 self.target: '/project',
@@ -478,7 +479,7 @@ class Project(object):
             '--link', 'datacats_search_' + self.name + ':solr',
             '--link', 'datacats_data_' + self.name + ':db',
             'datacats/web', '/bin/bash', '-c',
-            'cd /project/ckan; source /usr/lib/ckan/bin/activate '
+            'cd /project; source /usr/lib/ckan/bin/activate '
             '; /bin/bash'])
         # in case different user inside container created project files:
         self.fix_project_permissions()
