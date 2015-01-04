@@ -181,6 +181,14 @@ class Project(object):
         makedirs(self.datadir + '/run')
         makedirs(self.target)
 
+    def create_bash_profile(self):
+        """
+        Create a default .bash_profile for the shell user that
+        activates the ckan virtualenv
+        """
+        with open(self.target + '/.bash_profile', 'w') as prof:
+            prof.write('source /usr/lib/ckan/bin/activate\n')
+
     def _preload_image(self):
         """
         Return the preloaded ckan src and venv image name
@@ -478,11 +486,11 @@ class Project(object):
             '-v', self.datadir + '/files:/var/www/storage:rw',
             '--link', 'datacats_search_' + self.name + ':solr',
             '--link', 'datacats_data_' + self.name + ':db',
+            '--hostname', self.name,
             'datacats/web', '/bin/bash', '-c',
-            'cd /project; source /usr/lib/ckan/bin/activate '
-            '; /bin/bash'])
-        # in case different user inside container created project files:
-        self.fix_project_permissions()
+            'userdel www-data; useradd -d /project '
+            '-u $(stat -c %u /project) -M -s /bin/bash shell; '
+            'su -l shell'])
 
     def install_package_requirements(self, psrc):
         """

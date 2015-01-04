@@ -24,6 +24,7 @@ def create(opts):
 
     steps = [
         project.create_directories,
+        project.create_bash_profile,
         project.save,
         project.create_virtualenv,
         project.create_source,
