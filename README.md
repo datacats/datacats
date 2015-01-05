@@ -7,7 +7,7 @@ The easiest way to develop and deploy CKAN cross-platform
 
 OSX | Linux | Windows
 --- | --- | ---
-1. Install boot2docker | 1. Install docker | Support coming soon
+1. Install boot2docker | 1. Install docker | coming soon
 2. `pip install datacats` | 2. `pip install datacats` |
 
 
@@ -21,48 +21,52 @@ This will create a new project called "myproject" in the current
 directory, new data files in "~/.datacats/myproject" and start
 your project containers, serving your new site locally.
 
+```
+Creating project "myproject".............
+Site available at http://localhost:5425/
+admin user password:
+```
+
 Open your brower to the address shown to try out your new site.
 
 
 ## Customize your project
 
-First "cd" into your project directory so that the
-datacats command knows which project to work on:
-```
-cd myproject
-```
-
-In this directory you will find a "src"
-directory with "ckan" and "ckanext-myproject" subdirectories.
-"ckanext-myproject" is a simple example extension that modifies the
-CKAN site header to include the text "myproject".
+In your project directory you will find
+"ckan" and "ckanext-myproject" subdirectories.
+"ckanext-myproject" is a simple example extension that modifies
+some templates and adds some static files.
 
 Customize your Jinja2 templates in
-"src/ckanext-myproject/ckanext/myproject/templates", using
-the files in "src/ckan/ckan/templates" as a reference.
+"ckanext-myproject/ckanext/myproject/templates", using
+the files in "ckan/ckan/templates" as a reference.
 
 Full CKAN extension possibilities are covered in the official CKAN
 documentation.
 
-Test your changes locally by running:
-```
-datacats restart
-```
+The site is run with "paster serve --reload" by default so your
+Changes to templates and source files should be visible almost immediately
+after saving them. Refresh your browser window to see the changes.
 
-Refresh your browser window to see the changes.
+For changes to configuration files and
+new template files use "reload" to force a site reload.
+
+```
+datacats reload myproject
+```
 
 
 ## Add existing extensions
 
 Install any of the 100+ existing CKAN extensions.
 
-First download or clone the extension in to your project's "src" folder,
+First download or clone the extension in to your project directory,
 then add the plugins and configuration options as required by the extension
-to the "ckan.ini" file in your project directory.
+to the "development.ini" file.
 
-Then reinstall all project extensions and dependencies found under "src" with:
+Reinstall all project extensions and reload the site with:
 ```
-datacats install
+datacats install myproject
 ```
 
 Refresh your browser window to see the changes.
@@ -72,7 +76,7 @@ Refresh your browser window to see the changes.
 
 Deploy your customized CKAN project to the DataCats cloud service.
 ```
-datacats deploy
+datacats deploy myproject
 ```
 
 Follow the prompts and your site will be live in minutes.

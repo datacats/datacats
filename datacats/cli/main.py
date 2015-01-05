@@ -17,7 +17,7 @@ Usage:
   datacats info [PROJECT] [-qr]
   datacats list
   datacats open [PROJECT]
-  datacats shell [PROJECT]
+  datacats shell [PROJECT] [COMMAND...]
   datacats install [PROJECT] [-c]
   datacats purge [PROJECT [--delete-project]]
 
@@ -91,7 +91,7 @@ def main():
     if opts['reload']:
         return manage.reload(project, opts)
     if opts['shell']:
-        return manage.shell(project)
+        return manage.shell(project, opts)
     if opts['info']:
         return manage.info(project, opts)
     if opts['logs']:
