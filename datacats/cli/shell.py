@@ -6,5 +6,5 @@
 
 def shell(project, opts):
     project.start_data_and_search()
-    project.interactive_shell(opts['COMMAND'])
+    return project.interactive_shell(opts['COMMAND'])
 

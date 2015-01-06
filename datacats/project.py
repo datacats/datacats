@@ -486,7 +486,7 @@ class Project(object):
             command = []
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
-        subprocess.call([
+        return subprocess.call([
             '/usr/bin/docker', 'run', '--rm', '-it',
             '-v', self.datadir + '/venv:/usr/lib/ckan:rw',
             '-v', self.target + ':/project:rw',
