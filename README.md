@@ -2,6 +2,9 @@
 
 Easy CKAN development and deployment
 
+DataCats uses Docker to give you fully self-contained CKAN dev environments on
+any platform, along with a command to deploy that exact environment to the cloud.
+
 
 ## Install
 
@@ -94,4 +97,3 @@ datacats deploy
 ```
 
 Follow the prompts and your site will be live in minutes.
-
