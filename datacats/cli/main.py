@@ -82,7 +82,6 @@ def main():
     option_not_yet_implemented(opts, '--remote')
     option_not_yet_implemented(opts, '--clean')
     command_not_yet_implemented(opts, 'deploy')
-    command_not_yet_implemented(opts, 'open')
 
     if opts['pull']:
         return pull.pull(opts)
@@ -117,5 +116,7 @@ def main():
         return manage.logs(project, opts)
     if opts['install']:
         return install.install(project, opts['--clean'])
+    if opts['open']:
+        return manage.open(project)
 
     print json.dumps(docopt(__doc__), indent=4)

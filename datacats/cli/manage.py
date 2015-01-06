@@ -7,6 +7,7 @@
 from ConfigParser import SafeConfigParser
 from os import listdir
 from os.path import expanduser
+import webbrowser
 
 from datacats.project import Project, ProjectError
 
@@ -70,3 +71,10 @@ def logs(project, opts):
             print message
     except KeyboardInterrupt:
         print
+
+def open(project):
+    addr = project.web_address()
+    if not addr:
+        print "Site not currently running"
+    else:
+        webbrowser.open(addr)
