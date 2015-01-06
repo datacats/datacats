@@ -1,6 +1,6 @@
 # DataCats
 
-Develop and deploy CKAN cross-platform
+Easy CKAN development and deployment
 
 
 ## Install
