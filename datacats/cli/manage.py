@@ -31,10 +31,6 @@ def reload(project, opts):
     project.start_web(opts['--production'])
     print 'Now available at {0}'.format(project.web_address())
 
-def shell(project, opts):
-    project.start_data_and_search()
-    project.interactive_shell(opts['COMMAND'])
-
 def info(project, opts):
     addr = project.web_address()
     if opts['--quiet']:

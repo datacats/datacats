@@ -47,7 +47,7 @@ import json
 import sys
 from docopt import docopt
 
-from datacats.cli import create, manage, install, pull, purge
+from datacats.cli import create, manage, install, pull, purge, shell
 from datacats.project import Project, ProjectError
 
 def option_not_yet_implemented(opts, name):
@@ -91,7 +91,7 @@ def main():
     if opts['reload']:
         return manage.reload(project, opts)
     if opts['shell']:
-        return manage.shell(project, opts)
+        return shell.shell(project, opts)
     if opts['info']:
         return manage.info(project, opts)
     if opts['logs']:
