@@ -28,6 +28,7 @@ admin user password:
 ```
 
 Open your brower to the address shown to try out your new site.
+Enter an admin password at the prompt to create your first sysadmin user.
 
 
 ## Customize your project
@@ -44,32 +45,42 @@ the files in "ckan/ckan/templates" as a reference.
 Full CKAN extension possibilities are covered in the official CKAN
 documentation.
 
-The site is run with "paster serve --reload" by default so your
-Changes to templates and source files should be visible almost immediately
+The site is run with "paster serve --reload" by default so
+changes to templates and source files will be visible almost immediately
 after saving them. Refresh your browser window to see the changes.
 
 For changes to configuration files and
-new template files use "reload" to force a site reload.
+new template files added use "reload" to force a site reload.
 
 ```
 datacats reload myproject
 ```
 
+You may omit "myproject" when running datacats commands from within the
+project directory or any subdirectory.
 
 ## Add existing extensions
 
 Install any of the 100+ existing CKAN extensions.
 
-First download or clone the extension in to your project directory,
-then add the plugins and configuration options as required by the extension
-to the "development.ini" file.
+First download or clone an extension in to your project directory.
+
+```
+cd myproject
+wget https://github.com/ckan/ckanext-pages/archive/master.zip
+unzip master.zip
+```
+
+Then add the plugins and configuration options as required by the extension
+to the "development.ini" file.  For ckanext-pages we add "pages" to the list
+of plugins.
 
 Reinstall all project extensions and reload the site with:
 ```
-datacats install myproject
+datacats install
 ```
 
-Refresh your browser window to see the changes.
+Refresh your browser window to use the new features.
 
 
 ## Deploy your project
