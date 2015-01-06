@@ -20,6 +20,7 @@ Usage:
   datacats shell [PROJECT [COMMAND...]]
   datacats install [PROJECT] [-c]
   datacats purge [PROJECT [--delete-project]]
+  datacats init [PROJECT [PORT]] [-i]
 
 Options:
   -b --bare                   Bare CKAN site with no example extension
@@ -39,8 +40,9 @@ Options:
   -p --production             Run in production mode instead of debug mode
   -q --quiet                  Simple text response suitable for scripting
 
-Create PROJECT must be a path. Other PROJECT values may be a project name
-or a path to the project directory. Project defaults to '.' if not given.
+PROJECT must be a path for the create and init commands. Other PROJECT
+values may be a project name or a path to the project directory.
+PROJECT defaults to '.' if not given.
 """
 
 import json
@@ -80,11 +82,16 @@ def main():
     option_not_yet_implemented(opts, '--remote')
     option_not_yet_implemented(opts, '--clean')
     command_not_yet_implemented(opts, 'deploy')
+    command_not_yet_implemented(opts, 'open')
 
     if opts['pull']:
         return pull.pull(opts)
     if opts['create']:
-        return create.create(opts)
+        return create.create(opts['PROJECT'], opts['PORT'],
+            opts['--bare'], opts['--image-only'], opts['--no-sysadmin'],
+            opts['--ckan'])
+    if opts['init']:
+        return create.init(opts['PROJECT'], opts['PORT'], opts['--image-only'])
     if opts['purge']:
         return purge.purge(opts)
     if opts['list']:
@@ -109,6 +116,6 @@ def main():
     if opts['logs']:
         return manage.logs(project, opts)
     if opts['install']:
-        return install.install(project, opts)
+        return install.install(project, opts['--clean'])
 
     print json.dumps(docopt(__doc__), indent=4)

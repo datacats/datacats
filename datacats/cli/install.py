@@ -14,7 +14,7 @@ def write(s):
     sys.stdout.write(s)
     sys.stdout.flush()
 
-def install(project, opts):
+def install(project, clean=False):
     """
     Install all packages found in the project src directory
     and their requirements.txt files

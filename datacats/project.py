@@ -115,7 +115,7 @@ class Project(object):
         :param project_name: exising project name, path or None to look in
             current or parent directories for project
         :param data_only: set to True to only load from data dir, not
-            the project directory. used for purging project data.
+            the project dir; Used for purging project data.
 
         Raises ProjectError if project can't be found or if there is an
         error parsing the project information.
@@ -125,6 +125,7 @@ class Project(object):
 
         if valid_name(project_name) and isdir(
                 expanduser('~/.datacats/' + project_name)):
+            used_path = False
             datadir = expanduser('~/.datacats/' + project_name)
             with open(datadir + '/project-dir') as pd:
                 wd = pd.read()
@@ -135,6 +136,7 @@ class Project(object):
                     ' location or remove this project data with'
                     ' "datacats purge"')
         else:
+            used_path = True
             wd = abspath(project_name)
             if not isdir(wd):
                 raise ProjectError('No project found with that name')
@@ -146,7 +148,7 @@ class Project(object):
                     raise ProjectError(
                         'Project not found in current directory')
 
-        if data_only and project_name:
+        if data_only and not used_path:
             return cls(project_name, None, datadir)
 
         cp = SafeConfigParser()
@@ -169,12 +171,12 @@ class Project(object):
         project = cls(name, wd, datadir, ckan_version, port)
         project.passwords = passwords
 
-        if project_name is None:
+        if not used_path:
             project._update_saved_project_dir()
 
         return project
 
-    def create_directories(self):
+    def create_directories(self, create_project_dir=True):
         """
         Call once for new projects to create the initial project directories.
         """
@@ -185,7 +187,8 @@ class Project(object):
             makedirs(self.datadir + '/data')
         makedirs(self.datadir + '/files')
         makedirs(self.datadir + '/run')
-        makedirs(self.target)
+        if create_project_dir:
+            makedirs(self.target)
 
     def create_bash_profile(self):
         """
