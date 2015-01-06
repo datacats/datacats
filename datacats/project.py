@@ -21,6 +21,7 @@ from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
     PortAllocatedError, container_logs)
 from datacats.template import ckan_extension_template
+from datacats.scripts import SCRIPTS_DIR, SHELL
 
 class ProjectError(Exception):
     def __init__(self, message, format_args=()):
@@ -486,13 +487,11 @@ class Project(object):
             '-v', self.datadir + '/venv:/usr/lib/ckan:rw',
             '-v', self.target + ':/project:rw',
             '-v', self.datadir + '/files:/var/www/storage:rw',
+            '-v', SHELL + ':/scripts/shell.sh:ro',
             '--link', 'datacats_search_' + self.name + ':solr',
             '--link', 'datacats_data_' + self.name + ':db',
             '--hostname', self.name,
-            'datacats/web', '/bin/bash', '-c',
-            'userdel www-data; useradd -d /project '
-            '-u $(stat -c %u /project) -M -s /bin/bash shell; '
-            'su -l shell'])
+            'datacats/web', '/scripts/shell.sh'])
 
     def install_package_requirements(self, psrc):
         """
