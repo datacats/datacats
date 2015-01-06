@@ -87,7 +87,7 @@ Refresh your browser window to use the new features.
 
 Deploy your customized CKAN project to the DataCats cloud service.
 ```
-datacats deploy myproject
+datacats deploy
 ```
 
 Follow the prompts and your site will be live in minutes.
