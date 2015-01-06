@@ -33,7 +33,7 @@ def reload(project, opts):
 
 def shell(project, opts):
     project.start_data_and_search()
-    project.interactive_shell()
+    project.interactive_shell(opts['COMMAND'])
 
 def info(project, opts):
     addr = project.web_address()

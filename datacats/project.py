@@ -476,10 +476,14 @@ class Project(object):
                 'datacats_data_' + self.name: 'db'})
         remove(self.datadir + '/run/admin.json')
 
-    def interactive_shell(self):
+    def interactive_shell(self, command=None):
         """
-        launch interactive shell (bash) session with all writable volumes
+        launch interactive shell session with all writable volumes
+
+        :param: list of strings to execute instead of bash
         """
+        if not command:
+            command = []
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         subprocess.call([
@@ -491,7 +495,7 @@ class Project(object):
             '--link', 'datacats_search_' + self.name + ':solr',
             '--link', 'datacats_data_' + self.name + ':db',
             '--hostname', self.name,
-            'datacats/web', '/scripts/shell.sh'])
+            'datacats/web', '/scripts/shell.sh'] + command)
 
     def install_package_requirements(self, psrc):
         """

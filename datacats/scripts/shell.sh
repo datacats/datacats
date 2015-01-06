@@ -11,4 +11,9 @@ set -e
 userdel www-data
 
 useradd -d /project -u $(stat -c %u /project) -M -s /bin/bash shell
-su -l shell
+
+if [ "$#" -eq 0 ]; then
+    su -l shell
+else
+    sudo -i -u shell "$@"
+fi

@@ -17,7 +17,7 @@ Usage:
   datacats info [PROJECT] [-qr]
   datacats list
   datacats open [PROJECT]
-  datacats shell [PROJECT] [COMMAND...]
+  datacats shell [PROJECT [COMMAND...]]
   datacats install [PROJECT] [-c]
   datacats purge [PROJECT [--delete-project]]
 
