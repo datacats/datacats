@@ -21,7 +21,7 @@ from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
     PortAllocatedError, container_logs)
 from datacats.template import ckan_extension_template
-from datacats.scripts import SCRIPTS_DIR, SHELL
+from datacats.scripts import WEB, SHELL
 
 class ProjectError(Exception):
     def __init__(self, message, format_args=()):
@@ -361,10 +361,7 @@ class Project(object):
         port = self.port
         command = None
         if not production:
-            command = [
-                '/bin/su', 'www-data', '-s', '/bin/sh', '-c',
-                '/usr/lib/ckan/bin/paster --plugin=ckan'
-                ' serve /project/development.ini --reload']
+            command = ['/scripts/web.sh']
 
         def bindings():
             return {5000: port if is_boot2docker() else ('127.0.0.1', port)}
@@ -378,7 +375,8 @@ class Project(object):
                     ro={self.datadir + '/venv': '/usr/lib/ckan',
                         self.target: '/project/',
                         self.datadir + '/run/development.ini':
-                            '/project/development.ini'},
+                            '/project/development.ini',
+                        WEB: '/scripts/web.sh'},
                     links={'datacats_search_' + self.name: 'solr',
                         'datacats_data_' + self.name: 'db'},
                     command=command,
