@@ -21,8 +21,9 @@ def ckan_extension_template(name, target):
     makedirs(staticdir)
 
     here = dirname(__file__)
-    copyfile(here + '/chart.png', staticdir + '/chart.png')
-    copyfile(here + '/datacats-footer.png', staticdir + '/datacats-footer.png')
+    copyfile(here + '/images/chart.png', staticdir + '/chart.png')
+    copyfile(here + '/images/datacats-footer.png',
+        staticdir + '/datacats-footer.png')
 
     filecontents = [
         (setupdir + '/setup.py', SETUP_PY),
