@@ -112,7 +112,7 @@ class Project(object):
         """
         Return a Project object based on an existing project.
 
-        :param project_name: exising project name or None to look in
+        :param project_name: exising project name, path or None to look in
             current or parent directories for project
         :param data_only: set to True to only load from data dir, not
             the project directory. used for purging project data.
@@ -121,17 +121,11 @@ class Project(object):
         error parsing the project information.
         """
         if project_name is None:
-            wd = abspath(getcwd())
-            while not exists(wd + '/.datacats-project'):
-                oldwd = wd
-                wd, ignore = path_split(wd)
-                if wd == oldwd:
-                    raise ProjectError(
-                        'Project not found in current directory')
-        else:
+            project_name = '.'
+
+        if valid_name(project_name) and isdir(
+                expanduser('~/.datacats/' + project_name)):
             datadir = expanduser('~/.datacats/' + project_name)
-            if not isdir(datadir):
-                raise ProjectError('No project found with that name')
             with open(datadir + '/project-dir') as pd:
                 wd = pd.read()
             if not data_only and not exists(wd + '/.datacats-project'):
@@ -140,6 +134,17 @@ class Project(object):
                     ' Try again without "-p" from the new project directory'
                     ' location or remove this project data with'
                     ' "datacats purge"')
+        else:
+            wd = abspath(project_name)
+            if not isdir(wd):
+                raise ProjectError('No project found with that name')
+
+            while not exists(wd + '/.datacats-project'):
+                oldwd = wd
+                wd, ignore = path_split(wd)
+                if wd == oldwd:
+                    raise ProjectError(
+                        'Project not found in current directory')
 
         if data_only and project_name:
             return cls(project_name, None, datadir)
