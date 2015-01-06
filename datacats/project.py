@@ -363,25 +363,10 @@ class Project(object):
         if not production:
             command = ['/scripts/web.sh']
 
-        def bindings():
-            return {5000: port if is_boot2docker() else ('127.0.0.1', port)}
         while True:
             self._create_run_ini(port, production)
             try:
-                run_container(
-                    name='datacats_web_' + self.name,
-                    image='datacats/web',
-                    rw={self.datadir + '/files': '/var/www/storage'},
-                    ro={self.datadir + '/venv': '/usr/lib/ckan',
-                        self.target: '/project/',
-                        self.datadir + '/run/development.ini':
-                            '/project/development.ini',
-                        WEB: '/scripts/web.sh'},
-                    links={'datacats_search_' + self.name: 'solr',
-                        'datacats_data_' + self.name: 'db'},
-                    command=command,
-                    port_bindings=bindings(),
-                    )
+                self._run_web_container(port, command)
             except PortAllocatedError:
                 port = self._next_port(port)
                 continue
@@ -405,6 +390,26 @@ class Project(object):
             makedirs(self.datadir + '/run')  # upgrade old datadir
         with open(self.datadir + '/run/development.ini', 'w') as runini:
             cp.write(runini)
+
+    def _run_web_container(self, port, command):
+        """
+        Start web comtainer on port with command
+        """
+        run_container(
+            name='datacats_web_' + self.name,
+            image='datacats/web',
+            rw={self.datadir + '/files': '/var/www/storage'},
+            ro={self.datadir + '/venv': '/usr/lib/ckan',
+                self.target: '/project/',
+                self.datadir + '/run/development.ini':
+                    '/project/development.ini',
+                WEB: '/scripts/web.sh'},
+            links={'datacats_search_' + self.name: 'solr',
+                'datacats_data_' + self.name: 'db'},
+            command=command,
+            port_bindings={
+                5000: port if is_boot2docker() else ('127.0.0.1', port)},
+            )
 
     def _choose_port(self):
         """
