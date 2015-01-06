@@ -63,7 +63,19 @@ def command_not_yet_implemented(opts, name):
     sys.exit(1)
 
 def main():
-    opts = docopt(__doc__)
+    args = sys.argv[1:]
+    # separate shell commands from args pre-docopt to allow
+    # passing options as part of command
+    command = []
+    for i, a in enumerate(args):
+        if a.startswith('-'):
+            continue
+        if a == 'shell':
+            command = args[i + 2:]
+            args = args[:i + 2]
+        break
+
+    opts = docopt(__doc__, args)
     option_not_yet_implemented(opts, '--ckan')
     option_not_yet_implemented(opts, '--remote')
     option_not_yet_implemented(opts, '--clean')
@@ -91,7 +103,7 @@ def main():
     if opts['reload']:
         return manage.reload(project, opts)
     if opts['shell']:
-        return shell.shell(project, opts)
+        return shell.shell(project, command)
     if opts['info']:
         return manage.info(project, opts)
     if opts['logs']:
