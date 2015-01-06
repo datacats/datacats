@@ -67,13 +67,16 @@ First download or clone an extension in to your project directory.
 
 ```
 cd myproject
-wget https://github.com/ckan/ckanext-pages/archive/master.zip
-unzip master.zip
+git clone git@github.com:ckan/ckanext-pages.git
 ```
 
 Then add the plugins and configuration options as required by the extension
 to the "development.ini" file.  For ckanext-pages we add "pages" to the list
 of plugins.
+
+```
+ckan.plugins = myproject_skin datastore image_view pages
+```
 
 Reinstall all project extensions and reload the site with:
 ```
