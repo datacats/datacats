@@ -73,7 +73,6 @@ def init(project_dir, port, image_only):
         project = Project.load(project_dir)
         if port:
             project.port = int(port)
-            project.save()
     except ProjectError as e:
         print e
         return
@@ -81,6 +80,7 @@ def init(project_dir, port, image_only):
     write('Creating from existing project "{0}"'.format(project.name))
     steps = [
         lambda: project.create_directories(create_project_dir=False),
+        project.save,
         project.create_virtualenv,
         project.start_data_and_search,
         project.fix_storage_permissions,
