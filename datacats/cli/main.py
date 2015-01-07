@@ -13,10 +13,10 @@ Usage:
   datacats start [PROJECT [PORT] [-p] | -p | [PROJECT] -r]
   datacats reload [PROJECT [PORT] [-p] | -p | [PROJECT] -r]
   datacats deploy [PROJECT]
-  datacats logs [PROJECT] [-f | [-t] [--tail=LINES]] [-d | -s]
+  datacats logs [PROJECT] [-f | [-t] [--tail=LINES]] [-d | -s] [-r]
   datacats info [PROJECT] [-qr]
   datacats list
-  datacats open [PROJECT]
+  datacats open [PROJECT] [-r]
   datacats shell [PROJECT [COMMAND...]]
   datacats install [PROJECT] [-c]
   datacats purge [PROJECT [--delete-project]]
