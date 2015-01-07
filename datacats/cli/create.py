@@ -24,7 +24,7 @@ def create(project_name, port, bare, image_only, no_sysadmin, ckan):
         project = Project.new(project_name, 'master', port)
     except ProjectError as e:
         print e
-        return
+        return 1
 
     write('Creating project "{0}"'.format(project.name))
     steps = [
@@ -75,7 +75,7 @@ def init(project_dir, port, image_only):
             project.port = int(port)
     except ProjectError as e:
         print e
-        return
+        return 1
 
     write('Creating from existing project "{0}"'.format(project.name))
     steps = [
@@ -101,8 +101,12 @@ def init(project_dir, port, image_only):
     if image_only:
         project.stop_data_and_search()
     else:
-        project.start_web()
-        write('Site available at {0}\n'.format(project.web_address()))
+        try:
+            project.start_web()
+            write('Site available at {0}\n'.format(project.web_address()))
+        except ProjectError as e:
+            print e
+            return 1
 
 
 def confirm_password():
