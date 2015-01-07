@@ -9,9 +9,9 @@
 Usage:
   datacats pull
   datacats create PROJECT [PORT] [-bin] [--ckan=CKAN_VERSION]
-  datacats start [PROJECT [PORT] [-p] | -p | [PROJECT] -r]
   datacats stop [PROJECT] [-r]
-  datacats reload [PROJECT] [-p | -r]
+  datacats start [PROJECT [PORT] [-p] | -p | [PROJECT] -r]
+  datacats reload [PROJECT [PORT] [-p] | -p | [PROJECT] -r]
   datacats deploy [PROJECT]
   datacats logs [PROJECT] [-f | [-t] [--tail=LINES]] [-d | -s]
   datacats info [PROJECT] [-qr]
@@ -107,7 +107,9 @@ def main():
     if opts['start']:
         return manage.start(project, opts)
     if opts['reload']:
-        return manage.reload(project, opts)
+        return manage.reload_(project, opts)
+    if opts['debug']:
+        return manage.debug(project)
     if opts['shell']:
         return shell.shell(project, command)
     if opts['info']:

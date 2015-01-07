@@ -20,19 +20,14 @@ def start(project, opts):
     if address is not None:
         print 'Already running at {0}'.format(address)
         return
+    reload_(project, opts)
+
+def reload_(project, opts):
     if opts['PORT']:
         project.port = int(opts['PORT'])
         project.save()
-    project.start_data_and_search()
-    try:
-        project.start_web(opts['--production'])
-        print 'Now available at {0}'.format(project.web_address())
-    except ProjectError as e:
-        print e
-        return 1
-
-def reload(project, opts):
-    project.stop_web()
+    if 'data' not in project.containers_running():
+        project.start_data_and_search()
     try:
         project.start_web(opts['--production'])
         print 'Now available at {0}'.format(project.web_address())
