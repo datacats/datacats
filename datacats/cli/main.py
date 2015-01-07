@@ -108,8 +108,6 @@ def main():
         return manage.start(project, opts)
     if opts['reload']:
         return manage.reload_(project, opts)
-    if opts['debug']:
-        return manage.debug(project)
     if opts['shell']:
         return shell.shell(project, command)
     if opts['info']:
