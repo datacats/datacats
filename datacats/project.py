@@ -22,6 +22,10 @@ from datacats.docker import (web_command, run_container, remove_container,
     PortAllocatedError, container_logs)
 from datacats.template import ckan_extension_template
 from datacats.scripts import WEB, SHELL
+from datacats.network import wait_for_service_available, ServiceTimeout
+
+WEB_START_TIMEOUT_SECONDS = 6
+
 
 class ProjectError(Exception):
     def __init__(self, message, format_args=()):
@@ -132,7 +136,7 @@ class Project(object):
             if not data_only and not exists(wd + '/.datacats-project'):
                 raise ProjectError(
                     'Project data found but project directory is missing.'
-                    ' Try again without "-p" from the new project directory'
+                    ' Try again from the new project directory'
                     ' location or remove this project data with'
                     ' "datacats purge"')
         else:
@@ -371,6 +375,7 @@ class Project(object):
                 port = self._next_port(port)
                 continue
             break
+        self._wait_for_web_available(port)
 
     def _create_run_ini(self, port, production):
         """
@@ -410,6 +415,23 @@ class Project(object):
             port_bindings={
                 5000: port if is_boot2docker() else ('127.0.0.1', port)},
             )
+
+    def _wait_for_web_available(self, port):
+        """
+        Wait for the web server to become available or raise ProjectError
+        if it fails to start.
+        """
+        try:
+            if not wait_for_service_available(
+                    'datacats_web_' + self.name,
+                    docker_host(),
+                    port,
+                    WEB_START_TIMEOUT_SECONDS):
+                raise ProjectError('Failed to start web container.'
+                    ' Run "datacats logs" to check the output.')
+        except ServiceTimeout:
+            ProjectError('Timeout waiting for web container to start.'
+                ' Run "datacats logs" to check the output.')
 
     def _choose_port(self):
         """
