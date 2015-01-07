@@ -465,7 +465,10 @@ class Project(object):
         info = inspect_container('datacats_web_' + self.name)
         if info is None:
             return None
-        return info['NetworkSettings']['Ports']['5000/tcp'][0]['HostPort']
+        try:
+            return info['NetworkSettings']['Ports']['5000/tcp'][0]['HostPort']
+        except TypeError:
+            return None
 
     def containers_running(self):
         """
@@ -474,7 +477,10 @@ class Project(object):
         """
         running = []
         for n in ['web', 'data', 'search']:
-            if inspect_container('datacats_' + n + '_' + self.name):
+            info = inspect_container('datacats_' + n + '_' + self.name)
+            if info and not info['State']['Running']:
+                running.append(n + '(halted)')
+            elif info:
                 running.append(n)
         return running
 
