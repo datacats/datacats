@@ -23,6 +23,7 @@ def start(project, opts):
     reload_(project, opts)
 
 def reload_(project, opts):
+    project.stop_web()
     if opts['PORT']:
         project.port = int(opts['PORT'])
         project.save()
