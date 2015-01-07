@@ -55,8 +55,11 @@ def create(project_name, port, bare, image_only, no_sysadmin, ckan):
         write('Site available at {0}\n'.format(project.web_address()))
 
     if not no_sysadmin:
-        adminpw = confirm_password()
-        project.create_admin_set_password(adminpw)
+        try:
+            adminpw = confirm_password()
+            project.create_admin_set_password(adminpw)
+        except KeyboardInterrupt:
+            pass
 
     if image_only:
         project.stop_data_and_search()
