@@ -424,13 +424,12 @@ class Project(object):
         try:
             if not wait_for_service_available(
                     'datacats_web_' + self.name,
-                    docker_host(),
-                    port,
+                    self.web_address(),
                     WEB_START_TIMEOUT_SECONDS):
                 raise ProjectError('Failed to start web container.'
                     ' Run "datacats logs" to check the output.')
         except ServiceTimeout:
-            ProjectError('Timeout waiting for web container to start.'
+            raise ProjectError('Timeout waiting for web container to start.'
                 ' Run "datacats logs" to check the output.')
 
     def _choose_port(self):

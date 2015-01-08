@@ -5,7 +5,8 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 import time
-import socket
+from requests import get, ConnectionError
+#from requests.errors import ReadTimeout
 
 from datacats.docker import inspect_container
 
@@ -15,7 +16,7 @@ class ServiceTimeout(Exception):
 RETRY_DELAY_SECONDS = 0.1
 READ_TIMEOUT_SECONDS = 0.1
 
-def wait_for_service_available(container, host, port, timeout):
+def wait_for_service_available(container, url, timeout):
     """
     Wait up to timeout seconds for service at host:port
     to start.
@@ -30,21 +31,18 @@ def wait_for_service_available(container, host, port, timeout):
         remaining = start + timeout - time.time()
         if remaining < 0:
             raise ServiceTimeout
-        s = socket.socket(socket.AF_INET)
-        s.settimeout(READ_TIMEOUT_SECONDS)
         try:
-            s.connect((host, port))
-            s.recv(1)
-        except socket.timeout:
+            response = get(url)
+            if 500 <= response.status_code < 600:
+                return False
             return True
-        except socket.error:
+        except ConnectionError:
             pass
-        finally:
-            s.close()
         if not inspect_container(container)['State']['Running']:
             return False
 
         remaining = start + timeout - time.time()
         delay = max(0, min(RETRY_DELAY_SECONDS, remaining))
         time.sleep(delay)
+
     raise ServiceTimeout
