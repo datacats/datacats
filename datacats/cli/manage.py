@@ -28,22 +28,18 @@ def start(project, opts):
     reload_(project, opts)
 
 def reload_(project, opts):
+    project.stop_web()
+    if opts['PORT']:
+        project.port = int(opts['PORT'])
+        project.save()
+    if 'data' not in project.containers_running():
+        project.start_data_and_search()
     try:
-        if (not opts['--production'] and not opts['PORT']
-                and project.web_mode() == 'development'):
-            project.quick_web_reload()
-        else:
-            project.stop_web()
-            if opts['PORT']:
-                project.port = int(opts['PORT'])
-                project.save()
-            if 'data' not in project.containers_running():
-                project.start_data_and_search()
-            project.start_web(opts['--production'])
+        project.start_web(opts['--production'])
+        print 'Now available at {0}'.format(project.web_address())
     except ProjectError as e:
         print e
         return 1
-    print 'Now available at {0}'.format(project.web_address())
 
 def info(project, opts):
     addr = project.web_address()

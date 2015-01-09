@@ -19,7 +19,7 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
-    PortAllocatedError, container_logs, kill)
+    PortAllocatedError, container_logs)
 from datacats.template import ckan_extension_template
 from datacats.scripts import WEB, SHELL
 from datacats.network import wait_for_service_available, ServiceTimeout
@@ -375,7 +375,7 @@ class Project(object):
                 port = self._next_port(port)
                 continue
             break
-        self._wait_for_web_available()
+        self._wait_for_web_available(port)
 
     def _create_run_ini(self, port, production):
         """
@@ -416,7 +416,7 @@ class Project(object):
                 5000: port if is_boot2docker() else ('127.0.0.1', port)},
             )
 
-    def _wait_for_web_available(self):
+    def _wait_for_web_available(self, port):
         """
         Wait for the web server to become available or raise ProjectError
         if it fails to start.
@@ -431,16 +431,6 @@ class Project(object):
         except ServiceTimeout:
             raise ProjectError('Timeout waiting for web container to start.'
                 ' Run "datacats logs" to check the output.')
-
-    def quick_web_reload(self):
-        """
-        Recreate ini and send a SIGUSR1 to the web container to
-        ask it to re-run paster serve.
-        """
-        self._create_run_ini(port = self._current_web_port(), production=False)
-        kill('datacats_web_' + self.name, 'SIGUSR1')
-        self._wait_for_web_available()
-
 
     def _choose_port(self):
         """
@@ -501,19 +491,6 @@ class Project(object):
         if port is None:
             return None
         return 'http://{0}:{1}/'.format(docker_host(), port)
-
-    def web_mode(self):
-        """
-        Return 'production', 'development' or None if not running
-        """
-        info = inspect_container('datacats_web_' + self.name)
-        if not info or not info['State']['Running']:
-            return None
-        # FIXME: run/development.ini is the only place this is stored
-        cp = SafeConfigParser()
-        cp.read([self.datadir + '/run/development.ini'])
-        ini_debug = cp.getboolean('DEFAULT', 'debug')
-        return 'development' if ini_debug else 'production'
 
     def create_admin_set_password(self, password):
         """
