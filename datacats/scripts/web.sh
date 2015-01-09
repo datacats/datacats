@@ -8,11 +8,7 @@
 
 set -e
 
-function reload_web {
-	kill "$!"
-}
-
-trap reload_web SIGUSR1
+trap 'kill $!' SIGUSR1
 
 while true; do
 	sudo -u www-data /usr/lib/ckan/bin/paster --plugin=ckan serve \
