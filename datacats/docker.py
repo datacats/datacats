@@ -195,3 +195,5 @@ def data_only_container(name, volumes):
         volumes=volumes,
         detach=True)
     return c
+
+kill = _docker.kill
