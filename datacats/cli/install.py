@@ -48,4 +48,4 @@ def install(project, clean=False):
 
     if 'web' in project.containers_running():
         # FIXME: reload without changing debug setting?
-        manage.reload(project, {'--production': False})
+        manage.reload_(project, {'--production': False})
