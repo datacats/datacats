@@ -24,7 +24,7 @@ from datacats.template import ckan_extension_template
 from datacats.scripts import WEB, SHELL
 from datacats.network import wait_for_service_available, ServiceTimeout
 
-WEB_START_TIMEOUT_SECONDS = 6
+WEB_START_TIMEOUT_SECONDS = 30
 
 
 class ProjectError(Exception):
