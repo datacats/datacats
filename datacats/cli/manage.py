@@ -8,8 +8,13 @@ from ConfigParser import SafeConfigParser
 from os import listdir
 from os.path import expanduser
 import webbrowser
+import sys
 
 from datacats.project import Project, ProjectError
+
+def write(s):
+    sys.stdout.write(s)
+    sys.stdout.flush()
 
 def stop(project):
     project.stop_web()
@@ -76,7 +81,7 @@ def logs(project, opts):
         return
     try:
         for message in l:
-            print message
+            write(message)
     except KeyboardInterrupt:
         print
 
