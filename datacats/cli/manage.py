@@ -116,7 +116,7 @@ def logs(project, opts):
     """Display or follow container logs
 
 Usage:
-  datacats logs [-d | -s] [-t] [--tail=LINES] [-r] [PROJECT]
+  datacats logs [-d | -s] [-tr] [--tail=LINES] [PROJECT]
   datacats logs -f [-d | -s] [-r] [PROJECT]
 
 Options:
