@@ -7,8 +7,8 @@
 """datacats command line interface
 
 Usage:
-  datacats COMMAND [OPTIONS...] [ARGUMENTS...]
-  datacats [COMMAND] --help
+  datacats COMMAND [ARGUMENTS...]
+  datacats --help [COMMAND]
   datacats --version
 
 The datacats commands available are:
@@ -34,6 +34,7 @@ arguments available to each command.
 import json
 import sys
 from docopt import docopt
+import pkg_resources
 
 from datacats.cli import create, manage, install, pull, purge, shell, deploy
 from datacats.project import Project, ProjectError
@@ -81,7 +82,10 @@ def main():
         command_fn = COMMANDS.get(a)
         break
     else:
-        return docopt(__doc__, args)
+        if help_:
+            args = ['--help']
+        return docopt(__doc__, args,
+            version=pkg_resources.require("datacats")[0].version)
     if not command_fn:
         return docopt(__doc__, ['--help'])
 
