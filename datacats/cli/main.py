@@ -23,7 +23,7 @@ The datacats commands available are:
   pull        Download or update required datacats docker images
   purge       Purge project database and uploaded files
   reload      Reload project source and configuration
-  shell       Run commands or interactive shell within this project
+  shell       Run a command or interactive shell within this project
   start       Create containers to start serving project
   stop        Stop serving project and remove all its containers
 
@@ -85,7 +85,7 @@ def main():
     try:
         # shell is special: options might belong to the command being executed
         if command_fn == shell.shell:
-            return command_fn(args[i + 2:], args[:i + 2])
+            return command_fn(args[:i + 2], args[i + 2:])
 
         opts = docopt(command_fn.__doc__, args)
 
