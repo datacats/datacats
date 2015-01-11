@@ -34,7 +34,8 @@ def start(project, opts):
     """Create containers to start serving project
 
 Usage:
-  datacats start [PROJECT [PORT]] [-p] | -p | [PROJECT] -r]
+  datacats start [PROJECT [PORT]] [-p]
+  datacats start [PROJECT] -r
 
 Options:
   -p --production    Start with apache and debug=false
