@@ -13,7 +13,7 @@ def purge(opts):
     """Purge project database and uploaded files
 
 Usage:
-  datacats purge [PROJECT [--delete-project]]
+  datacats purge [PROJECT] [--delete-project]
 
 Options:
   --delete-project   Delete project folder as well as its data
