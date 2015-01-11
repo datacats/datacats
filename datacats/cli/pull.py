@@ -18,9 +18,11 @@ IMAGES = [
     ]
 
 def pull(opts):
-    """
-    Pull down all docker images used by DataCats
-    """
+    """Download or update required datacats docker images
+
+Usage:
+  datacats pull
+"""
 
     sameline = False
     for i in IMAGES:

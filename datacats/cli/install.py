@@ -14,11 +14,19 @@ def write(s):
     sys.stdout.write(s)
     sys.stdout.flush()
 
-def install(project, clean=False):
-    """
-    Install all packages found in the project src directory
-    and their requirements.txt files
-    """
+def install(project, opts):
+    """Install or reinstall Python packages within this project
+
+Usage:
+  datacats install [PROJECT] [-c]
+
+Options:
+  -c --clean         Reinstall into a clean virtualenv
+
+PROJECT may be a project name or a path to a project directory. Default: '.'
+"""
+    clean = opts['--clean']
+
     srcdirs = set()
     reqdirs = set()
     for d in listdir(project.target):
