@@ -10,14 +10,20 @@ from shutil import rmtree
 from datacats.project import Project, ProjectError
 
 def purge(opts):
+    """Purge project database and uploaded files
+
+Usage:
+  datacats purge [PROJECT] [--delete-project]
+
+Options:
+  --delete-project   Delete project folder as well as its data
+
+PROJECT may be a project name or a path to a project directory. Default: '.'
+"""
     try:
         project = Project.load(opts['PROJECT'])
     except ProjectError as e:
-        try:
-            project = Project.load(opts['PROJECT'], data_only=True)
-        except ProjectError:
-            print e  # first error, not the second one
-            return
+        project = Project.load(opts['PROJECT'], data_only=True)
 
     project.stop_web()
     project.stop_data_and_search()

@@ -7,116 +7,111 @@
 """datacats command line interface
 
 Usage:
-  datacats pull
-  datacats create PROJECT [PORT] [-bin] [--ckan=CKAN_VERSION]
-  datacats stop [PROJECT] [-r]
-  datacats start [PROJECT [PORT] [-p] | -p | [PROJECT] -r]
-  datacats reload [PROJECT [PORT] [-p] | -p | [PROJECT] -r]
-  datacats deploy [PROJECT]
-  datacats logs [PROJECT] [-f | [-t] [--tail=LINES]] [-d | -s] [-r]
-  datacats info [PROJECT] [-qr]
-  datacats list
-  datacats open [PROJECT] [-r]
-  datacats shell [PROJECT [COMMAND...]]
-  datacats install [PROJECT] [-c]
-  datacats purge [PROJECT [--delete-project]]
-  datacats init [PROJECT [PORT]] [-i]
+  datacats COMMAND [OPTIONS...] [ARGUMENTS...]
+  datacats [COMMAND] --help
+  datacats --version
 
-Options:
-  -b --bare                   Bare CKAN site with no example extension
-  -c --clean                  Reinstall into a clean virtual environment
-  --ckan=CKAN_VERSION         Use CKAN version CKAN_VERSION, defaults to
-                              latest development release
-  -d --data-logs              Show database logs instead of web logs
-  --delete-project            Delete project folder as well as its data
-  -f --follow                 Follow logs instead of exiting immediately
-  -i --image-only             Only create the project, don't start containers
-  -r --remote                 Operate on cloud-deployed production datacats
-                              instance
-  -s --search-logs            Show search logs instead of web logs
-  -t --timestamps             Include timestamps in logs
-  --tail=LINES                Number of lines to show [default: all]
-  -n --no-sysadmin            Don't create an initial sysadmin user account
-  -p --production             Run in production mode instead of debug mode
-  -q --quiet                  Simple text response suitable for scripting
+The datacats commands available are:
+  create      Create a new project
+  deploy      Deploy project to production DataCats.com cloud service
+  info        Display information about project and running containers
+  init        Initialize a purged project or copied project directory
+  install     Install or reinstall Python packages within this project
+  list        List all projects for this user
+  logs        Display or follow container logs
+  open        Open web browser window to this project
+  pull        Download or update required datacats docker images
+  purge       Purge project database and uploaded files
+  reload      Reload project source and configuration
+  shell       Run a command or interactive shell within this project
+  start       Create containers to start serving project
+  stop        Stop serving project and remove all its containers
 
-PROJECT must be a path for the create and init commands. Other PROJECT
-values may be a project name or a path to the project directory.
-PROJECT defaults to '.' if not given.
+See 'datacats help COMMAND' for information about options and
+arguments available to each command.
 """
 
 import json
 import sys
 from docopt import docopt
 
-from datacats.cli import create, manage, install, pull, purge, shell
+from datacats.cli import create, manage, install, pull, purge, shell, deploy
 from datacats.project import Project, ProjectError
 
+COMMANDS = {
+    'create': create.create,
+    'deploy': deploy.deploy,
+    'info': manage.info,
+    'init': create.init,
+    'install': install.install,
+    'list': manage.list_,
+    'logs': manage.logs,
+    'open': manage.open_,
+    'pull': pull.pull,
+    'purge': purge.purge,
+    'reload': manage.reload_,
+    'shell': shell.shell,
+    'start': manage.start,
+    'stop': manage.stop,
+}
+
 def option_not_yet_implemented(opts, name):
-    if not opts[name]:
+    if name not in opts or not opts[name]:
         return
     print "Option {0} is not yet implemented.".format(name)
     sys.exit(1)
 
 def command_not_yet_implemented(opts, name):
-    if not opts[name]:
+    if name not in opts or not opts[name]:
         return
     print "Command {0} is not yet implemented.".format(name)
     sys.exit(1)
 
 def main():
     args = sys.argv[1:]
-    # separate shell commands from args pre-docopt to allow
-    # passing options as part of command
-    command = []
+    help_ = False
+    # Find subcommand without docopt so that subcommand options may appear
+    # anywhere
     for i, a in enumerate(args):
         if a.startswith('-'):
             continue
-        if a == 'shell':
-            command = args[i + 2:]
-            args = args[:i + 2]
+        if a == 'help':
+            help_ = True
+            continue
+        command_fn = COMMANDS.get(a)
         break
+    else:
+        return docopt(__doc__, args)
+    if not command_fn:
+        return docopt(__doc__, ['--help'])
 
-    opts = docopt(__doc__, args)
-    option_not_yet_implemented(opts, '--ckan')
-    option_not_yet_implemented(opts, '--remote')
-    option_not_yet_implemented(opts, '--clean')
-    command_not_yet_implemented(opts, 'deploy')
+    # shell is special: options might belong to the command being executed
+    # split args into args and shell_command
+    if command_fn == shell.shell:
+        # assume commands don't start with '-' and that those options
+        # are intended for datacats
+        for j, a in enumerate(args[i + 2:], i + 2):
+            if not a.startswith('-'):
+                # -- makes docopt parse the rest as positional args
+                args = args[:j] + ['--'] + args[j:]
+                break
 
-    if opts['pull']:
-        return pull.pull(opts)
-    if opts['create']:
-        return create.create(opts['PROJECT'], opts['PORT'],
-            opts['--bare'], opts['--image-only'], opts['--no-sysadmin'],
-            opts['--ckan'])
-    if opts['init']:
-        return create.init(opts['PROJECT'], opts['PORT'], opts['--image-only'])
-    if opts['purge']:
-        return purge.purge(opts)
-    if opts['list']:
-        return manage.list()
+    if help_:
+        args.insert(1, '--help')
 
     try:
-        project = Project.load(opts['PROJECT'])
+        opts = docopt(command_fn.__doc__, args)
+
+        option_not_yet_implemented(opts, '--ckan')
+        option_not_yet_implemented(opts, '--remote')
+        option_not_yet_implemented(opts, '--clean')
+        command_not_yet_implemented(opts, 'deploy')
+
+        # purge handles loading differently
+        if command_fn != purge.purge and 'PROJECT' in opts:
+            project = Project.load(opts['PROJECT'] or '.')
+            return command_fn(project, opts)
+        return command_fn(opts)
     except ProjectError as e:
         print e
-        return
-
-    if opts['stop']:
-        return manage.stop(project)
-    if opts['start']:
-        return manage.start(project, opts)
-    if opts['reload']:
-        return manage.reload_(project, opts)
-    if opts['shell']:
-        return shell.shell(project, command)
-    if opts['info']:
-        return manage.info(project, opts)
-    if opts['logs']:
-        return manage.logs(project, opts)
-    if opts['install']:
-        return install.install(project, opts['--clean'])
-    if opts['open']:
-        return manage.open(project)
-
-    print json.dumps(docopt(__doc__), indent=4)
+        return 1

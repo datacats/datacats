@@ -15,13 +15,30 @@ def write(s):
     sys.stdout.write(s)
     sys.stdout.flush()
 
-def create(project_name, port, bare, image_only, no_sysadmin, ckan):
-    """
-    Create a new DataCats project directory, init the data dir.
-    Optionally start the web server and create an admin user.
-    """
+def create(opts):
+    """Create a new project
+
+Usage:
+  datacats create PROJECT_DIR [PORT] [-bin] [--ckan=CKAN_VERSION]
+
+Options:
+  --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION, defaults to
+                          latest development release
+  -b --bare               Bare CKAN site with no example extension
+  -i --image-only         Create the project but don't start containers
+  -n --no-sysadmin        Don't prompt for an initial sysadmin user account
+
+PROJECT_DIR is a path for the new project directory.
+"""
+    project_dir = opts['PROJECT_DIR']
+    port = opts['PORT']
+    bare = opts['--bare']
+    image_only = opts['--image-only']
+    no_sysadmin = opts['--no-sysadmin']
+    ckan = opts['--ckan']
+
     try:
-        project = Project.new(project_name, 'master', port)
+        project = Project.new(project_dir, 'master', port)
     except ProjectError as e:
         print e
         return 1
@@ -48,29 +65,28 @@ def create(project_name, port, bare, image_only, no_sysadmin, ckan):
     for fn in steps:
         fn()
         write('.')
+    write('\n')
 
-    if not image_only:
-        project.start_web()
-        write('.\n')
-        write('Site available at {0}\n'.format(project.web_address()))
-
-    if not no_sysadmin:
-        try:
-            adminpw = confirm_password()
-            project.create_admin_set_password(adminpw)
-        except KeyboardInterrupt:
-            pass
-
-    if image_only:
-        project.stop_data_and_search()
-        write('.\n')
+    return finish_init(project, image_only, no_sysadmin)
 
 
-def init(project_dir, port, image_only):
-    """
-    Init the data dir for an existing project dir.
-    Optionally start the web server.
-    """
+def init(opts):
+    """Initialize a purged project or copied project directory
+
+Usage:
+  datacats init [PROJECT_DIR [PORT]] [-in]
+
+Options:
+  -i --image-only         Create the project but don't start containers
+  -n --no-sysadmin        Don't prompt for an initial sysadmin user account
+
+PROJECT_DIR is an existing project directory. Defaults to '.'
+"""
+    project_dir = opts['PROJECT_DIR']
+    port = opts['PORT']
+    image_only = opts['--image-only']
+    no_sysadmin = opts['--no-sysadmin']
+
     project_dir = abspath(project_dir or '.')
     try:
         project = Project.load(project_dir)
@@ -95,21 +111,32 @@ def init(project_dir, port, image_only):
         write('.')
     write('\n')
 
-    install(project)
+    return finish_init(project, image_only, no_sysadmin)
+
+
+def finish_init(project, image_only, no_sysadmin):
+    """
+    Common parts of create and init: Install, init db, start site, sysadmin
+    """
+    install(project, {'--clean': False, 'PORT': None})
 
     write('Initializing database')
     project.ckan_db_init()
     write('\n')
 
+    if not image_only:
+        project.start_web()
+        write('Site available at {0}\n'.format(project.web_address()))
+
+    if not no_sysadmin:
+        try:
+            adminpw = confirm_password()
+            project.create_admin_set_password(adminpw)
+        except KeyboardInterrupt:
+            print
+
     if image_only:
         project.stop_data_and_search()
-    else:
-        try:
-            project.start_web()
-            write('Site available at {0}\n'.format(project.web_address()))
-        except ProjectError as e:
-            print e
-            return 1
 
 
 def confirm_password():

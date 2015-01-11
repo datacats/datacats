@@ -16,11 +16,33 @@ def write(s):
     sys.stdout.write(s)
     sys.stdout.flush()
 
-def stop(project):
+def stop(project, opts):
+    """Stop serving project and remove all its containers
+
+Usage:
+  datacats stop [PROJECT] [-r]
+
+Options:
+  -r --remote        Stop DataCats.com cloud instance
+
+PROJECT may be a project name or a path to a project directory. Default: '.'
+"""
     project.stop_web()
     project.stop_data_and_search()
 
 def start(project, opts):
+    """Create containers to start serving project
+
+Usage:
+  datacats start [PROJECT [PORT]] [-p]
+  datacats start [PROJECT] -r
+
+Options:
+  -p --production    Start with apache and debug=false
+  -r --remote        Start DataCats.com cloud instance
+
+PROJECT may be a project name or a path to a project directory. Default: '.'
+"""
     address = project.web_address()
     if address is not None:
         print 'Already running at {0}'.format(address)
@@ -28,6 +50,18 @@ def start(project, opts):
     reload_(project, opts)
 
 def reload_(project, opts):
+    """Reload project source and configuration
+
+Usage:
+  datacats reload [PROJECT [PORT]] [-p]
+  datacats reload [PROJECT] -r
+
+Options:
+  -p --production    Reload with apache and debug=false
+  -r --remote        Reload DataCats.com cloud instance
+
+PROJECT may be a project name or a path to a project directory. Default: '.'
+"""
     project.stop_web()
     if opts['PORT']:
         project.port = int(opts['PORT'])
@@ -42,6 +76,17 @@ def reload_(project, opts):
         return 1
 
 def info(project, opts):
+    """Display information about project and running containers
+
+Usage:
+  datacats info [PROJECT] [-qr]
+
+Options:
+  -q --quiet         Echo only the web URL or nothing if not running
+  -r --remote        Information about DataCats.com cloud instance
+
+PROJECT may be a project name or a path to a project directory. Default: '.'
+"""
     addr = project.web_address()
     if opts['--quiet']:
         if addr:
@@ -58,11 +103,31 @@ def info(project, opts):
         return
     print '    Available at: ' + addr
 
-def list():
+def list_(opts):
+    """List all projects for this user
+
+Usage:
+  datacats list
+"""
     for p in sorted(listdir(expanduser('~/.datacats'))):
         print p
 
 def logs(project, opts):
+    """Display or follow container logs
+
+Usage:
+  datacats logs [PROJECT] [-f | [-t] [--tail=LINES]] [-d | -s] [-r]
+
+Options:
+  -d --data-logs     Show postgres database logs instead of web logs
+  -f --follow        Follow logs instead of exiting immediately
+  -r --remote        Retrieve logs from DataCats.com cloud instance
+  -s --search-logs   Show solr search logs instead of web logs
+  -t --timestamps    Add timestamps to log lines
+  --tail=LINES       Number of lines to show [default: all]
+
+PROJECT may be a project name or a path to a project directory. Default: '.'
+"""
     container = 'web'
     if opts['--search-logs']:
         container = 'search'
@@ -81,7 +146,17 @@ def logs(project, opts):
     except KeyboardInterrupt:
         print
 
-def open(project):
+def open_(project, opts):
+    """Open web browser window to this project
+
+Usage:
+  datacats open [PROJECT] [-r]
+
+Options:
+  -r --remote        Open DataCats.com cloud instance address
+
+PROJECT may be a project name or a path to a project directory. Default: '.'
+"""
     addr = project.web_address()
     if not addr:
         print "Site not currently running"

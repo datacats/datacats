@@ -4,16 +4,12 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
-from datacats.project import Project
-
-def shell(project, opts):
-    """Run a command or interactive shell within this project
+def deploy(project, opts):
+    """Deploy project to Deploy project to production DataCats.com cloud service
 
 Usage:
-  datacats shell [PROJECT [COMMAND...]]
+  datacats deploy [PROJECT]
 
 PROJECT may be a project name or a path to a project directory. Default: '.'
 """
-    project.start_data_and_search()
-    return project.interactive_shell(opts['COMMAND'])
-
+    pass
