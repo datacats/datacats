@@ -35,12 +35,12 @@ import json
 import sys
 from docopt import docopt
 
-from datacats.cli import create, manage, install, pull, purge, shell
+from datacats.cli import create, manage, install, pull, purge, shell, deploy
 from datacats.project import Project, ProjectError
 
 COMMANDS = {
     'create': create.create,
-    'deploy': 'tbd',
+    'deploy': deploy.deploy,
     'info': manage.info,
     'init': create.init,
     'install': install.install,
