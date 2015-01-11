@@ -27,7 +27,7 @@ The datacats commands available are:
   start       Create containers to start serving project
   stop        Stop serving project and remove all its containers
 
-See 'datacats COMMAND --help' for information about options and
+See 'datacats help COMMAND' for information about options and
 arguments available to each command.
 """
 
