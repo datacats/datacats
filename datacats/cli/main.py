@@ -31,46 +31,6 @@ See 'datacats COMMAND --help' for information about options and
 arguments available to each command.
 """
 
-"""
-Usage:
-  datacats pull
-  datacats create PROJECT [PORT] [-bin] [--ckan=CKAN_VERSION]
-  datacats stop [PROJECT] [-r]
-  datacats start [PROJECT [PORT] [-p] | -p | [PROJECT] -r]
-  datacats reload [PROJECT [PORT] [-p] | -p | [PROJECT] -r]
-  datacats deploy [PROJECT]
-  datacats logs [PROJECT] [-f | [-t] [--tail=LINES]] [-d | -s] [-r]
-  datacats info [PROJECT] [-qr]
-  datacats list
-  datacats open [PROJECT] [-r]
-  datacats shell [PROJECT [COMMAND...]]
-  datacats install [PROJECT] [-c]
-  datacats purge [PROJECT [--delete-project]]
-  datacats init [PROJECT [PORT]] [-i]
-
-Options:
-  -b --bare                   Bare CKAN site with no example extension
-  -c --clean                  Reinstall into a clean virtual environment
-  --ckan=CKAN_VERSION         Use CKAN version CKAN_VERSION, defaults to
-                              latest development release
-  -d --data-logs              Show database logs instead of web logs
-  --delete-project            Delete project folder as well as its data
-  -f --follow                 Follow logs instead of exiting immediately
-  -i --image-only             Only create the project, don't start containers
-  -r --remote                 Operate on cloud-deployed production datacats
-                              instance
-  -s --search-logs            Show search logs instead of web logs
-  -t --timestamps             Include timestamps in logs
-  --tail=LINES                Number of lines to show [default: all]
-  -n --no-sysadmin            Don't create an initial sysadmin user account
-  -p --production             Run in production mode instead of debug mode
-  -q --quiet                  Simple text response suitable for scripting
-
-PROJECT must be a path for the create and init commands. Other PROJECT
-values may be a project name or a path to the project directory.
-PROJECT defaults to '.' if not given.
-"""
-
 import json
 import sys
 from docopt import docopt
