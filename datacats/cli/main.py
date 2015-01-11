@@ -94,7 +94,8 @@ def main():
         option_not_yet_implemented(opts, '--clean')
         command_not_yet_implemented(opts, 'deploy')
 
-        if opts.get('PROJECT'):
+        # purge handles loading differently
+        if command_fn != purge.purge and opts.get('PROJECT'):
             project = Project.load(opts['PROJECT'])
             return command_fn(project, opts)
         return command_fn(opts)
