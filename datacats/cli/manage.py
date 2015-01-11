@@ -101,7 +101,7 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
         return
     print '    Available at: ' + addr
 
-def list_():
+def list_(opts):
     """List all projects for this user
 
 Usage:
