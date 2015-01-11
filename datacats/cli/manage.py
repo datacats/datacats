@@ -53,7 +53,8 @@ def reload_(project, opts):
     """Reload project source and configuration
 
 Usage:
-  datacats reload [PROJECT [PORT]] [-p] | -p | [PROJECT] -r]
+  datacats reload [PROJECT [PORT]] [-p]
+  datacats reload [PROJECT] -r
 
 Options:
   -p --production    Reload with apache and debug=false
