@@ -56,13 +56,13 @@ COMMANDS = {
 }
 
 def option_not_yet_implemented(opts, name):
-    if not opts[name]:
+    if name not in opts or not opts[name]:
         return
     print "Option {0} is not yet implemented.".format(name)
     sys.exit(1)
 
 def command_not_yet_implemented(opts, name):
-    if not opts[name]:
+    if name not in opts or not opts[name]:
         return
     print "Command {0} is not yet implemented.".format(name)
     sys.exit(1)
