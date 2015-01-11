@@ -20,7 +20,7 @@ def stop(project, opts):
     """Stop serving project and remove all its containers
 
 Usage:
-  datacats stop [PROJECT] [-r]
+  datacats stop [-r] [PROJECT]
 
 Options:
   -r --remote        Stop DataCats.com cloud instance
@@ -34,8 +34,8 @@ def start(project, opts):
     """Create containers to start serving project
 
 Usage:
-  datacats start [PROJECT [PORT]] [-p]
-  datacats start [PROJECT] -r
+  datacats start [-p] [PROJECT [PORT]]
+  datacats start -r [PROJECT]
 
 Options:
   -p --production    Start with apache and debug=false
@@ -53,8 +53,8 @@ def reload_(project, opts):
     """Reload project source and configuration
 
 Usage:
-  datacats reload [PROJECT [PORT]] [-p]
-  datacats reload [PROJECT] -r
+  datacats reload [-p] [PROJECT [PORT]]
+  datacats reload -r [PROJECT]
 
 Options:
   -p --production    Reload with apache and debug=false
@@ -79,7 +79,7 @@ def info(project, opts):
     """Display information about project and running containers
 
 Usage:
-  datacats info [PROJECT] [-qr]
+  datacats info [-qr] [PROJECT]
 
 Options:
   -q --quiet         Echo only the web URL or nothing if not running
@@ -116,7 +116,8 @@ def logs(project, opts):
     """Display or follow container logs
 
 Usage:
-  datacats logs [PROJECT] [-f | [-t] [--tail=LINES]] [-d | -s] [-r]
+  datacats logs [-d | -s] [-t] [--tail=LINES] [-r] [PROJECT]
+  datacats logs -f [-d | -s] [-r] [PROJECT]
 
 Options:
   -d --data-logs     Show postgres database logs instead of web logs
@@ -150,7 +151,7 @@ def open_(project, opts):
     """Open web browser window to this project
 
 Usage:
-  datacats open [PROJECT] [-r]
+  datacats open [-r] [PROJECT]
 
 Options:
   -r --remote        Open DataCats.com cloud instance address

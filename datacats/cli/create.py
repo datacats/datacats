@@ -19,7 +19,7 @@ def create(opts):
     """Create a new project
 
 Usage:
-  datacats create PROJECT_DIR [PORT] [-bin] [--ckan=CKAN_VERSION]
+  datacats create [-bin] [--ckan=CKAN_VERSION] PROJECT_DIR [PORT]
 
 Options:
   --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION, defaults to
@@ -74,7 +74,7 @@ def init(opts):
     """Initialize a purged project or copied project directory
 
 Usage:
-  datacats init [PROJECT_DIR [PORT]] [-in]
+  datacats init [-in] [PROJECT_DIR [PORT]]
 
 Options:
   -i --image-only         Create the project but don't start containers

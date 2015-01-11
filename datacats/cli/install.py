@@ -18,7 +18,7 @@ def install(project, opts):
     """Install or reinstall Python packages within this project
 
 Usage:
-  datacats install [PROJECT] [-c]
+  datacats install [-c] [PROJECT]
 
 Options:
   -c --clean         Reinstall into a clean virtualenv
