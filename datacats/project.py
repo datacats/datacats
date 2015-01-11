@@ -375,7 +375,6 @@ class Project(object):
                 port = self._next_port(port)
                 continue
             break
-        self._wait_for_web_available(port)
 
     def _create_run_ini(self, port, production):
         """
@@ -416,7 +415,7 @@ class Project(object):
                 5000: port if is_boot2docker() else ('127.0.0.1', port)},
             )
 
-    def _wait_for_web_available(self, port):
+    def wait_for_web_available(self):
         """
         Wait for the web server to become available or raise ProjectError
         if it fails to start.

@@ -34,10 +34,11 @@ def start(project, opts):
     """Create containers to start serving project
 
 Usage:
-  datacats start [-p] [PROJECT [PORT]]
-  datacats start -r [PROJECT]
+  datacats start [-bp] [PROJECT [PORT]]
+  datacats start -r [-b] [PROJECT]
 
 Options:
+  -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
 
@@ -53,10 +54,11 @@ def reload_(project, opts):
     """Reload project source and configuration
 
 Usage:
-  datacats reload [-p] [PROJECT [PORT]]
-  datacats reload -r [PROJECT]
+  datacats reload [-bp] [PROJECT [PORT]]
+  datacats reload -r [-b] [PROJECT]
 
 Options:
+  -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
 
@@ -68,12 +70,16 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
         project.save()
     if 'data' not in project.containers_running():
         project.start_data_and_search()
+
+    project.start_web(opts['--production'])
+    write('Starting web server at {0}...'.format(project.web_address()))
+    if opts['--background']:
+        write('\n')
+        return
     try:
-        project.start_web(opts['--production'])
-        print 'Now available at {0}'.format(project.web_address())
-    except ProjectError as e:
-        print e
-        return 1
+        project.wait_for_web_available()
+    finally:
+        write('\n')
 
 def info(project, opts):
     """Display information about project and running containers
