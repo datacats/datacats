@@ -124,7 +124,7 @@ PROJECT_DIR is an existing project directory. Defaults to '.'
         write('.')
     write('\n')
 
-    install(project)
+    install(project, {'--clean': False})
 
     write('Initializing database')
     project.ckan_db_init()
