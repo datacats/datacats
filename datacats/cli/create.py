@@ -65,22 +65,9 @@ PROJECT_DIR is a path for the new project directory.
     for fn in steps:
         fn()
         write('.')
+    write('\n')
 
-    if not image_only:
-        project.start_web()
-        write('.\n')
-        write('Site available at {0}\n'.format(project.web_address()))
-
-    if not no_sysadmin:
-        try:
-            adminpw = confirm_password()
-            project.create_admin_set_password(adminpw)
-        except KeyboardInterrupt:
-            pass
-
-    if image_only:
-        project.stop_data_and_search()
-        write('.\n')
+    return finish_init(project, image_only, no_sysadmin)
 
 
 def init(opts):
@@ -124,21 +111,32 @@ PROJECT_DIR is an existing project directory. Defaults to '.'
         write('.')
     write('\n')
 
-    install(project, {'--clean': False})
+    return finish_init(project, image_only, no_sysadmin)
+
+
+def finish_init(project, image_only, no_sysadmin):
+    """
+    Common parts of create and init: Install, init db, start site, sysadmin
+    """
+    install(project, {'--clean': False, 'PORT': None})
 
     write('Initializing database')
     project.ckan_db_init()
     write('\n')
 
+    if not image_only:
+        project.start_web()
+        write('Site available at {0}\n'.format(project.web_address()))
+
+    if not no_sysadmin:
+        try:
+            adminpw = confirm_password()
+            project.create_admin_set_password(adminpw)
+        except KeyboardInterrupt:
+            print
+
     if image_only:
         project.stop_data_and_search()
-    else:
-        try:
-            project.start_web()
-            write('Site available at {0}\n'.format(project.web_address()))
-        except ProjectError as e:
-            print e
-            return 1
 
 
 def confirm_password():
