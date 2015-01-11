@@ -38,7 +38,7 @@ PROJECT_DIR is a path for the new project directory.
     ckan = opts['--ckan']
 
     try:
-        project = Project.new(project_name, 'master', port)
+        project = Project.new(project_dir, 'master', port)
     except ProjectError as e:
         print e
         return 1
