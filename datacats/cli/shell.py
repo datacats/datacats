@@ -6,7 +6,7 @@
 
 from datacats.project import Project
 
-def shell(pre, command):
+def shell(project, opts):
     """Run a command or interactive shell within this project
 
 Usage:
@@ -14,7 +14,6 @@ Usage:
 
 PROJECT may be a project name or a path to a project directory. Default: '.'
 """
-    project = Project.load(pre[1] if len(pre) == 2 else '.')
     project.start_data_and_search()
-    return project.interactive_shell(command)
+    return project.interactive_shell(opts['COMMAND'])
 

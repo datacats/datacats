@@ -69,24 +69,37 @@ def command_not_yet_implemented(opts, name):
 
 def main():
     args = sys.argv[1:]
+    help_ = False
     # Find subcommand without docopt so that subcommand options may appear
     # anywhere
     for i, a in enumerate(args):
-        if a.startswith('-') or a == 'help':
+        if a.startswith('-'):
+            continue
+        if a == 'help':
+            help_ = True
             continue
         command_fn = COMMANDS.get(a)
-
         break
     else:
         return docopt(__doc__, args)
     if not command_fn:
         return docopt(__doc__, ['--help'])
 
-    try:
-        # shell is special: options might belong to the command being executed
-        if command_fn == shell.shell:
-            return command_fn(args[:i + 2], args[i + 2:])
+    # shell is special: options might belong to the command being executed
+    # split args into args and shell_command
+    if command_fn == shell.shell:
+        # assume commands don't start with '-' and that those options
+        # are intended for datacats
+        for j, a in enumerate(args[i + 2:], i + 2):
+            if not a.startswith('-'):
+                # -- makes docopt parse the rest as positional args
+                args = args[:j] + ['--'] + args[j:]
+                break
 
+    if help_:
+        args.insert(1, '--help')
+
+    try:
         opts = docopt(command_fn.__doc__, args)
 
         option_not_yet_implemented(opts, '--ckan')
@@ -95,8 +108,8 @@ def main():
         command_not_yet_implemented(opts, 'deploy')
 
         # purge handles loading differently
-        if command_fn != purge.purge and opts.get('PROJECT'):
-            project = Project.load(opts['PROJECT'])
+        if command_fn != purge.purge and 'PROJECT' in opts:
+            project = Project.load(opts['PROJECT'] or '.')
             return command_fn(project, opts)
         return command_fn(opts)
     except ProjectError as e:
