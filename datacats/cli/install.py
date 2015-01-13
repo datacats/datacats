@@ -56,4 +56,7 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
 
     if 'web' in project.containers_running():
         # FIXME: reload without changing debug setting?
-        manage.reload_(project, {'--production': False, 'PORT': None})
+        manage.reload_(project, {
+            '--production': False,
+            'PORT': None,
+            '--background': False})
