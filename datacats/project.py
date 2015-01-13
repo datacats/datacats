@@ -6,6 +6,7 @@
 
 from os.path import abspath, split as path_split, expanduser, isdir, exists
 from os import makedirs, getcwd, remove
+import sys
 import subprocess
 import shutil
 import json
@@ -524,7 +525,8 @@ class Project(object):
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
-            '/usr/bin/docker', 'run', '--rm', '-it',
+            '/usr/bin/docker', 'run', '--rm',
+            '-it' if sys.stdout.isatty() else '-i',
             '-v', self.datadir + '/venv:/usr/lib/ckan:rw',
             '-v', self.target + ':/project:rw',
             '-v', self.datadir + '/files:/var/www/storage:rw',
