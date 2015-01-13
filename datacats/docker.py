@@ -107,6 +107,8 @@ def run_container(name, image, command=None, environment=None,
             environment=environment,
             volumes=binds_to_volumes(binds),
             detach=detach,
+            stdin_open=False,
+            tty=False,
             ports=list(port_bindings) if port_bindings else None)
     except APIError as e:
         return None
