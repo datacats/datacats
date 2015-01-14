@@ -116,6 +116,8 @@ Usage:
   datacats list
 """
     for p in sorted(listdir(expanduser('~/.datacats'))):
+        if p == 'user-profile':
+            continue
         print p
 
 def logs(project, opts):
