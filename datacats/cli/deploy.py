@@ -12,4 +12,12 @@ Usage:
 
 PROJECT may be a project name or a path to a project directory. Default: '.'
 """
-    pass
+    # 1. open or create user profile
+    #    a. create ~/.datacats/user-profile/config
+    #    b. generate ssh key
+    #    c. request email address
+    # 2. connect to DataCats.com
+    #    a. create account or log in to DataCats.com account
+    #    b. associate ssh key with DataCats.com account
+    # 3. reserve DataCats.com project name, save in project conf
+    # 4. rsync project directory (triggers install and reload)
