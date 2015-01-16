@@ -10,8 +10,8 @@ set -e
 
 HERE="$(dirname $(readlink -f $0))"
 
-docker build -t datacats/search search/
-docker build -t datacats/data data/
+docker build -t datacats/solr solr/
+docker build -t datacats/postgres postgres/
 docker build -t datacats/web web/
 
 docker rm datacats_preload_1 || true
@@ -48,5 +48,5 @@ docker rm -f datacats_preload_2
 [ "$1" == "push" ] || exit
 
 docker push datacats/web
-docker push datacats/data
-docker push datacats/search
+docker push datacats/postgres
+docker push datacats/solr

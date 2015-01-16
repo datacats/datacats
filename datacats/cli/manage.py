@@ -28,7 +28,7 @@ Options:
 PROJECT may be a project name or a path to a project directory. Default: '.'
 """
     project.stop_web()
-    project.stop_data_and_search()
+    project.stop_postgres_and_solr()
 
 def start(project, opts):
     """Create containers to start serving project
@@ -69,7 +69,7 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
         project.port = int(opts['PORT'])
         project.save()
     if 'data' not in project.containers_running():
-        project.start_data_and_search()
+        project.start_postgres_and_solr()
 
     project.start_web(opts['--production'])
     write('Starting web server at {0}...'.format(project.web_address()))
@@ -128,20 +128,20 @@ Usage:
   datacats logs -f [-d | -s] [-r] [PROJECT]
 
 Options:
-  -d --data-logs     Show postgres database logs instead of web logs
+  -d --postgres-logs Show postgres database logs instead of web logs
   -f --follow        Follow logs instead of exiting immediately
   -r --remote        Retrieve logs from DataCats.com cloud instance
-  -s --search-logs   Show solr search logs instead of web logs
+  -s --solr-logs     Show solr search logs instead of web logs
   -t --timestamps    Add timestamps to log lines
   --tail=LINES       Number of lines to show [default: all]
 
 PROJECT may be a project name or a path to a project directory. Default: '.'
 """
     container = 'web'
-    if opts['--search-logs']:
-        container = 'search'
-    if opts['--data-logs']:
-        container = 'data'
+    if opts['--solr-logs']:
+        container = 'solr'
+    if opts['--postgres-logs']:
+        container = 'postgres'
     tail = opts['--tail']
     if tail != 'all':
         tail = int(tail)

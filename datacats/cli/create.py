@@ -50,7 +50,7 @@ PROJECT_DIR is a path for the new project directory.
         project.save,
         project.create_virtualenv,
         project.create_source,
-        project.start_data_and_search,
+        project.start_postgres_and_solr,
         project.fix_storage_permissions,
         project.create_ckan_ini,
         lambda: project.update_ckan_ini(skin=not bare),
@@ -101,7 +101,7 @@ PROJECT_DIR is an existing project directory. Defaults to '.'
         lambda: project.create_directories(create_project_dir=False),
         project.save,
         project.create_virtualenv,
-        project.start_data_and_search,
+        project.start_postgres_and_solr,
         project.fix_storage_permissions,
         project.fix_project_permissions,
         ]
@@ -136,7 +136,7 @@ def finish_init(project, image_only, no_sysadmin):
             print
 
     if image_only:
-        project.stop_data_and_search()
+        project.stop_postgres_and_solr()
 
 
 def confirm_password():

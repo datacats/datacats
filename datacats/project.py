@@ -234,9 +234,9 @@ class Project(object):
             self.target + '/ckan/ckan/config/solr/schema.xml',
             self.target)
 
-    def start_data_and_search(self):
+    def start_postgres_and_solr(self):
         """
-        run the postgres and solr containers
+        run the DB and search containers
         """
         # complicated because postgres needs hard links to
         # work on its data volume. see issue #5
@@ -246,29 +246,29 @@ class Project(object):
             rw = {}
             volumes_from='datacats_dataonly_' + self.name
         else:
-            rw = {self.datadir + '/data': '/var/lib/postgresql/data'}
+            rw = {self.datadir + '/postgres': '/var/lib/postgresql/data'}
             volumes_from=None
 
         # users are created when data dir is blank so we must pass
         # all the user passwords as environment vars
         run_container(
-            name='datacats_data_' + self.name,
-            image='datacats/data',
+            name='datacats_postgres_' + self.name,
+            image='datacats/postgres',
             environment=self.passwords,
             rw=rw,
             volumes_from=volumes_from)
         run_container(
-            name='datacats_search_' + self.name,
-            image='datacats/search',
-            rw={self.datadir + '/search': '/var/lib/solr'},
+            name='datacats_solr_' + self.name,
+            image='datacats/solr',
+            rw={self.datadir + '/solr': '/var/lib/solr'},
             ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
-    def stop_data_and_search(self):
+    def stop_postgres_and_solr(self):
         """
         stop and remove postgres and solr containers
         """
-        remove_container('datacats_data_' + self.name)
-        remove_container('datacats_search_' + self.name)
+        remove_container('datacats_postgres_' + self.name)
+        remove_container('datacats_solr_' + self.name)
 
     def fix_storage_permissions(self):
         """
@@ -344,8 +344,8 @@ class Project(object):
                 ' -c /project/development.ini',
             ro={self.datadir + '/venv': '/usr/lib/ckan',
                 self.target: '/project'},
-            links={'datacats_search_' + self.name: 'solr',
-                'datacats_data_' + self.name: 'db'})
+            links={'datacats_solr_' + self.name: 'solr',
+                'datacats_postgres_' + self.name: 'db'})
 
     def _generate_passwords(self):
         """
@@ -410,8 +410,8 @@ class Project(object):
                 self.datadir + '/run/development.ini':
                     '/project/development.ini',
                 WEB: '/scripts/web.sh'},
-            links={'datacats_search_' + self.name: 'solr',
-                'datacats_data_' + self.name: 'db'},
+            links={'datacats_solr_' + self.name: 'solr',
+                'datacats_postgres_' + self.name: 'db'},
             command=command,
             port_bindings={
                 5000: port if is_boot2docker() else ('127.0.0.1', port)},
@@ -476,7 +476,7 @@ class Project(object):
         for containers tracked by this project that are running
         """
         running = []
-        for n in ['web', 'data', 'search']:
+        for n in ['web', 'postgres', 'solr']:
             info = inspect_container('datacats_' + n + '_' + self.name)
             if info and not info['State']['Running']:
                 running.append(n + '(halted)')
@@ -511,8 +511,8 @@ class Project(object):
             ro={self.datadir + '/venv': '/usr/lib/ckan',
                 self.target: '/project',
                 self.datadir + '/run/admin.json': '/input/admin.json'},
-            links={'datacats_search_' + self.name: 'solr',
-                'datacats_data_' + self.name: 'db'})
+            links={'datacats_solr_' + self.name: 'solr',
+                'datacats_postgres_' + self.name: 'db'})
         remove(self.datadir + '/run/admin.json')
 
     def interactive_shell(self, command=None):
@@ -533,8 +533,8 @@ class Project(object):
             '-v', self.target + ':/project:rw',
             '-v', self.datadir + '/files:/var/www/storage:rw',
             '-v', SHELL + ':/scripts/shell.sh:ro',
-            '--link', 'datacats_search_' + self.name + ':solr',
-            '--link', 'datacats_data_' + self.name + ':db',
+            '--link', 'datacats_solr_' + self.name + ':solr',
+            '--link', 'datacats_postgres_' + self.name + ':db',
             '--hostname', self.name,
             'datacats/web', '/scripts/shell.sh'] + command)
 
@@ -587,11 +587,11 @@ class Project(object):
         """
         Remove uploaded files, postgres db, solr index, venv
         """
-        datadirs = ['files', 'search', 'venv']
+        datadirs = ['files', 'solr', 'venv']
         if is_boot2docker():
             remove_container('datacats_dataonly_' + self.name)
         else:
-            datadirs.append('data')
+            datadirs.append('postgres')
 
         web_command(
             command=['/bin/rm', '-r']
@@ -602,7 +602,7 @@ class Project(object):
 
     def logs(self, container, tail='all', follow=False, timestamps=False):
         """
-        :param container: 'web', 'search' or 'data'
+        :param container: 'web', 'solr' or 'postgres'
         :param tail: number of lines to show
         :param follow: True to return generator instead of list
         :param timestamps: True to include timestamps

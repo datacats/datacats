@@ -26,7 +26,7 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
         project = Project.load(opts['PROJECT'], data_only=True)
 
     project.stop_web()
-    project.stop_data_and_search()
+    project.stop_postgres_and_solr()
 
     if opts['--delete-project']:
         if not project.target:

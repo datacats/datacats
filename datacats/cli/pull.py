@@ -12,8 +12,8 @@ from datacats.docker import pull_stream
 IMAGES = [
     'datacats/web',
     'datacats/web:preload_master',
-    'datacats/data',
-    'datacats/search',
+    'datacats/postgres',
+    'datacats/solr',
     'scratch',
     ]
 

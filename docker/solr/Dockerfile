@@ -11,8 +11,5 @@ ENV CATALINA_BASE /var/lib/tomcat6
 RUN apt-get -q -y update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -q -y install solr-tomcat
 
-# Setup Solr
-#ADD schema.xml /etc/solr/conf/schema.xml
-
 EXPOSE 8080
 CMD ["/usr/share/tomcat6/bin/catalina.sh", "run"]

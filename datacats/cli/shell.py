@@ -14,6 +14,6 @@ Usage:
 
 PROJECT may be a project name or a path to a project directory. Default: '.'
 """
-    project.start_data_and_search()
+    project.start_postgres_and_solr()
     return project.interactive_shell(opts['COMMAND'])
 
