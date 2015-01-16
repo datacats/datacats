@@ -518,12 +518,18 @@ class Project(object):
         if not command:
             command = []
         use_tty = sys.stdin.isatty() and sys.stdout.isatty()
+
+        if is_boot2docker():
+            venv_volumes = ['--volumes-from', 'datacats_venv_' + self.name]
+        else:
+            venv_volumes = ['-v', self.datadir + '/venv:/usr/lib/ckan:rw']
+
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
             '/usr/bin/docker', 'run', '--rm',
             '-it' if use_tty else '-i',
-            '-v', self.datadir + '/venv:/usr/lib/ckan:rw',
+            ] + venv_volumes + [
             '-v', self.target + ':/project:rw',
             '-v', self.datadir + '/files:/var/www/storage:rw',
             '-v', SHELL + ':/scripts/shell.sh:ro',
