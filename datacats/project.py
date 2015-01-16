@@ -186,9 +186,9 @@ class Project(object):
         Call once for new projects to create the initial project directories.
         """
         makedirs(self.datadir, mode=0o700)
-        makedirs(self.datadir + '/venv')
         makedirs(self.datadir + '/search')
         if not is_boot2docker():
+            makedirs(self.datadir + '/venv')
             makedirs(self.datadir + '/data')
         makedirs(self.datadir + '/files')
         makedirs(self.datadir + '/run')
@@ -241,10 +241,10 @@ class Project(object):
         # complicated because postgres needs hard links to
         # work on its data volume. see issue #5
         if is_boot2docker():
-            data_only_container('datacats_dataonly_' + self.name,
+            data_only_container('datacats_pgdata_' + self.name,
                 ['/var/lib/postgresql/data'])
             rw = {}
-            volumes_from='datacats_dataonly_' + self.name
+            volumes_from='datacats_pgdata_' + self.name
         else:
             rw = {self.datadir + '/postgres': '/var/lib/postgresql/data'}
             volumes_from=None
@@ -282,11 +282,11 @@ class Project(object):
         """
         Use make-config to generate an initial development.ini file
         """
-        web_command(
+        self.run_command(
             command='/usr/lib/ckan/bin/paster make-config'
                 ' ckan /project/development.ini',
-            ro={self.datadir + '/venv': '/usr/lib/ckan'},
-            rw={self.target: '/project'})
+            rw_project=True,
+            )
 
     def update_ckan_ini(self, skin=True):
         """
@@ -311,10 +311,7 @@ class Project(object):
             'ckan.site_title = ' + self.name,
             'ckan.site_logo =',
             ]
-        web_command(
-            command=command,
-            ro={self.datadir + '/venv': '/usr/lib/ckan'},
-            rw={self.target: '/project'})
+        self.run_command(command=command, rw_project=True)
 
     def create_install_template_skin(self):
         """
@@ -329,23 +326,22 @@ class Project(object):
         Reset owner of project files to the host user so they can edit,
         move and delete them freely.
         """
-        web_command(
+        self.run_command(
             command='/bin/chown -R --reference=/project'
                 ' /usr/lib/ckan /project',
-            rw={self.datadir + '/venv': '/usr/lib/ckan',
-                self.target: '/project'})
+            rw_venv=True,
+            rw_project=True,
+            )
 
     def ckan_db_init(self):
         """
         Run db init to create all ckan tables
         """
-        web_command(
-            command='/usr/lib/ckan/bin/paster --plugin=ckan db init'
-                ' -c /project/development.ini',
-            ro={self.datadir + '/venv': '/usr/lib/ckan',
-                self.target: '/project'},
-            links={'datacats_solr_' + self.name: 'solr',
-                'datacats_postgres_' + self.name: 'db'})
+        self.run_command(
+            '/usr/lib/ckan/bin/paster --plugin=ckan db init '
+            '-c /project/development.ini',
+            db_links=True,
+            )
 
     def _generate_passwords(self):
         """
@@ -504,15 +500,13 @@ class Project(object):
                 'password': password,
                 'sysadmin': True},
                 out)
-        web_command(
-            command=['/bin/bash', '-c',
-                '/usr/lib/ckan/bin/ckanapi -c /project/development.ini '
-                'action user_create -i < /input/admin.json'],
-            ro={self.datadir + '/venv': '/usr/lib/ckan',
-                self.target: '/project',
-                self.datadir + '/run/admin.json': '/input/admin.json'},
-            links={'datacats_solr_' + self.name: 'solr',
-                'datacats_postgres_' + self.name: 'db'})
+        self.run_command(
+            command=['/bin/bash', '-c', '/usr/lib/ckan/bin/ckanapi '
+                'action user_create -i -c /project/development.ini '
+                '< /input/admin.json'],
+            db_links=True,
+            ro={self.datadir + '/run/admin.json': '/input/admin.json'},
+            )
         remove(self.datadir + '/run/admin.json')
 
     def interactive_shell(self, command=None):
@@ -548,13 +542,12 @@ class Project(object):
         assert isdir(package), package
         if not exists(package + '/requirements.txt'):
             return
-        web_command(
+        self.run_command(
             command=[
                 '/usr/lib/ckan/bin/pip', 'install', '-r',
                 '/project/' + psrc + '/requirements.txt'
                 ],
-            rw={self.datadir + '/venv': '/usr/lib/ckan'},
-            ro={self.target: '/project'},
+            rw_venv=True,
             )
 
     def install_package_develop(self, psrc):
@@ -567,31 +560,55 @@ class Project(object):
         assert isdir(package), package
         if not exists(package + '/setup.py'):
             return
-        web_command(
-            command=[
-                '/usr/lib/ckan/bin/pip', 'install', '-e', '/project/' + psrc
-                ],
-            rw={self.datadir + '/venv': '/usr/lib/ckan',
-                self.target + '/' + psrc: '/project/' + psrc},
-            ro={self.target: '/project'},
+        self.run_command(
+            ['/usr/lib/ckan/bin/pip', 'install', '-e', '/project/' + psrc],
+            rw_venv=True,
+            rw={self.target + '/' + psrc: '/project/' + psrc},
             )
         # .egg-info permissions
-        web_command(
-            command=['/bin/chown', '-R', '--reference=/project',
-                '/project/' + psrc],
+        self.run_command(
+            ['/bin/chown', '-R', '--reference=/project', '/project/' + psrc],
             rw={self.target + '/' + psrc: '/project/' + psrc},
-            ro={self.target: '/project'},
             )
+
+    def run_command(self, command, db_links=False, rw_venv=False,
+            rw_project=False, rw=None, ro=None):
+
+        rw = {} if rw is None else dict(rw)
+        ro = {} if ro is None else dict(ro)
+
+        if is_boot2docker():
+            data_only_container('datacats_venv_' + self.name,
+                ['/usr/lib/ckan'])
+            volumes_from = 'datacats_venv_' + self.name
+        else:
+            volumes_from = None
+            venvmount = rw if rw_venv else ro
+            venvmount[self.datadir + '/venv'] = '/usr/lib/ckan'
+        projectmount = rw if rw_project else ro
+        projectmount[self.target] = '/project'
+
+        if db_links:
+            links = {
+                'datacats_solr_' + self.name: 'solr',
+                'datacats_postgres_' + self.name: 'db',
+                }
+        else:
+            links = None
+
+        return web_command(command=command, ro=ro, rw=rw, links=links)
+
 
     def purge_data(self):
         """
         Remove uploaded files, postgres db, solr index, venv
         """
-        datadirs = ['files', 'solr', 'venv']
+        datadirs = ['files', 'solr']
         if is_boot2docker():
-            remove_container('datacats_dataonly_' + self.name)
+            remove_container('datacats_pgdata_' + self.name)
+            remove_container('datacats_venv_' + self.name)
         else:
-            datadirs.append('postgres')
+            datadirs += ['postgres', 'venv']
 
         web_command(
             command=['/bin/rm', '-r']
