@@ -20,7 +20,7 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
-    PortAllocatedError, container_logs)
+    PortAllocatedError, container_logs, remove_image)
 from datacats.template import ckan_extension_template
 from datacats.scripts import WEB, SHELL
 from datacats.network import wait_for_service_available, ServiceTimeout
@@ -213,10 +213,25 @@ class Project(object):
         """
         Populate venv directory from preloaded image
         """
-        web_command(
-            command='/bin/cp -a /usr/lib/ckan/. /usr/lib/ckan_target/.',
-            rw={self.datadir + '/venv': '/usr/lib/ckan_target'},
-            image=self._preload_image())
+        if is_boot2docker():
+            data_only_container('datacats_venv_' + self.name,
+                ['/usr/lib/ckan'])
+            img_id = web_command(
+                '/bin/mv /usr/lib/ckan/ /usr/lib/ckan_original',
+                image=self._preload_image(),
+                commit=True,
+                )
+            web_command(
+                command='/bin/cp -a /usr/lib/ckan_original/. /usr/lib/ckan/.',
+                volumes_from='datacats_venv_' + self.name,
+                image=img_id,
+                )
+            remove_image(img_id)
+        else:
+            web_command(
+                command='/bin/cp -a /usr/lib/ckan/. /usr/lib/ckan_target/.',
+                rw={self.datadir + '/venv': '/usr/lib/ckan_target'},
+                image=self._preload_image())
 
     def create_source(self):
         """
@@ -244,10 +259,10 @@ class Project(object):
             data_only_container('datacats_pgdata_' + self.name,
                 ['/var/lib/postgresql/data'])
             rw = {}
-            volumes_from='datacats_pgdata_' + self.name
+            volumes_from = 'datacats_pgdata_' + self.name
         else:
             rw = {self.datadir + '/postgres': '/var/lib/postgresql/data'}
-            volumes_from=None
+            volumes_from = None
 
         # users are created when data dir is blank so we must pass
         # all the user passwords as environment vars
@@ -397,17 +412,25 @@ class Project(object):
         """
         Start web comtainer on port with command
         """
+        if is_boot2docker():
+            ro = {}
+            volumes_from = 'datacats_venv_' + self.name
+        else:
+            ro = {self.datadir + '/venv': '/usr/lib/ckan'}
+            volumes_from = None
+
         run_container(
             name='datacats_web_' + self.name,
             image='datacats/web',
             rw={self.datadir + '/files': '/var/www/storage'},
-            ro={self.datadir + '/venv': '/usr/lib/ckan',
+            ro=dict({
                 self.target: '/project/',
                 self.datadir + '/run/development.ini':
                     '/project/development.ini',
-                WEB: '/scripts/web.sh'},
+                WEB: '/scripts/web.sh'}, **ro),
             links={'datacats_solr_' + self.name: 'solr',
                 'datacats_postgres_' + self.name: 'db'},
+            volumes_from=volumes_from,
             command=command,
             port_bindings={
                 5000: port if is_boot2docker() else ('127.0.0.1', port)},
@@ -584,8 +607,6 @@ class Project(object):
         ro = {} if ro is None else dict(ro)
 
         if is_boot2docker():
-            data_only_container('datacats_venv_' + self.name,
-                ['/usr/lib/ckan'])
             volumes_from = 'datacats_venv_' + self.name
         else:
             volumes_from = None
@@ -602,7 +623,8 @@ class Project(object):
         else:
             links = None
 
-        return web_command(command=command, ro=ro, rw=rw, links=links)
+        return web_command(command=command, ro=ro, rw=rw, links=links,
+                volumes_from=volumes_from)
 
 
     def purge_data(self):
