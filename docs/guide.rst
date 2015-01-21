@@ -201,4 +201,4 @@ To see the log output of your CKAN: ::
 .. _designing your own custom theme: http://docs.ckan.org/en/latest/theming/index.html
 .. _here: http://docs.ckan.org/en/latest/maintaining/configuration.html
 .. _pages: http://github.com/ckan/ckanext-pages
-.. _list of CKAN paster commands: http://docs.ckan.org/en/latest/maintaining/paster.html
+.. _CKAN paster page: http://docs.ckan.org/en/latest/maintaining/paster.html
