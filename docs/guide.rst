@@ -4,17 +4,16 @@ User Guide
 What is DataCats
 ----------------
 
-CKAN can be very difficult to develop and deploy. The aim of DataCats is to make
-this easier and bring CKAN within reach for a much wider audience.
+CKAN can be quite difficult to develop and deploy, especially for beginners.
+The aim of DataCats is to make this easier and bring CKAN within reach for a
+much wider audience.
 
-DataCats relies on Docker_ to container-ize the CKAN environment. If you don't
+DataCats relies on Docker_ to "containerize" the CKAN environment. If you don't
 know much about Docker, it doesn't matter. You need to know very little about
-how Docker works in order to use DataCats. If you wish to know more about how
-this project works, take a look at :ref:`docker`.
+it in order to use DataCats. If you wish to know more about how
+this project works, take a look at :doc:`docker`.
 
 .. _Docker: https://www.docker.com/
-.. _How DataCats uses Docker: :ref:`docker`
-
 
 Installation
 ------------
@@ -37,7 +36,7 @@ You will need `boot2docker`_, the standard way to get Docker running on your Mac
 
 Windows
 #######
-Windows support is coming soon. For now, you can run DataCats inside any Linux
+Native Windows support is coming soon. For now, you can run DataCats inside any Linux
 Virtual Machine. Simply install VirtualBox or VMWare, create a Ubuntu VM and
 `install Docker`__ on it.
 
@@ -57,8 +56,6 @@ If you do not have ``pip`` installed, you can install it by running: ::
 Getting Started
 ---------------
 
-Create an environment
-"""""""""""""""""""""
 Create a CKAN development environment. Open a shell and run: ::
 
     datacats create kittyville
@@ -74,6 +71,15 @@ promprt at the end of the create command, with the address of where your CKAN
 instance is running. To open that address easily at any time, you can always run: ::
 
     datacats open kittyville
+
+.. note::
+
+    All ``datacats`` commands work without having to specify the project to run
+    them on, as long as you are within a DataCats project directory. For the
+    above command, we could as well have ran: ::
+
+        cd kittyville/
+        datacats open
 
 Let's see what is inside our new project directory. ``cd`` into the directory
 and take a look at the file structure. You should see something like this: ::
@@ -159,7 +165,35 @@ process is similar to following this guide, with some minor but important change
 You will want to make sure your CKAN is running a production web server,
 you will need to set up DNS and, optionally, emails, backups, logs and other
 miscellaneous items. If you plan to go this route, you should understand a bit
-more about how DataCats works under-the-hood_.
+more about how DataCats works under-the-hood. See :doc:`docker`
+
+Shell Access
+------------
+To run an interactive shell within your CKAN environment, run: ::
+
+    datacats shell kittyville
+
+Where ``kittyville`` is your DataCats project name. The shell will immediately
+drop you inside your project directory, and it will activate the ``virtualenv``.
+The shell is useful if you want to run admin ``paster`` tasks such as database
+migrations, or you simply want to poke around your CKAN instance.
+
+Paster Commands
+---------------
+To quickly run CKAN ``paster`` commands, you can do the following: ::
+
+    datacats paster --plugin=ckan sysadmin add joe
+
+Take a look at the `CKAN paster page`_ for a list of available commands. Note
+that with DataCats, you don't need to worry about activating your ``virtualenv``,
+and you do not need to pass the ``--config`` option to paster. DataCats handles this
+for you automagically.
+
+Logs
+----
+To see the log output of your CKAN: ::
+
+    datacats logs
 
 .. _source code of the CKAN project: http://github.com/ckan/ckan
 .. _CKAN extension: http://extensions.ckan.org/
@@ -167,4 +201,4 @@ more about how DataCats works under-the-hood_.
 .. _designing your own custom theme: http://docs.ckan.org/en/latest/theming/index.html
 .. _here: http://docs.ckan.org/en/latest/maintaining/configuration.html
 .. _pages: http://github.com/ckan/ckanext-pages
-.. _under-the-hood: :ref:`docker`
+.. _list of CKAN paster commands: http://docs.ckan.org/en/latest/maintaining/paster.html
