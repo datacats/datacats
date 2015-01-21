@@ -126,7 +126,7 @@ def finish_init(project, image_only, no_sysadmin):
 
     if not image_only:
         project.start_web()
-        write('Starting web server at {0}...\n'.format(project.web_address()))
+        write('Starting web server at {0} ...\n'.format(project.web_address()))
 
     if not no_sysadmin:
         try:

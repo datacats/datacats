@@ -72,7 +72,7 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
         project.start_postgres_and_solr()
 
     project.start_web(opts['--production'])
-    write('Starting web server at {0}...'.format(project.web_address()))
+    write('Starting web server at {0} ...'.format(project.web_address()))
     if opts['--background']:
         write('\n')
         return
