@@ -13,24 +13,26 @@ def purge(opts):
     """Purge project database and uploaded files
 
 Usage:
-  datacats purge [--delete-project] [PROJECT]
+  datacats purge [--delete-environment] [ENVIRONMENT]
 
 Options:
-  --delete-project   Delete project folder as well as its data
+  --delete-environment   Delete environment directory as well as its data
 
-PROJECT may be a project name or a path to a project directory. Default: '.'
+ENVIRONMENT may be an environment name or a path to an environment directory.
+Default: '.'
 """
     try:
-        project = Project.load(opts['PROJECT'])
+        project = Project.load(opts['ENVIRONMENT'])
     except ProjectError as e:
-        project = Project.load(opts['PROJECT'], data_only=True)
+        project = Project.load(opts['ENVIRONMENT'], data_only=True)
 
     project.stop_web()
     project.stop_postgres_and_solr()
 
-    if opts['--delete-project']:
+    if opts['--delete-environment']:
         if not project.target:
-            print 'Failed to load project. Not deleting project directory.'
+            print 'Failed to load environment.',
+            print 'Not deleting environment directory.'
         else:
             project.fix_project_permissions()
             rmtree(project.target)

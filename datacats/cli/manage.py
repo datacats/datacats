@@ -17,32 +17,34 @@ def write(s):
     sys.stdout.flush()
 
 def stop(project, opts):
-    """Stop serving project and remove all its containers
+    """Stop serving environment and remove all its containers
 
 Usage:
-  datacats stop [-r] [PROJECT]
+  datacats stop [-r] [ENVIRONMENT]
 
 Options:
   -r --remote        Stop DataCats.com cloud instance
 
-PROJECT may be a project name or a path to a project directory. Default: '.'
+ENVIRONMENT may be an environment name or a path to an environment directory.
+Default: '.'
 """
     project.stop_web()
     project.stop_postgres_and_solr()
 
 def start(project, opts):
-    """Create containers to start serving project
+    """Create containers and start serving environment
 
 Usage:
-  datacats start [-bp] [PROJECT [PORT]]
-  datacats start -r [-b] [PROJECT]
+  datacats start [-bp] [ENVIRONMENT [PORT]]
+  datacats start -r [-b] [ENVIRONMENT]
 
 Options:
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
 
-PROJECT may be a project name or a path to a project directory. Default: '.'
+ENVIRONMENT may be an environment name or a path to an environment directory.
+Default: '.'
 """
     address = project.web_address()
     if address is not None:
@@ -51,18 +53,19 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
     reload_(project, opts)
 
 def reload_(project, opts):
-    """Reload project source and configuration
+    """Reload environment source and configuration
 
 Usage:
-  datacats reload [-bp] [PROJECT [PORT]]
-  datacats reload -r [-b] [PROJECT]
+  datacats reload [-bp] [ENVIRONMENT [PORT]]
+  datacats reload -r [-b] [ENVIRONMENT]
 
 Options:
   -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
 
-PROJECT may be a project name or a path to a project directory. Default: '.'
+ENVIRONMENT may be an environment name or a path to an environment directory.
+Default: '.'
 """
     project.stop_web()
     if opts['PORT']:
@@ -82,16 +85,17 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
         write('\n')
 
 def info(project, opts):
-    """Display information about project and running containers
+    """Display information about environment and running containers
 
 Usage:
-  datacats info [-qr] [PROJECT]
+  datacats info [-qr] [ENVIRONMENT]
 
 Options:
   -q --quiet         Echo only the web URL or nothing if not running
   -r --remote        Information about DataCats.com cloud instance
 
-PROJECT may be a project name or a path to a project directory. Default: '.'
+ENVIRONMENT may be an environment name or a path to an environment directory.
+Default: '.'
 """
     addr = project.web_address()
     if opts['--quiet']:
@@ -99,10 +103,10 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
             print addr
         return
 
-    print '    Project name: ' + project.name
+    print 'Environment name: ' + project.name
     print '    CKAN version: ' + project.ckan_version
     print '    Default port: ' + str(project.port)
-    print '     Project dir: ' + project.target
+    print ' Environment dir: ' + project.target
     print '        Data dir: ' + project.datadir
     print '      Containers: ' + ' '.join(project.containers_running())
     if not addr:
@@ -110,7 +114,7 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
     print '    Available at: ' + addr
 
 def list_(opts):
-    """List all projects for this user
+    """List all environments for this user
 
 Usage:
   datacats list
@@ -124,8 +128,8 @@ def logs(project, opts):
     """Display or follow container logs
 
 Usage:
-  datacats logs [-d | -s] [-tr] [--tail=LINES] [PROJECT]
-  datacats logs -f [-d | -s] [-r] [PROJECT]
+  datacats logs [-d | -s] [-tr] [--tail=LINES] [ENVIRONMENT]
+  datacats logs -f [-d | -s] [-r] [ENVIRONMENT]
 
 Options:
   -d --postgres-logs Show postgres database logs instead of web logs
@@ -135,7 +139,8 @@ Options:
   -t --timestamps    Add timestamps to log lines
   --tail=LINES       Number of lines to show [default: all]
 
-PROJECT may be a project name or a path to a project directory. Default: '.'
+ENVIRONMENT may be an environment name or a path to an environment directory.
+Default: '.'
 """
     container = 'web'
     if opts['--solr-logs']:
@@ -156,15 +161,16 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
         print
 
 def open_(project, opts):
-    """Open web browser window to this project
+    """Open web browser window to this environment
 
 Usage:
-  datacats open [-r] [PROJECT]
+  datacats open [-r] [ENVIRONMENT]
 
 Options:
   -r --remote        Open DataCats.com cloud instance address
 
-PROJECT may be a project name or a path to a project directory. Default: '.'
+ENVIRONMENT may be an environment name or a path to an environment directory.
+Default: '.'
 """
     addr = project.web_address()
     if not addr:

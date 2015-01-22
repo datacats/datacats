@@ -5,12 +5,13 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 def deploy(project, opts):
-    """Deploy project to Deploy project to production DataCats.com cloud service
+    """Deploy environment to production DataCats.com cloud service
 
 Usage:
-  datacats deploy [PROJECT]
+  datacats deploy [ENVIRONMENT]
 
-PROJECT may be a project name or a path to a project directory. Default: '.'
+ENVIRONMENT may be an environment name or a path to a environment directory.
+Default: '.'
 """
     # 1. open or create user profile
     #    a. create ~/.datacats/user-profile/config
