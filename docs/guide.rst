@@ -108,9 +108,9 @@ The ``development.ini`` file holds all the configuration options for your CKAN
 environment. All of these options are described here_. Open this file and find a
 line that starts with ``ckan.plugins``. It will look something like this: ::
 
-    ckan.plugins = datastore kittyville_skin
+    ckan.plugins = datastore kittyville_theme
 
-The ``kittyville_skin`` is the extension endpoint for our kittyville extension,
+The ``kittyville_theme`` is the extension endpoint for our kittyville extension,
 defined in ``ckanext-kittyville/setup.py``. We can enable and disable our
 extension by adding it or removing it from the plugins list above.
 
@@ -141,7 +141,7 @@ The install command will iterate through your environment directory and install
 all your extensions. After this is complete, we need to open the ``development.ini``
 file again and add the pages extension to our list of installed extensions: ::
 
-    ckan.plugins = datastore kittyville_skin pages
+    ckan.plugins = datastore kittyville_theme pages
 
 Finally, reload CKAN for the config changes to take effect: ::
 

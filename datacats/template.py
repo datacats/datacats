@@ -64,7 +64,7 @@ setup(
     zip_safe=False,
     entry_points = """
         [ckan.plugins]
-        ##name##_skin = ckanext.##name##theme.plugins:CustomTheme
+        ##name##_theme = ckanext.##name##theme.plugins:CustomTheme
     """
 )
 '''

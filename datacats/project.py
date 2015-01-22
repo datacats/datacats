@@ -322,7 +322,7 @@ class Project(object):
             'solr_url = http://solr:8080/solr',
             'ckan.storage_path = /var/www/storage',
             'ckan.plugins = datastore text_preview recline_preview'
-            + (' {0}_skin'.format(self.name) if skin else ''),
+            + (' {0}_theme'.format(self.name) if skin else ''),
             'ckan.site_title = ' + self.name,
             'ckan.site_logo =',
             ]
