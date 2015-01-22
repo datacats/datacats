@@ -333,7 +333,7 @@ class Project(object):
         Create an example ckan extension for this project and install it
         """
         ckan_extension_template(self.name, self.target)
-        self.install_package_develop('ckanext-' + self.name)
+        self.install_package_develop('ckanext-' + self.name + 'theme')
 
 
     def fix_project_permissions(self):
