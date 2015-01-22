@@ -103,7 +103,7 @@ We see there are two containers running from the image template ``datacats/web``
 One of those containers is our database migration. After the migration is done,
 `the container is destroyed`_. It may take you some time to get used to this way
 of doing things. After all, we just created and destroyed a perfectly good
-"virtual machine"[#f1]_ just so we can run a 5 second script. How wasteful! But this
+"virtual machine" just so we can run a 5 second script. How wasteful! But this
 is the primary paradigm of how Docker and containers work. The sooner you get
 used to it, the happier your experience with Docker will be.
 
@@ -118,14 +118,3 @@ used to it, the happier your experience with Docker will be.
 .. _scale out: http://12factor.net/concurrency
 .. _disposable: http://12factor.net/disposability
 .. _the container is destroyed: http://12factor.net/admin-processes
-
-.. rubric:: Footnotes
-
-.. [#f1] Most people new to Docker think of containers as lightweight virtual
-    machines. But this puts your in a mindset that can actually be harmful
-    in the way you use Docker. This is why `some misguided souls`_ go as far as trying
-    to replicate  a VM inside a docker image as much as possible, complete with init
-    systems, ssh deamons, cron, syslog, and kinds of other stuff that shouldn't be
-    together inside the same container.
-
-.. _some misguided souls: http://phusion.github.io/baseimage-docker/
