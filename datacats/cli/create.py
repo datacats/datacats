@@ -78,7 +78,7 @@ Usage:
   datacats init [-in] [ENVIRONMENT_DIR [PORT]]
 
 Options:
-  -i --image-only         Create the project but don't start containers
+  -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'

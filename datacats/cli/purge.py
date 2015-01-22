@@ -10,7 +10,7 @@ from shutil import rmtree
 from datacats.project import Project, ProjectError
 
 def purge(opts):
-    """Purge project database and uploaded files
+    """Purge environment database and uploaded files
 
 Usage:
   datacats purge [--delete-environment] [ENVIRONMENT]
