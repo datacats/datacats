@@ -16,21 +16,22 @@ def write(s):
     sys.stdout.flush()
 
 def create(opts):
-    """Create a new project
+    """Create a new environment
 
 Usage:
-  datacats create [-bin] [--ckan=CKAN_VERSION] PROJECT_DIR [PORT]
+  datacats create [-bin] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
 
 Options:
   --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION, defaults to
                           latest development release
   -b --bare               Bare CKAN site with no example extension
-  -i --image-only         Create the project but don't start containers
+  -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
 
-PROJECT_DIR is a path for the new project directory.
+ENVIRONMENT_DIR is a path for the new environment directory. The last
+part of this path will be used as the environment name.
 """
-    project_dir = opts['PROJECT_DIR']
+    project_dir = opts['ENVIRONMENT_DIR']
     port = opts['PORT']
     bare = opts['--bare']
     image_only = opts['--image-only']
@@ -43,7 +44,7 @@ PROJECT_DIR is a path for the new project directory.
         print e
         return 1
 
-    write('Creating project "{0}"'.format(project.name))
+    write('Creating environment "{0}"'.format(project.name))
     steps = [
         project.create_directories,
         project.create_bash_profile,
@@ -71,18 +72,18 @@ PROJECT_DIR is a path for the new project directory.
 
 
 def init(opts):
-    """Initialize a purged project or copied project directory
+    """Initialize a purged environment or copied environment directory
 
 Usage:
-  datacats init [-in] [PROJECT_DIR [PORT]]
+  datacats init [-in] [ENVIRONMENT_DIR [PORT]]
 
 Options:
   -i --image-only         Create the project but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
 
-PROJECT_DIR is an existing project directory. Defaults to '.'
+ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
-    project_dir = opts['PROJECT_DIR']
+    project_dir = opts['ENVIRONMENT_DIR']
     port = opts['PORT']
     image_only = opts['--image-only']
     no_sysadmin = opts['--no-sysadmin']
@@ -96,7 +97,8 @@ PROJECT_DIR is an existing project directory. Defaults to '.'
         print e
         return 1
 
-    write('Creating from existing project "{0}"'.format(project.name))
+    write('Creating from existing environment directory "{0}"'.format(
+        project.name))
     steps = [
         lambda: project.create_directories(create_project_dir=False),
         project.save,
@@ -126,7 +128,7 @@ def finish_init(project, image_only, no_sysadmin):
 
     if not image_only:
         project.start_web()
-        write('Starting web server at {0}...\n'.format(project.web_address()))
+        write('Starting web server at {0} ...\n'.format(project.web_address()))
 
     if not no_sysadmin:
         try:

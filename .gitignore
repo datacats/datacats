@@ -5,3 +5,4 @@ build/
 dist/
 datacats.egg-info/
 docker/src/*
+docs/_build

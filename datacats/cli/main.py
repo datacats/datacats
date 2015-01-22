@@ -12,20 +12,20 @@ Usage:
   datacats --version
 
 The datacats commands available are:
-  create      Create a new project
-  deploy      Deploy project to production DataCats.com cloud service
-  info        Display information about project and running containers
-  init        Initialize a purged project or copied project directory
+  create      Create a new environment
+  deploy      Deploy environment to production DataCats.com cloud service
+  info        Display information about environment and running containers
+  init        Initialize a purged environment or copied environment directory
   install     Install or reinstall Python packages within this project
-  list        List all projects for this user
+  list        List all environments for this user
   logs        Display or follow container logs
-  open        Open web browser window to this project
+  open        Open web browser window to this environment
   pull        Download or update required datacats docker images
-  purge       Purge project database and uploaded files
-  reload      Reload project source and configuration
-  shell       Run a command or interactive shell within this project
-  start       Create containers to start serving project
-  stop        Stop serving project and remove all its containers
+  purge       Purge environment database and uploaded files
+  reload      Reload environment source and configuration
+  shell       Run a command or interactive shell within this environment
+  start       Create containers and start serving environment
+  stop        Stop serving environment and remove all its containers
 
 See 'datacats help COMMAND' for information about options and
 arguments available to each command.
@@ -105,8 +105,8 @@ def main():
         option_not_yet_implemented(opts, '--clean')
 
         # purge handles loading differently
-        if command_fn != purge.purge and 'PROJECT' in opts:
-            project = Project.load(opts['PROJECT'] or '.')
+        if command_fn != purge.purge and 'ENVIRONMENT' in opts:
+            project = Project.load(opts['ENVIRONMENT'] or '.')
             return command_fn(project, opts)
         return command_fn(opts)
     except ProjectError as e:

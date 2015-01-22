@@ -7,12 +7,13 @@
 from datacats.project import Project
 
 def shell(project, opts):
-    """Run a command or interactive shell within this project
+    """Run a command or interactive shell within this environment
 
 Usage:
-  datacats shell [PROJECT [COMMAND...]]
+  datacats shell [ENVIRONMENT [COMMAND...]]
 
-PROJECT may be a project name or a path to a project directory. Default: '.'
+ENVIRONMENT may be an environment name or a path to an environment directory.
+Default: '.'
 """
     project.start_postgres_and_solr()
     return project.interactive_shell(opts['COMMAND'])

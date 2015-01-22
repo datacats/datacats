@@ -7,12 +7,13 @@
 from datacats.cli.profile import get_working_profile
 
 def deploy(project, opts):
-    """Deploy project to Deploy project to production DataCats.com cloud service
+    """Deploy environment to production DataCats.com cloud service
 
 Usage:
-  datacats deploy [PROJECT]
+  datacats deploy [ENVIRONMENT]
 
-PROJECT may be a project name or a path to a project directory. Default: '.'
+ENVIRONMENT may be an environment name or a path to a environment directory.
+Default: '.'
 """
     profile = get_working_profile()
     # 1. open or create user profile

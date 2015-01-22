@@ -15,15 +15,16 @@ def write(s):
     sys.stdout.flush()
 
 def install(project, opts):
-    """Install or reinstall Python packages within this project
+    """Install or reinstall Python packages within this environment
 
 Usage:
-  datacats install [-c] [PROJECT]
+  datacats install [-c] [ENVIRONMENT]
 
 Options:
-  -c --clean         Reinstall into a clean virtualenv
+  -c --clean         Reinstall packages into a clean virtualenv
 
-PROJECT may be a project name or a path to a project directory. Default: '.'
+ENVIRONMENT may be an environment name or a path to an environment directory.
+Default: '.'
 """
     clean = opts['--clean']
 
@@ -42,7 +43,7 @@ PROJECT may be a project name or a path to a project directory. Default: '.'
         srcdirs.remove('ckan')
         reqdirs.remove('ckan')
     except KeyError:
-        print 'ckan not found in project directory'
+        print 'ckan not found in environment directory'
         return
 
     for s in ['ckan'] + sorted(reqdirs):
