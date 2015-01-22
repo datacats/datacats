@@ -62,7 +62,8 @@ def binds_to_volumes(volumes):
     return [v['bind'] for v in volumes.itervalues()]
 
 def web_command(command, ro=None, rw=None, links=None,
-        image='datacats/web', volumes_from=None, commit=False):
+        image='datacats/web', volumes_from=None, commit=False,
+        clean_up=False):
     """
     Run a single command in a web image optionally preloaded with the ckan
     source and virtual envrionment.
@@ -74,6 +75,7 @@ def web_command(command, ro=None, rw=None, links=None,
     :param image: docker image name to use
     :param volumes_from:
     :param commit: True to create a new image based on result
+    :param clean_up: True to remove container even on error
 
     :returns: image id if commit=True
     """
@@ -89,6 +91,8 @@ def web_command(command, ro=None, rw=None, links=None,
         binds=binds,
         volumes_from=volumes_from)
     if _docker.wait(c['Id']):
+        if clean_up:
+            _docker.remove_container(container=c['Id'])
         raise WebCommandError(command, c['Id'][:12])
     if commit:
         rval = _docker.commit(c['Id'])

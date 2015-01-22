@@ -5,11 +5,8 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from os.path import exists
-from socket import gethostname
-from getpass import getuser
 
 from datacats.userprofile import UserProfile
-from datacats.docker import web_command
 
 def get_working_profile():
     """
@@ -19,9 +16,27 @@ def get_working_profile():
     """
     profile = UserProfile()
 
+    new_key = False
     if profile.ssh_private_key is None or not exists(
             profile.ssh_private_key) or not exists(profile.ssh_public_key):
-        _create_profile(profile)
+        new_key = _create_profile(profile)
+
+    if new_key:
+        print 'New key generated. Please visit',
+        print 'https://www.datacats.com/add-key'
+        print 'and paste your public key in to the form:'
+
+    if not new_key and not profile.test_ssh_key():
+        print 'There was an error connecting to DataCats.com'
+        print 'If you have not installed your key please visit',
+        print 'https://www.datacats.com/add-key'
+        print 'and paste your public key in to the form:'
+        new_key = True
+
+    if new_key:
+        print
+        with open(profile.ssh_public_key) as pub_key:
+            print pub_key.read()
 
     return profile
 
@@ -36,14 +51,8 @@ def _create_profile(profile):
     profile.ssh_public_key = profile.profiledir + '/id_rsa.pub'
     profile.save()
 
-    if not exists(profile.ssh_private_key):
-        web_command(
-            command=["ssh-keygen", "-q", "-t", "rsa", "-N", "", "-C",
-                "datacats generated {0}@{1}".format(getuser(), gethostname()),
-                "-f", "/output/id_rsa"],
-            rw={profile.profiledir: '/output'},
-            )
-
-
-
+    if exists(profile.ssh_private_key):
+        return False
+    profile.generate_ssh_key()
+    return True
 

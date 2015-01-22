@@ -7,6 +7,12 @@
 from os.path import expanduser, exists, isdir
 from os import makedirs
 from ConfigParser import SafeConfigParser
+from socket import gethostname
+from getpass import getuser
+
+from datacats.docker import web_command, WebCommandError
+
+DATACATS_USER_HOST = 'ssh@command.datacats.com'
 
 class UserProfile(object):
     """
@@ -17,6 +23,7 @@ class UserProfile(object):
         config = self.profiledir + '/config'
         if isdir(self.profiledir) and exists(config):
             cp = SafeConfigParser()
+            cp.read([config])
             self.ssh_private_key = cp.get('ssh', 'private_key')
             self.ssh_public_key = cp.get('ssh', 'public_key')
         else:
@@ -39,3 +46,29 @@ class UserProfile(object):
 
         with open(config, 'w') as cfile:
             cp.write(cfile)
+
+    def generate_ssh_key(self):
+        """
+        Generate a new ssh private and public key
+        """
+        web_command(
+            command=["ssh-keygen", "-q", "-t", "rsa", "-N", "", "-C",
+                "datacats generated {0}@{1}".format(getuser(), gethostname()),
+                "-f", "/output/id_rsa"],
+            rw={self.profiledir: '/output'},
+            )
+
+    def test_ssh_key(self):
+        """
+        Return True if this key is accepted by DataCats.com
+        """
+        try:
+            web_command(
+                command=["ssh", "-i", "/input/id_rsa", DATACATS_USER_HOST,
+                    'test'],
+                ro={self.profiledir: '/input'},
+                clean_up=True
+                )
+            return True
+        except WebCommandError:
+            return False
