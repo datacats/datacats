@@ -15,7 +15,7 @@ Usage:
 ENVIRONMENT may be an environment name or a path to a environment directory.
 Default: '.'
 """
-    profile = get_working_profile()
+    profile = get_working_profile(project)
     # 1. open or create user profile
     #    a. create ~/.datacats/user-profile/config
     #    b. generate ssh key

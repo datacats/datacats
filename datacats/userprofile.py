@@ -12,7 +12,7 @@ from getpass import getuser
 
 from datacats.docker import web_command, WebCommandError
 
-DATACATS_USER_HOST = 'ssh@command.datacats.com'
+DATACATS_USER_HOST = 'datacats@command.datacats.com'
 
 class UserProfile(object):
     """
@@ -58,13 +58,14 @@ class UserProfile(object):
             rw={self.profiledir: '/output'},
             )
 
-    def test_ssh_key(self):
+    def test_ssh_key(self, project):
         """
         Return True if this key is accepted by DataCats.com
         """
         try:
             web_command(
-                command=["ssh", "-i", "/input/id_rsa", DATACATS_USER_HOST,
+                command=["ssh", "-i", "/input/id_rsa",
+                    _project_user_host(project),
                     'test'],
                 ro={self.profiledir: '/input'},
                 clean_up=True
@@ -72,3 +73,10 @@ class UserProfile(object):
             return True
         except WebCommandError:
             return False
+
+
+def _project_user_host(project):
+    if project.deploy_target is None:
+        return DATACATS_USER_HOST
+    return project.deploy_target
+

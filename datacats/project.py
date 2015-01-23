@@ -15,7 +15,7 @@ from random import SystemRandom
 from sha import sha
 from struct import unpack
 from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
-    NoOptionError)
+    NoOptionError, NoSectionError)
 
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
@@ -44,12 +44,14 @@ class Project(object):
 
     Create with Project.new(path) or Project.load(path)
     """
-    def __init__(self, name, target, datadir, ckan_version=None, port=None):
+    def __init__(self, name, target, datadir, ckan_version=None, port=None,
+            deploy_target=None):
         self.name = name
         self.target = target
         self.datadir = datadir
         self.ckan_version = ckan_version
         self.port = int(port if port else self._choose_port())
+        self.deploy_target = deploy_target
 
     def save(self):
         """
@@ -67,6 +69,10 @@ class Project(object):
             cp.set('passwords', n.lower(), self.passwords[n])
         with open(self.target + '/.datacats-project', 'w') as config:
             cp.write(config)
+
+        if self.deploy_target:
+            cp.add_section('deploy')
+            cp.set('deploy', 'target', self.deploy_target)
 
         self._update_saved_project_dir()
 
@@ -173,7 +179,12 @@ class Project(object):
         for n in cp.options('passwords'):
             passwords[n.upper()] = cp.get('passwords', n)
 
-        project = cls(name, wd, datadir, ckan_version, port)
+        try:
+            deploy_target = cp.get('deploy', 'target', None)
+        except NoSectionError:
+            deploy_target = None
+
+        project = cls(name, wd, datadir, ckan_version, port, deploy_target)
         project.passwords = passwords
 
         if not used_path:

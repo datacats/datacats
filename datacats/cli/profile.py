@@ -8,7 +8,7 @@ from os.path import exists
 
 from datacats.userprofile import UserProfile
 
-def get_working_profile():
+def get_working_profile(project):
     """
     Return a complete UserProfile with ssh keys configured either
     by loading an existing profile or setting one up with the
@@ -26,7 +26,7 @@ def get_working_profile():
         print 'https://www.datacats.com/add-key'
         print 'and paste your public key in to the form:'
 
-    if not new_key and not profile.test_ssh_key():
+    if not new_key and not profile.test_ssh_key(project):
         print 'There was an error connecting to DataCats.com'
         print 'If you have not installed your key please visit',
         print 'https://www.datacats.com/add-key'
