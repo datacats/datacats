@@ -78,7 +78,7 @@ to the "development.ini" file.  For ckanext-pages we add "pages" to the list
 of plugins.
 
 ```
-ckan.plugins = myproject_skin datastore image_view pages
+ckan.plugins = myproject_theme datastore image_view pages
 ```
 
 Reinstall all project extensions and reload the site with:

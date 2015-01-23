@@ -12,8 +12,8 @@ def ckan_extension_template(name, target):
     """
     Create ckanext-(name) in target directory.
     """
-    setupdir = '{0}/ckanext-{1}'.format(target, name)
-    extdir = setupdir + '/ckanext/{0}'.format(name)
+    setupdir = '{0}/ckanext-{1}theme'.format(target, name)
+    extdir = setupdir + '/ckanext/{0}theme'.format(name)
     templatedir = extdir + '/templates/'
     staticdir = extdir + '/static/datacats'
 
@@ -52,7 +52,7 @@ SETUP_PY = '''#!/usr/bin/env/python
 from setuptools import setup
 
 setup(
-    name='ckanext-##name##',
+    name='ckanext-##name##theme',
     version='0.1',
     description='',
     license='AGPL3',
@@ -60,11 +60,11 @@ setup(
     author_email='',
     url='',
     namespace_packages=['ckanext'],
-    packages=['ckanext.##name##'],
+    packages=['ckanext.##name##theme'],
     zip_safe=False,
     entry_points = """
         [ckan.plugins]
-        ##name##_skin = ckanext.##name##.plugins:CustomSkin
+        ##name##_theme = ckanext.##name##theme.plugins:CustomTheme
     """
 )
 '''
@@ -72,7 +72,7 @@ setup(
 PLUGINS_PY = '''
 from ckan.plugins import toolkit, IConfigurer, SingletonPlugin, implements
 
-class CustomSkin(SingletonPlugin):
+class CustomTheme(SingletonPlugin):
     implements(IConfigurer)
 
     def update_config(self, config):
@@ -82,7 +82,7 @@ class CustomSkin(SingletonPlugin):
 
 DOT_GITIGNORE = '''
 *.pyc
-ckanext_##name##.egg-info/*
+ckanext_##name##theme.egg-info/*
 build/*
 dist/*
 '''
