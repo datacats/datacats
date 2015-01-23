@@ -65,7 +65,7 @@ class Project(object):
         cp.add_section('passwords')
         for n in sorted(self.passwords):
             cp.set('passwords', n.lower(), self.passwords[n])
-        with open(self.target + '/.datacats-project', 'w') as config:
+        with open(self.target + '/.datacats-environment', 'w') as config:
             cp.write(config)
 
         self._update_saved_project_dir()
@@ -134,7 +134,7 @@ class Project(object):
             datadir = expanduser('~/.datacats/' + project_name)
             with open(datadir + '/project-dir') as pd:
                 wd = pd.read()
-            if not data_only and not exists(wd + '/.datacats-project'):
+            if not data_only and not exists(wd + '/.datacats-environment'):
                 raise ProjectError(
                     'Project data found but project directory is missing.'
                     ' Try again from the new project directory'
@@ -146,7 +146,7 @@ class Project(object):
             if not isdir(wd):
                 raise ProjectError('No project found with that name')
 
-            while not exists(wd + '/.datacats-project'):
+            while not exists(wd + '/.datacats-environment'):
                 oldwd = wd
                 wd, ignore = path_split(wd)
                 if wd == oldwd:
@@ -158,7 +158,7 @@ class Project(object):
 
         cp = SafeConfigParser()
         try:
-            cp.read([wd + '/.datacats-project'])
+            cp.read([wd + '/.datacats-environment'])
         except ConfigParserError:
             raise ProjectError('Error reading project information')
 
