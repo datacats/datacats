@@ -22,14 +22,14 @@ def get_working_profile(project):
         new_key = _create_profile(profile)
 
     if new_key:
-        print 'New key generated. Please visit',
-        print 'https://www.datacats.com/add-key'
+        print 'New key generated. Please visit'
+        print 'https://www.datacats.com/account/key'
         print 'and paste your public key in to the form:'
 
     if not new_key and not profile.test_ssh_key(project):
         print 'There was an error connecting to DataCats.com'
-        print 'If you have not installed your key please visit',
-        print 'https://www.datacats.com/add-key'
+        print 'If you have not installed your key please visit'
+        print 'https://www.datacats.com/account/key'
         print 'and paste your public key in to the form:'
         new_key = True
 
