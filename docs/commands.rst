@@ -1,6 +1,10 @@
 Command Reference
 =================
 
+help
+----
+.. program-output:: datacats help
+
 create
 ------
 .. program-output:: datacats help create
