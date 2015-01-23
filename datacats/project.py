@@ -100,19 +100,21 @@ class Project(object):
         workdir, name = path_split(abspath(expanduser(path)))
 
         if not valid_name(name):
-            raise ProjectError('Please choose a project name starting with a '
-                'letter and including only lowercase letters and digits')
+            raise ProjectError('Please choose an environment name starting'
+                ' with a letter and including only lowercase letters'
+                ' and digits')
         if not isdir(workdir):
-            raise ProjectError('Parent directory for project does not exist')
+            raise ProjectError('Parent directory for environment'
+                ' does not exist')
 
         datadir = expanduser('~/.datacats/' + name)
         target = workdir + '/' + name
 
         if isdir(datadir):
-            raise ProjectError('Project data directory {0} already exists',
+            raise ProjectError('Environment data directory {0} already exists',
                 (datadir,))
         if isdir(target):
-            raise ProjectError('Project directory already exists')
+            raise ProjectError('Environment directory already exists')
 
         project = cls(name, target, datadir, ckan_version, port)
         project._generate_passwords()
@@ -142,22 +144,22 @@ class Project(object):
                 wd = pd.read()
             if not data_only and not exists(wd + '/.datacats-environment'):
                 raise ProjectError(
-                    'Project data found but project directory is missing.'
-                    ' Try again from the new project directory'
-                    ' location or remove this project data with'
+                    'Environment data found but environment directory is'
+                    ' missing. Try again from the new environment directory'
+                    ' location or remove the environment data with'
                     ' "datacats purge"')
         else:
             used_path = True
             wd = abspath(project_name)
             if not isdir(wd):
-                raise ProjectError('No project found with that name')
+                raise ProjectError('No environment found with that name')
 
             while not exists(wd + '/.datacats-environment'):
                 oldwd = wd
                 wd, ignore = path_split(wd)
                 if wd == oldwd:
                     raise ProjectError(
-                        'Project not found in current directory')
+                        'Environment not found in current directory or above')
 
         if data_only and not used_path:
             return cls(project_name, None, datadir)
@@ -166,7 +168,7 @@ class Project(object):
         try:
             cp.read([wd + '/.datacats-environment'])
         except ConfigParserError:
-            raise ProjectError('Error reading project information')
+            raise ProjectError('Error reading environment information')
 
         name = cp.get('datacats', 'name')
         datadir = expanduser('~/.datacats/' + name)
