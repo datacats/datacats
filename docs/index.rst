@@ -1,9 +1,9 @@
-.. DataCats documentation master file, created by
+.. datacats documentation master file, created by
    sphinx-quickstart on Tue Jan 20 18:23:04 2015.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-DataCats - Easy CKAN development using Docker
+datacats - Easy CKAN development using Docker
 =============================================
 
 Quickstart
@@ -34,7 +34,7 @@ Reload CKAN for the config changes to take effect: ::
 
     datacats reload
 
-Finally, deploy your project to the DataCats cloud: ::
+Finally, deploy your project to the DataCats.com cloud: ::
 
     datacats deploy myckan
 

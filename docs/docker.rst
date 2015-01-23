@@ -1,12 +1,12 @@
 .. _docker:
 
-How DataCats uses Docker
+How datacats uses Docker
 ========================
 
 Images and Containers
 ---------------------
 
-DataCats puts CKAN inside of Docker containers. Each DataCats CKAN environment
+datacats puts CKAN inside of Docker containers. Each datacats CKAN environment
 is actually at least 3 different Docker containers. You can see this by running
 ``datacats info`` inside your project directory: ::
 
@@ -38,7 +38,7 @@ is like a template used to run each container.
 Throw-away containers
 ---------------------
 
-The most important thing to remember about your DataCats containers is that they
+The most important thing to remember about your datacats containers is that they
 are `disposable`_. You can kill any of these containers without worry, for example: ::
 
     $ docker rm -f datacats_web_datapusher
@@ -59,7 +59,7 @@ The second important thing to note is that containers are more or less immutable
 stuff inside a container doesn't change. This is not strictly true. Docker does
 allow us to go inside a container and do whatever we want. However, this would
 make our containers no longer disposable, since there is now state encapsulated
-inside of them we presumably wish to not lose. Because of this, DataCats treats
+inside of them we presumably wish to not lose. Because of this, datacats treats
 containers as stateless and disposable.
 
 This comes with a couple of important exceptions. Our source files and our
