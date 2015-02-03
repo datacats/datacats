@@ -154,12 +154,13 @@ class Project(object):
             if not isdir(wd):
                 raise ProjectError('No environment found with that name')
 
+            first_wd = wd
             while not exists(wd + '/.datacats-environment'):
                 oldwd = wd
                 wd, ignore = path_split(wd)
                 if wd == oldwd:
                     raise ProjectError(
-                        'Environment not found in current directory or above')
+                        'Environment not found in {0} or above', first_wd)
 
         if data_only and not used_path:
             return cls(project_name, None, datadir)
