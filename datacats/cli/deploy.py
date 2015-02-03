@@ -16,10 +16,4 @@ ENVIRONMENT may be an environment name or a path to a environment directory.
 Default: '.'
 """
     profile = get_working_profile(project)
-    # 1. open or create user profile
-    #    a. create ~/.datacats/user-profile/config
-    #    b. generate ssh key
-    # 2. connect to DataCats.com
-    #    b. associate ssh key with DataCats.com account
-    # 3. reserve DataCats.com project name, save in project conf
-    # 4. rsync project directory (triggers install and reload)
+    profile.deploy(project)
