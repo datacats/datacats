@@ -11,6 +11,7 @@ from socket import gethostname
 from getpass import getuser
 
 from datacats.docker import web_command, WebCommandError
+from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG
 
 DATACATS_USER_HOST = 'datacats@command.datacats.com'
 
@@ -84,6 +85,8 @@ class UserProfile(object):
                 "/project/.",
                 _project_user_host(project) + ':' + project.name],
             ro={project.target: '/project',
+                KNOWN_HOSTS: '/root/.ssh/known_hosts',
+                SSH_CONFIG: '/etc/ssh/ssh_config',
                 self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
             )
 
