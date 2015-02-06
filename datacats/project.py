@@ -64,15 +64,22 @@ class Project(object):
         cp.set('datacats', 'ckan_version', self.ckan_version)
         cp.set('datacats', 'port', str(self.port))
 
-        cp.add_section('passwords')
-        for n in sorted(self.passwords):
-            cp.set('passwords', n.lower(), self.passwords[n])
-        with open(self.target + '/.datacats-environment', 'w') as config:
-            cp.write(config)
-
         if self.deploy_target:
             cp.add_section('deploy')
             cp.set('deploy', 'target', self.deploy_target)
+
+        with open(self.target + '/.datacats-environment', 'w') as config:
+            cp.write(config)
+
+        # save passwords to datadir
+        cp = SafeConfigParser()
+
+        cp.add_section('passwords')
+        for n in sorted(self.passwords):
+            cp.set('passwords', n.lower(), self.passwords[n])
+
+        with open(self.datadir + '/passwords.ini', 'w') as config:
+            cp.write(config)
 
         self._update_saved_project_dir()
 
@@ -178,14 +185,23 @@ class Project(object):
             port = cp.getint('datacats', 'port')
         except NoOptionError:
             port = None
-        passwords = {}
-        for n in cp.options('passwords'):
-            passwords[n.upper()] = cp.get('passwords', n)
 
         try:
             deploy_target = cp.get('deploy', 'target', None)
         except NoSectionError:
             deploy_target = None
+
+        passwords = {}
+        try:
+            # backwards compatibility  FIXME: remove this
+            pw_options = cp.options('passwords')
+        except NoSectionError:
+            cp = SafeConfigParser()
+            cp.read(datadir + '/passwords.ini')
+            pw_options = cp.options('passwords')
+
+        for n in pw_options:
+            passwords[n.upper()] = cp.get('passwords', n)
 
         project = cls(name, wd, datadir, ckan_version, port, deploy_target)
         project.passwords = passwords
