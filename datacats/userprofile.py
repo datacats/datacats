@@ -78,7 +78,7 @@ class UserProfile(object):
         web_command(
             command=[
                 "rsync", "-lr", "--safe-links", "--munge-links",
-                "--delete-excluded", "--exclude=.datacats-environment",
+                "--exclude=.datacats-environment",
                 "--exclude=.git",
                 "/project/.",
                 _project_user_host(project) + ':' + project.name],
