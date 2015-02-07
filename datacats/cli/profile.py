@@ -37,6 +37,7 @@ def get_working_profile(project):
         print
         with open(profile.ssh_public_key) as pub_key:
             print pub_key.read()
+        return
 
     return profile
 

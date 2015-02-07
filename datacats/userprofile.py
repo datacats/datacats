@@ -65,10 +65,13 @@ class UserProfile(object):
         """
         try:
             web_command(
-                command=["ssh", "-i", "/input/id_rsa",
+                command=["ssh",
                     _project_user_host(project),
                     'test'],
-                ro={self.profiledir: '/input'},
+                ro={
+                    KNOWN_HOSTS: '/root/.ssh/known_hosts',
+                    SSH_CONFIG: '/etc/ssh/ssh_config',
+                    self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
                 clean_up=True
                 )
             return True

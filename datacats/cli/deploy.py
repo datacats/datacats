@@ -16,4 +16,5 @@ ENVIRONMENT may be an environment name or a path to a environment directory.
 Default: '.'
 """
     profile = get_working_profile(project)
-    profile.deploy(project)
+    if profile:
+        profile.deploy(project)
