@@ -62,12 +62,6 @@ def option_not_yet_implemented(opts, name):
     print "Option {0} is not yet implemented.".format(name)
     sys.exit(1)
 
-def command_not_yet_implemented(opts, name):
-    if name not in opts or not opts[name]:
-        return
-    print "Command {0} is not yet implemented.".format(name)
-    sys.exit(1)
-
 def main():
     args = sys.argv[1:]
     help_ = False
@@ -109,7 +103,6 @@ def main():
         option_not_yet_implemented(opts, '--ckan')
         option_not_yet_implemented(opts, '--remote')
         option_not_yet_implemented(opts, '--clean')
-        command_not_yet_implemented(opts, 'deploy')
 
         # purge handles loading differently
         if command_fn != purge.purge and 'ENVIRONMENT' in opts:
