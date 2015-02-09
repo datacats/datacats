@@ -78,15 +78,15 @@ class UserProfile(object):
         except WebCommandError:
             return False
 
-    def deploy(self, project):
+    def deploy(self, project, target_name):
         web_command(
             command=[
                 "rsync", "-lr", "--safe-links", "--munge-links",
-                "--delete",
+                "--delete", "--inplace",
                 "--exclude=.datacats-environment",
                 "--exclude=.git",
                 "/project/.",
-                _project_user_host(project) + ':' + project.name],
+                _project_user_host(project) + ':' + target_name],
             ro={project.target: '/project',
                 KNOWN_HOSTS: '/root/.ssh/known_hosts',
                 SSH_CONFIG: '/etc/ssh/ssh_config',

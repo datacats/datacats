@@ -10,11 +10,16 @@ def deploy(project, opts):
     """Deploy environment to production DataCats.com cloud service
 
 Usage:
-  datacats deploy [ENVIRONMENT]
+  datacats deploy [ENVIRONMENT [TARGET_NAME]]
 
 ENVIRONMENT may be an environment name or a path to a environment directory.
 Default: '.'
 """
     profile = get_working_profile(project)
-    if profile:
-        profile.deploy(project)
+    if not profile:
+        return
+
+    target_name = opts['TARGET_NAME']
+    if target_name is None:
+        target_name = project.name
+    profile.deploy(project, target_name)
