@@ -339,16 +339,12 @@ class Project(object):
 
         :param skin: use project template skin plugin True/False
         """
-        p = self.passwords
         command = [
             '/usr/lib/ckan/bin/paster', '--plugin=ckan', 'config-tool',
             '/project/development.ini', '-e',
-            'sqlalchemy.url = postgresql://ckan:'
-                '{CKAN_PASSWORD}@db:5432/ckan'.format(**p),
-            'ckan.datastore.read_url = postgresql://ckan_datastore_readonly:'
-                '{DATASTORE_RO_PASSWORD}@db:5432/ckan_datastore'.format(**p),
-            'ckan.datastore.write_url = postgresql://ckan_datastore_readwrite:'
-                '{DATASTORE_RW_PASSWORD}@db:5432/ckan_datastore'.format(**p),
+            'sqlalchemy.url = postgresql://<hidden>',
+            'ckan.datastore.read_url = postgresql://<hidden>',
+            'ckan.datastore.write_url = postgresql://<hidden>',
             'solr_url = http://solr:8080/solr',
             'ckan.storage_path = /var/www/storage',
             'ckan.plugins = datastore text_preview recline_preview'
@@ -422,6 +418,7 @@ class Project(object):
     def _create_run_ini(self, port, production):
         """
         Create run/development.ini in datadir with debug and site_url overridden
+        and with correct db passwords inserted
         """
         cp = SafeConfigParser()
         try:
@@ -432,6 +429,16 @@ class Project(object):
         cp.set('DEFAULT', 'debug', 'false' if production else 'true')
         site_url = 'http://{0}:{1}/'.format(docker_host(), port)
         cp.set('app:main', 'ckan.site_url', site_url)
+
+        cp.set('app:main', 'sqlalchemy.url',
+            'postgresql://ckan:{0}@db:5432/ckan'
+                .format(self.passwords['CKAN_PASSWORD']))
+        cp.set('app:main', 'ckan.datastore.read_url',
+            'postgresql://ckan_datastore_readonly:{0}@db:5432/ckan_datastore'
+                .format(self.passwords['DATASTORE_RO_PASSWORD']))
+        cp.set('app:main', 'ckan.datastore.write_url',
+            'postgresql://ckan_datastore_readwrite:{0}@db:5432/ckan_datastore'
+                .format(self.passwords['DATASTORE_RW_PASSWORD']))
 
         if not isdir(self.datadir + '/run'):
             makedirs(self.datadir + '/run')  # upgrade old datadir
