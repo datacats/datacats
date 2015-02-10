@@ -207,7 +207,10 @@ class Project(object):
             passwords[n.upper()] = cp.get('passwords', n)
 
         project = cls(name, wd, datadir, ckan_version, port, deploy_target)
-        project.passwords = passwords
+        if passwords:
+            project.passwords = passwords
+        else:
+            project._generate_passwords()
 
         if not used_path:
             project._update_saved_project_dir()
