@@ -415,7 +415,7 @@ class Project(object):
                 continue
             break
 
-    def _create_run_ini(self, port, production):
+    def _create_run_ini(self, port, production, output='development.ini'):
         """
         Create run/development.ini in datadir with debug and site_url overridden
         and with correct db passwords inserted
@@ -442,7 +442,7 @@ class Project(object):
 
         if not isdir(self.datadir + '/run'):
             makedirs(self.datadir + '/run')  # upgrade old datadir
-        with open(self.datadir + '/run/development.ini', 'w') as runini:
+        with open(self.datadir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
     def _run_web_container(self, port, command):
@@ -653,10 +653,12 @@ class Project(object):
         projectmount[self.target] = '/project'
 
         if db_links:
+            self._create_run_ini(self.port, production=False, output='run.ini')
             links = {
                 'datacats_solr_' + self.name: 'solr',
                 'datacats_postgres_' + self.name: 'db',
                 }
+            ro[self.datadir + '/run/run.ini'] = '/project/development.ini'
         else:
             links = None
 
