@@ -584,6 +584,8 @@ class Project(object):
         else:
             venv_volumes = ['-v', self.datadir + '/venv:/usr/lib/ckan:rw']
 
+        self._create_run_ini(self.port, production=False, output='run.ini')
+
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
@@ -593,6 +595,7 @@ class Project(object):
             '-v', self.target + ':/project:rw',
             '-v', self.datadir + '/files:/var/www/storage:rw',
             '-v', SHELL + ':/scripts/shell.sh:ro',
+            '-v', self.datadir + '/run/run.ini:/project/development.ini:ro',
             '--link', 'datacats_solr_' + self.name + ':solr',
             '--link', 'datacats_postgres_' + self.name + ':db',
             '--hostname', self.name,
