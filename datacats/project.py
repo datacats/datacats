@@ -412,6 +412,14 @@ class Project(object):
         if not production:
             command = ['/scripts/web.sh']
 
+        # XXX nasty hack, remove this once we have a lessc command
+        # for users (not just for building our preload image)
+        if not production:
+            css = self.target + '/ckan/ckan/public/base/css'
+            if not exists(css + '/main.debug.css'):
+                from shutil import copyfile
+                copyfile(css + '/main.css', css + '/main.debug.css')
+
         while True:
             self._create_run_ini(port, production)
             try:
