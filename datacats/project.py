@@ -198,7 +198,10 @@ class Project(object):
         except NoSectionError:
             cp = SafeConfigParser()
             cp.read(datadir + '/passwords.ini')
-            pw_options = cp.options('passwords')
+            try:
+                pw_options = cp.options('passwords')
+            except NoSectionError:
+                pw_options = []
 
         for n in pw_options:
             passwords[n.upper()] = cp.get('passwords', n)
