@@ -26,8 +26,16 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    clean = opts['--clean']
+    install_all(project, opts['--clean'])
 
+    if 'web' in project.containers_running():
+        # FIXME: reload without changing debug setting?
+        manage.reload_(project, {
+            '--production': False,
+            'PORT': None,
+            '--background': False})
+
+def install_all(project, clean):
     srcdirs = set()
     reqdirs = set()
     for d in listdir(project.target):
@@ -54,10 +62,3 @@ Default: '.'
         write('Installing ' + s)
         project.install_package_develop(s)
         write('\n')
-
-    if 'web' in project.containers_running():
-        # FIXME: reload without changing debug setting?
-        manage.reload_(project, {
-            '--production': False,
-            'PORT': None,
-            '--background': False})
