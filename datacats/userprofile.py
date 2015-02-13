@@ -82,7 +82,7 @@ class UserProfile(object):
         web_command(
             command=[
                 "rsync", "-lr", "--safe-links", "--munge-links",
-                "--delete", "--inplace",
+                "--delete", "--inplace", "--chmod=ugo=rwX",
                 "--exclude=.datacats-environment",
                 "--exclude=.git",
                 "/project/.",
