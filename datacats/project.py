@@ -45,13 +45,15 @@ class Project(object):
     Create with Project.new(path) or Project.load(path)
     """
     def __init__(self, name, target, datadir, ckan_version=None, port=None,
-            deploy_target=None):
+            deploy_target=None, site_url=None, always_prod=False):
         self.name = name
         self.target = target
         self.datadir = datadir
         self.ckan_version = ckan_version
         self.port = int(port if port else self._choose_port())
         self.deploy_target = deploy_target
+        self.site_url = site_url
+        self.always_prod = always_prod
 
     def save(self):
         """
@@ -67,6 +69,12 @@ class Project(object):
         if self.deploy_target:
             cp.add_section('deploy')
             cp.set('deploy', 'target', self.deploy_target)
+
+        if self.site_url or self.always_prod:
+            if self.site_url:
+                cp.set('datacats', 'site_url', self.site_url)
+            if self.always_prod:
+                cp.set('datacats', 'always_prod', 'true')
 
         with open(self.target + '/.datacats-environment', 'w') as config:
             cp.write(config)
@@ -185,7 +193,14 @@ class Project(object):
             port = cp.getint('datacats', 'port')
         except NoOptionError:
             port = None
-
+        try:
+            site_url = cp.get('datacats', 'site_url')
+        except NoOptionError:
+            site_url = None
+        try:
+            always_prod = cp.getboolean('datacats', 'always_prod')
+        except NoOptionError:
+            always_prod = False
         try:
             deploy_target = cp.get('deploy', 'target', None)
         except NoSectionError:
@@ -206,7 +221,8 @@ class Project(object):
         for n in pw_options:
             passwords[n.upper()] = cp.get('passwords', n)
 
-        project = cls(name, wd, datadir, ckan_version, port, deploy_target)
+        project = cls(name, wd, datadir, ckan_version, port, deploy_target,
+            site_url=site_url, always_prod=always_prod)
         if passwords:
             project.passwords = passwords
         else:
@@ -409,6 +425,8 @@ class Project(object):
         """
         port = self.port
         command = None
+
+        production = production or self.always_prod
         if not production:
             command = ['/scripts/web.sh']
 
@@ -441,7 +459,12 @@ class Project(object):
             raise ProjectError('Error reading development.ini')
 
         cp.set('DEFAULT', 'debug', 'false' if production else 'true')
-        site_url = 'http://{0}:{1}/'.format(docker_host(), port)
+
+        if self.site_url:
+            site_url = self.site_url
+        else:
+            site_url = 'http://{0}:{1}/'.format(docker_host(), port)
+
         cp.set('app:main', 'ckan.site_url', site_url)
 
         cp.set('app:main', 'sqlalchemy.url',
