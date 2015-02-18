@@ -205,7 +205,7 @@ def data_only_container(name, volumes):
         return
     c = _docker.create_container(
         name=name,
-        image='datacats/web', # FIXME: use an empty container instead
+        image='datacats/postgres', # any image will do
         command='true',
         volumes=volumes,
         detach=True)
