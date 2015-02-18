@@ -10,11 +10,11 @@ import json
 from datacats.docker import pull_stream
 
 IMAGES = [
+    'scratch',
     'datacats/web',
     'datacats/web:preload_master',
     'datacats/postgres',
     'datacats/solr',
-    'scratch',
     ]
 
 def pull(opts):
