@@ -9,7 +9,7 @@ Run an interactive Paster Shell
 -------------------------------
 Anywhere within your datacats environment directory, run::
 
-    datacats paster --plugin=pylons shell
+    datacats shell . paster --plugin=pylons shell
 
 Load data from one CKAN into another
 ------------------------------------
