@@ -187,7 +187,7 @@ Paster Commands
 ---------------
 To quickly run CKAN ``paster`` commands, you can do the following: ::
 
-    datacats paster --plugin=ckan sysadmin add joe
+    datacats shell catstown paster --plugin=ckan sysadmin add joe
 
 Take a look at the `CKAN paster page`_ for a list of available commands. Note
 that with datacats, you don't need to worry about activating your ``virtualenv``,
