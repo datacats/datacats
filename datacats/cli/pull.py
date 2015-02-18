@@ -32,8 +32,6 @@ Usage:
             if 'status' not in s:
                 print json.dumps(s, indent=2)
                 continue
-            if s['status'] == 'Download complete':
-                sys.stdout.write('.')
-                sys.stdout.flush()
-                continue
+            sys.stdout.write('.')
+            sys.stdout.flush()
         sys.stdout.write('\n')
