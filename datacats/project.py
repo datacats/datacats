@@ -373,6 +373,7 @@ class Project(object):
             + (' {0}_theme'.format(self.name) if skin else ''),
             'ckan.site_title = ' + self.name,
             'ckan.site_logo =',
+            'ckan.auth.create_user_via_web = false',
             ]
         self.run_command(command=command, rw_project=True)
 
