@@ -205,7 +205,7 @@ def data_only_container(name, volumes):
         return
     c = _docker.create_container(
         name=name,
-        image='scratch', # minimal container
+        image='datacats/web', # FIXME: use an empty container instead
         command='true',
         volumes=volumes,
         detach=True)
