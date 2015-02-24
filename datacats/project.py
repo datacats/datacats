@@ -613,6 +613,10 @@ class Project(object):
 
         :param: list of strings to execute instead of bash
         """
+        if not exists(self.target + '/.bash_profile'):
+            # this file is required for activating the virtualenv
+            self.create_bash_profile()
+
         if not command:
             command = []
         use_tty = sys.stdin.isatty() and sys.stdout.isatty()
