@@ -4,22 +4,37 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
+from sys import stdout
+
 from datacats.cli.profile import get_working_profile
 
 def deploy(project, opts):
     """Deploy environment to production DataCats.com cloud service
 
 Usage:
-  datacats deploy [ENVIRONMENT [TARGET_NAME]]
+  datacats deploy [--create] [ENVIRONMENT [TARGET_NAME]]
+
+Options:
+  --create                Create a new environment on DataCats.com instead
+                          of updating an existing environment
 
 ENVIRONMENT may be an environment name or a path to a environment directory.
 Default: '.'
+
+TARGET_NAME is the name of the environment on DataCats.com. Defaults to
+the environment name.
 """
     profile = get_working_profile(project)
     if not profile:
-        return
+        return 1
 
     target_name = opts['TARGET_NAME']
     if target_name is None:
         target_name = project.name
-    profile.deploy(project, target_name)
+
+    if opts['--create']:
+        if not profile.create(project, target_name, stdout):
+            return 1
+
+    if not profile.deploy(project, target_name, stdout):
+        return 1

@@ -78,20 +78,48 @@ class UserProfile(object):
         except WebCommandError:
             return False
 
-    def deploy(self, project, target_name):
-        web_command(
-            command=[
-                "rsync", "-lr", "--safe-links", "--munge-links",
-                "--delete", "--inplace", "--chmod=ugo=rwX",
-                "--exclude=.datacats-environment",
-                "--exclude=.git",
-                "/project/.",
-                _project_user_host(project) + ':' + target_name],
-            ro={project.target: '/project',
-                KNOWN_HOSTS: '/root/.ssh/known_hosts',
-                SSH_CONFIG: '/etc/ssh/ssh_config',
-                self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
-            )
+    def create(self, project, target_name, stream_output=None):
+        """
+        Return True if project was created and now belongs to this user
+        """
+        try:
+            web_command(
+                command=[
+                    "ssh", _project_user_host(project), "create", target_name,
+                    ],
+                ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
+                    SSH_CONFIG: '/etc/ssh/ssh_config',
+                    self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
+                stream_output=stream_output,
+                clean_up=True,
+                )
+            return True
+        except WebCommandError:
+            return False
+
+    def deploy(self, project, target_name, stream_output=None):
+        """
+        Return True if deployment was successful
+        """
+        try:
+            web_command(
+                command=[
+                    "rsync", "-lr", "--safe-links", "--munge-links",
+                    "--delete", "--inplace", "--chmod=ugo=rwX",
+                    "--exclude=.datacats-environment",
+                    "--exclude=.git",
+                    "/project/.",
+                    _project_user_host(project) + ':' + target_name],
+                ro={project.target: '/project',
+                    KNOWN_HOSTS: '/root/.ssh/known_hosts',
+                    SSH_CONFIG: '/etc/ssh/ssh_config',
+                    self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
+                stream_output=stream_output,
+                clean_up=True,
+                )
+            return True
+        except WebCommandError:
+            return False
 
 def _project_user_host(project):
     if project.deploy_target is None:
