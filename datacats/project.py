@@ -651,12 +651,15 @@ class Project(object):
         """
         package = self.target + '/' + psrc
         assert isdir(package), package
-        if not exists(package + '/requirements.txt'):
-            return
+        reqname = '/requirements.txt'
+        if not exists(package + reqname):
+            reqname = '/pip-requirements.txt'
+            if not exists(package + reqname):
+                return
         self.run_command(
             command=[
                 '/usr/lib/ckan/bin/pip', 'install', '-r',
-                '/project/' + psrc + '/requirements.txt'
+                '/project/' + psrc + reqname,
                 ],
             rw_venv=True,
             )
