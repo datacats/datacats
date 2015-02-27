@@ -31,15 +31,19 @@ Options:
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
 """
-    project_dir = opts['ENVIRONMENT_DIR']
-    port = opts['PORT']
-    bare = opts['--bare']
-    image_only = opts['--image-only']
-    no_sysadmin = opts['--no-sysadmin']
-    ckan = opts['--ckan']
+    return create_environment(
+        environment_dir=opts['ENVIRONMENT_DIR'],
+        port=opts['PORT'],
+        create_skin=not opts['--bare'],
+        start_web=not opts['--image-only'],
+        create_sysadmin=not opts['--no-sysadmin'],
+        ckan_version=opts['--ckan'],
+        )
 
+def create_environment(environment_dir, port, ckan_version, create_skin,
+        start_web, create_sysadmin):
     try:
-        project = Project.new(project_dir, 'master', port)
+        project = Project.new(environment_dir, 'master', port)
     except ProjectError as e:
         print e
         return 1
@@ -54,11 +58,11 @@ part of this path will be used as the environment name.
         project.start_postgres_and_solr,
         project.fix_storage_permissions,
         project.create_ckan_ini,
-        lambda: project.update_ckan_ini(skin=not bare),
+        lambda: project.update_ckan_ini(skin=create_skin),
         project.fix_project_permissions,
         ]
 
-    if not bare:
+    if create_skin:
         steps.append(project.create_install_template_skin)
 
     steps.append(project.ckan_db_init)
@@ -68,7 +72,7 @@ part of this path will be used as the environment name.
         write('.')
     write('\n')
 
-    return finish_init(project, image_only, no_sysadmin)
+    return finish_init(project, start_web, create_sysadmin)
 
 
 def init(opts):
@@ -85,8 +89,8 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
     project_dir = opts['ENVIRONMENT_DIR']
     port = opts['PORT']
-    image_only = opts['--image-only']
-    no_sysadmin = opts['--no-sysadmin']
+    start_web = not opts['--image-only']
+    create_sysadmin = not opts['--no-sysadmin']
 
     project_dir = abspath(project_dir or '.')
     try:
@@ -113,10 +117,10 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         write('.')
     write('\n')
 
-    return finish_init(project, image_only, no_sysadmin)
+    return finish_init(project, start_web, create_sysadmin)
 
 
-def finish_init(project, image_only, no_sysadmin):
+def finish_init(project, start_web, create_sysadmin):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """
@@ -126,18 +130,18 @@ def finish_init(project, image_only, no_sysadmin):
     project.ckan_db_init()
     write('\n')
 
-    if not image_only:
+    if start_web:
         project.start_web()
         write('Starting web server at {0} ...\n'.format(project.web_address()))
 
-    if not no_sysadmin:
+    if create_sysadmin:
         try:
             adminpw = confirm_password()
             project.create_admin_set_password(adminpw)
         except KeyboardInterrupt:
             print
 
-    if image_only:
+    if not start_web:
         project.stop_postgres_and_solr()
 
 
