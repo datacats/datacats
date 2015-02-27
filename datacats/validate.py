@@ -17,6 +17,6 @@ def valid_name(n):
 
 def valid_datacats_name(n):
     """
-    Return True for project names that may be deployed to datacats site
+    Return True for project names that may be deployed to DataCats.com
     """
     return bool(re.match(DATACATS_NAME_RE, n))
