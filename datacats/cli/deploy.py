@@ -7,6 +7,7 @@
 from sys import stdout
 
 from datacats.cli.profile import get_working_profile
+from datacats.validate import valid_deploy_name
 
 def deploy(project, opts):
     """Deploy environment to production DataCats.com cloud service
@@ -31,6 +32,11 @@ the environment name.
     target_name = opts['TARGET_NAME']
     if target_name is None:
         target_name = project.name
+
+    if not valid_deploy_name(target_name):
+        print "Please choose a name at least 4 characters long"
+        print "and containing only lowercase letters and numbers"
+        return 1
 
     if opts['--create']:
         if not profile.create(project, target_name, stdout):
