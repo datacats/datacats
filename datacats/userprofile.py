@@ -104,7 +104,7 @@ class UserProfile(object):
         try:
             web_command(
                 command=[
-                    "rsync", "-lr", "--safe-links", "--munge-links",
+                    "rsync", "-lrv", "--safe-links", "--munge-links",
                     "--delete", "--inplace", "--chmod=ugo=rwX",
                     "--exclude=.datacats-environment",
                     "--exclude=.git",
