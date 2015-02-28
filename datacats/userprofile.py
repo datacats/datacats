@@ -97,6 +97,26 @@ class UserProfile(object):
         except WebCommandError:
             return False
 
+    def admin_password(self, project, target_name, password):
+        """
+        Return True if password was set successfully
+        """
+        try:
+            web_command(
+                command=[
+                    "ssh", _project_user_host(project),
+                    "admin_password", target_name, password,
+                    ],
+                ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
+                    SSH_CONFIG: '/etc/ssh/ssh_config',
+                    self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
+                clean_up=True,
+                )
+            return True
+        except WebCommandError:
+            return False
+
+
     def deploy(self, project, target_name, stream_output=None):
         """
         Return True if deployment was successful
@@ -112,6 +132,16 @@ class UserProfile(object):
                     _project_user_host(project) + ':' + target_name],
                 ro={project.target: '/project',
                     KNOWN_HOSTS: '/root/.ssh/known_hosts',
+                    SSH_CONFIG: '/etc/ssh/ssh_config',
+                    self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
+                stream_output=stream_output,
+                clean_up=True,
+                )
+            web_command(
+                command=[
+                    "ssh", _project_user_host(project), "install", target_name,
+                    ],
+                ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
                     SSH_CONFIG: '/etc/ssh/ssh_config',
                     self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
                 stream_output=stream_output,

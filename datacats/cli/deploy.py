@@ -7,6 +7,7 @@
 from sys import stdout
 
 from datacats.cli.profile import get_working_profile
+from datacats.cli.create import confirm_password
 from datacats.validate import valid_deploy_name
 
 def deploy(project, opts):
@@ -44,3 +45,10 @@ the environment name.
 
     if not profile.deploy(project, target_name, stdout):
         return 1
+
+    if opts['--create']:
+        try:
+            pw = confirm_password()
+            profile.admin_password(project, target_name, pw)
+        except KeyboardInterrupt:
+            pass
