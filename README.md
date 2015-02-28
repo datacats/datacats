@@ -14,18 +14,18 @@ OSX | Linux | Windows
 2. `pip install datacats` | 2. `pip install datacats` |
 
 
-## Start a CKAN project
+## Create a CKAN environment
 
 ```
-datacats create myproject
+datacats create mytown
 ```
 
-This will create a new project called "myproject" in the current
-directory, new data files in "~/.datacats/myproject" and start
-your project containers, serving your new site locally.
+This will create a new environment called "mytown" in the current
+directory, new data files in "~/.datacats/mytown" and start
+serving your new site locally.
 
 ```
-Creating project "myproject".............
+Creating project "mytown".............
 Site available at http://localhost:5425/
 admin user password:
 ```
@@ -34,15 +34,15 @@ Open your brower to the address shown to try out your new site.
 Enter an admin password at the prompt to create your first sysadmin user.
 
 
-## Customize your project
+## Customize your theme
 
-In your project directory you will find
-"ckan" and "ckanext-myproject" subdirectories.
-"ckanext-myproject" is a simple example extension that modifies
+In your environment directory you will find
+"ckan" and "ckanext-mytowntheme" subdirectories.
+"ckanext-mytowntheme" is a simple example extension that extends
 some templates and adds some static files.
 
 Customize your Jinja2 templates in
-"ckanext-myproject/ckanext/myproject/templates", using
+"ckanext-mytowntheme/ckanext/mytowntheme/templates", using
 the files in "ckan/ckan/templates" as a reference.
 
 Full CKAN extension possibilities are covered in the official CKAN
@@ -56,17 +56,17 @@ For changes to configuration files and
 new template files added use "reload" to force a site reload.
 
 ```
-datacats reload myproject
+datacats reload mytown
 ```
 
-You may omit "myproject" when running datacats commands from within the
-project directory or any subdirectory.
+You may omit "mytown" when running datacats commands from within the
+environment directory or any subdirectory.
 
-## Add existing extensions
+## Add CKAN extensions
 
 Install any of the 100+ existing CKAN extensions.
 
-First download or clone an extension in to your project directory.
+First download or clone an extension in to your environment directory.
 
 ```
 cd myproject
@@ -78,10 +78,10 @@ to the "development.ini" file.  For ckanext-pages we add "pages" to the list
 of plugins.
 
 ```
-ckan.plugins = myproject_theme datastore image_view pages
+ckan.plugins = mytowntheme datastore image_view pages
 ```
 
-Reinstall all project extensions and reload the site with:
+Reinstall all extensions and reload the site with:
 ```
 datacats install
 ```
@@ -89,11 +89,11 @@ datacats install
 Refresh your browser window to use the new features.
 
 
-## Deploy your project
+## Deploy your environment
 
-Deploy your customized CKAN project to the DataCats cloud service.
+Deploy your customized CKAN site to the DataCats.com cloud service.
 ```
-datacats deploy
+datacats deploy --create
 ```
 
 Follow the prompts and your site will be live in minutes.
