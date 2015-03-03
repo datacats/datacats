@@ -12,9 +12,9 @@ def paster(opts):
 Usage:
   datacats paster [COMMAND...]
 
-You must be inside a datacats environment to run this. By default, the --plugin
-part of the command will be set to 'ckan'. Since the command runs in the same
-directory as development.ini, the --config option need not be specified.
+You must be inside a datacats environment to run this. The paster command will
+run within your current directory inside the environment. You don't need to
+specify the --plugin option. The --config option also need not be specified.
 """
     project = Project.load('.')
     project.start_postgres_and_solr()

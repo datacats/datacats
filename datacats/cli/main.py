@@ -20,7 +20,7 @@ The datacats commands available are:
   list        List all environments for this user
   logs        Display or follow container logs
   open        Open web browser window to this environment
-  paster      Run a paster command within this environment
+  paster      Run a paster command from the current directory
   pull        Download or update required datacats docker images
   purge       Purge environment database and uploaded files
   reload      Reload environment source and configuration
