@@ -20,6 +20,7 @@ The datacats commands available are:
   list        List all environments for this user
   logs        Display or follow container logs
   open        Open web browser window to this environment
+  paster      Run a paster command within this environment
   pull        Download or update required datacats docker images
   purge       Purge environment database and uploaded files
   reload      Reload environment source and configuration
@@ -36,7 +37,8 @@ import sys
 from docopt import docopt
 import pkg_resources
 
-from datacats.cli import create, manage, install, pull, purge, shell, deploy
+from datacats.cli import (create, manage, install, pull, purge, shell, deploy,
+    paster)
 from datacats.project import Project, ProjectError
 
 COMMANDS = {
@@ -48,6 +50,7 @@ COMMANDS = {
     'list': manage.list_,
     'logs': manage.logs,
     'open': manage.open_,
+    'paster': paster.paster,
     'pull': pull.pull,
     'purge': purge.purge,
     'reload': manage.reload_,
