@@ -45,10 +45,12 @@ class Project(object):
     Create with Project.new(path) or Project.load(path)
     """
     def __init__(self, name, target, datadir, ckan_version=None, port=None,
-            deploy_target=None, site_url=None, always_prod=False):
+                deploy_target=None, site_url=None, always_prod=False,
+                extension_dir=None):
         self.name = name
         self.target = target
         self.datadir = datadir
+        self.extension_dir = extension_dir
         self.ckan_version = ckan_version
         self.port = int(port if port else self._choose_port())
         self.deploy_target = deploy_target
@@ -170,12 +172,17 @@ class Project(object):
                 raise ProjectError('No environment found with that name')
 
             first_wd = wd
+            oldwd = None
             while not exists(wd + '/.datacats-environment'):
                 oldwd = wd
                 wd, ignore = path_split(wd)
                 if wd == oldwd:
                     raise ProjectError(
                         'Environment not found in {0} or above', first_wd)
+
+            extension_dir = 'ckan'
+            if oldwd:
+                ignore, extension_dir = path_split(oldwd)
 
         if data_only and not used_path:
             return cls(project_name, None, datadir)
@@ -222,7 +229,7 @@ class Project(object):
             passwords[n.upper()] = cp.get('passwords', n)
 
         project = cls(name, wd, datadir, ckan_version, port, deploy_target,
-            site_url=site_url, always_prod=always_prod)
+        site_url=site_url, always_prod=always_prod, extension_dir=extension_dir)
         if passwords:
             project.passwords = passwords
         else:
@@ -753,4 +760,3 @@ def generate_db_password():
     """
     chars = uppercase + lowercase + digits
     return ''.join(SystemRandom().choice(chars) for x in xrange(16))
-

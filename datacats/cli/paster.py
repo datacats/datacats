@@ -19,5 +19,7 @@ directory as development.ini, the --config option need not be specified.
     project = Project.load('.')
     project.start_postgres_and_solr()
 
-    opts['COMMAND'] = ['--', 'paster', '--plugin=ckan'] + opts['COMMAND']
+    extension = "--plugin={0}".format(project.extension_dir)
+    opts['COMMAND'] = ['--', 'paster', extension] + opts['COMMAND']
+
     return project.interactive_shell(opts['COMMAND'])
