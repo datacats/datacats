@@ -88,12 +88,10 @@ def main():
 
     # shell is special: options might belong to the command being executed
     # split args into args and shell_command
-    if command_fn == shell.shell or command_fn == paster.paster:
+    if command_fn == shell.shell:
         # assume commands don't start with '-' and that those options
         # are intended for datacats
         offset = 2
-        if command_fn == paster.paster:
-            offset = 1
         for j, a in enumerate(args[i + offset:], i + offset):
             if not a.startswith('-'):
                 # -- makes docopt parse the rest as positional args

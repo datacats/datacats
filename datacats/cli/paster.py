@@ -19,7 +19,6 @@ specify the --plugin option. The --config option also need not be specified.
     project = Project.load('.')
     project.start_postgres_and_solr()
 
-    extension = "--plugin={0}".format(project.extension_dir)
-    opts['COMMAND'] = ['--', 'paster', extension] + opts['COMMAND']
+    opts['COMMAND'] = ['--', project.extension_dir, 'paster'] + opts['COMMAND']
 
-    return project.interactive_shell(opts['COMMAND'])
+    return project.interactive_shell(opts['COMMAND'], paster=True)

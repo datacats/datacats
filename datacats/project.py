@@ -22,7 +22,7 @@ from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
     PortAllocatedError, container_logs, remove_image)
 from datacats.template import ckan_extension_template
-from datacats.scripts import WEB, SHELL
+from datacats.scripts import WEB, SHELL, PASTER
 from datacats.network import wait_for_service_available, ServiceTimeout
 
 WEB_START_TIMEOUT_SECONDS = 30
@@ -614,7 +614,7 @@ class Project(object):
             )
         remove(self.datadir + '/run/admin.json')
 
-    def interactive_shell(self, command=None):
+    def interactive_shell(self, command=None, paster=False):
         """
         launch interactive shell session with all writable volumes
 
@@ -635,6 +635,8 @@ class Project(object):
 
         self._create_run_ini(self.port, production=False, output='run.ini')
 
+        sh = 'paster.sh' if paster else 'shell.sh'
+        
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
@@ -643,12 +645,12 @@ class Project(object):
             ] + venv_volumes + [
             '-v', self.target + ':/project:rw',
             '-v', self.datadir + '/files:/var/www/storage:rw',
-            '-v', SHELL + ':/scripts/shell.sh:ro',
+            '-v', (PASTER if paster else SHELL) + ':/scripts/{0}:ro'.format(sh),
             '-v', self.datadir + '/run/run.ini:/project/development.ini:ro',
             '--link', 'datacats_solr_' + self.name + ':solr',
             '--link', 'datacats_postgres_' + self.name + ':db',
             '--hostname', self.name,
-            'datacats/web', '/scripts/shell.sh'] + command)
+            'datacats/web', '/scripts/{0}'.format(sh)] + command)
 
     def install_package_requirements(self, psrc):
         """
