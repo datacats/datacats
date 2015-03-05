@@ -17,8 +17,14 @@ Load data from one CKAN into another
 Run the CKAN test suite
 -----------------------
 
-Run a command within an extension
----------------------------------
+Run Celery tasks
+----------------
+If you have an extension that is using Celery, make sure that the extension is
+installed in your environment with ``datacats install``. You can then run a
+container with a celery daemon like this: ::
+
+    datacats paster celeryd
+
 
 Working on Core CKAN
 --------------------

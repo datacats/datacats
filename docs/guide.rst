@@ -187,12 +187,22 @@ Paster Commands
 ---------------
 To quickly run CKAN ``paster`` commands, you can do the following: ::
 
-    datacats shell catstown paster --plugin=ckan sysadmin add joe
+    datacats paster sysadmin add joe
 
-Take a look at the `CKAN paster page`_ for a list of available commands. Note
-that with datacats, you don't need to worry about activating your ``virtualenv``,
-and you do not need to pass the ``--config`` option to paster. datacats handles this
-for you automatically.
+Take a look at the `CKAN paster page`_ for a list of available commands.
+
+.. note::
+
+    With datacats, you don't need to worry about activating your ``virtualenv``,
+    and you do not need to pass the ``--config`` option to paster. You also
+    do not need to specify the ``--plugin=ckan`` option.
+    datacats handles this for you automatically.
+
+If you have ``paster`` commands inside your CKAN extensions, you can ``cd`` into
+the extension directory and run the command from there: ::
+
+    cd ckanext-archiver/
+    datacats paster archiver clean
 
 Logs
 ----
