@@ -50,7 +50,7 @@ COMMANDS = {
     'list': manage.list_,
     'logs': manage.logs,
     'open': manage.open_,
-    'paster': paster.paster,
+    'paster': shell.paster,
     'pull': pull.pull,
     'purge': purge.purge,
     'reload': manage.reload_,
