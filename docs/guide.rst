@@ -24,9 +24,11 @@ You will need to install Docker first:
 
 Linux
 #####
-Follow the instructions over at the `Docker Docs`_
+Follow the instructions over at the `Docker Docs`_. Make sure to install the
+Docker-maintained version of Docker, not the official Ubuntu-maintained version
+of Docker, which is out-of-date.
 
-.. _Docker Docs: https://docs.docker.com/installation/ubuntulinux/
+.. _Docker Docs: https://docs.docker.com/installation/ubuntulinux/#docker-maintained-package-installation
 
 OSX
 ###
