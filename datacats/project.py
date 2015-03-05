@@ -369,7 +369,8 @@ class Project(object):
             'ckan.datastore.write_url = postgresql://<hidden>',
             'solr_url = http://solr:8080/solr',
             'ckan.storage_path = /var/www/storage',
-            'ckan.plugins = datastore text_preview recline_preview'
+            'ckan.plugins = datastore resource_proxy text_view '
+            + 'recline_grid_view recline_graph_view'
             + (' {0}_theme'.format(self.name) if skin else ''),
             'ckan.site_title = ' + self.name,
             'ckan.site_logo =',
@@ -753,4 +754,3 @@ def generate_db_password():
     """
     chars = uppercase + lowercase + digits
     return ''.join(SystemRandom().choice(chars) for x in xrange(16))
-
