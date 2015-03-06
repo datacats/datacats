@@ -7,7 +7,6 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from setuptools import setup
-from setuptools.command.install import install
 import sys
 
 install_requires=[
@@ -19,7 +18,7 @@ install_requires=[
 
 setup(
     name='datacats',
-    version='0.2',
+    version='0.3',
     description='Developer tools for CKAN data catalogs built on Docker',
     license='AGPL3',
     author='Boxkite',

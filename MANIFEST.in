@@ -1,2 +1,2 @@
-recursive-include datacats/images *.png
-recursive-include datacats/scripts *.sh
+recursive-include datacats/images *
+recursive-include datacats/scripts *
