@@ -27,11 +27,11 @@ install_requires=[
 setup(
     name='datacats',
     version='0.1',
-    description='The easiest way to develop and deploy CKAN cross-platform.',
+    description='Developer tools for CKAN data catalogs built on Docker',
     license='AGPL3',
     author='Boxkite',
     author_email='contact@boxkite.ca',
-    url='https://github.com/dcats/datacats',
+    url='https://github.com/boxkite/datacats',
     packages=[
         'datacats',
         'datacats.tests',
