@@ -46,7 +46,7 @@ class Project(object):
     """
     def __init__(self, name, target, datadir, ckan_version=None, port=None,
                 deploy_target=None, site_url=None, always_prod=False,
-                extension_dir=None):
+                extension_dir='ckan'):
         self.name = name
         self.target = target
         self.datadir = datadir
@@ -153,6 +153,7 @@ class Project(object):
         if project_name is None:
             project_name = '.'
 
+        extension_dir = 'ckan'
         if valid_name(project_name) and isdir(
                 expanduser('~/.datacats/' + project_name)):
             used_path = False
@@ -180,7 +181,6 @@ class Project(object):
                     raise ProjectError(
                         'Environment not found in {0} or above', first_wd)
 
-            extension_dir = 'ckan'
             if oldwd:
                 ignore, extension_dir = path_split(oldwd)
 
