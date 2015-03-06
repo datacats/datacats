@@ -14,7 +14,7 @@ install_requires=[
     'setuptools',
     'docopt',
     'docker-py',
-    'requests',
+    'requests<2.5.0',
 ]
 
 setup(
