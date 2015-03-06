@@ -37,8 +37,7 @@ import sys
 from docopt import docopt
 import pkg_resources
 
-from datacats.cli import (create, manage, install, pull, purge, shell, deploy,
-    paster)
+from datacats.cli import create, manage, install, pull, purge, shell, deploy
 from datacats.project import Project, ProjectError
 
 COMMANDS = {
