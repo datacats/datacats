@@ -36,7 +36,7 @@ Reload CKAN for the config changes to take effect: ::
 
 Finally, deploy your project to the DataCats.com cloud: ::
 
-    datacats deploy myckan
+    datacats deploy --create
 
 .. _Docker: https://docs.docker.com/installation/
 
