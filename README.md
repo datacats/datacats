@@ -65,7 +65,8 @@ environment directory or any subdirectory.
 
 ## Add CKAN extensions
 
-Install any of the 100+ existing CKAN extensions.
+Many of the [100+ existing CKAN extensions](http://extensions.ckan.org/)
+are already compatible with datacats.
 
 First download or clone an extension in to your environment directory.
 
