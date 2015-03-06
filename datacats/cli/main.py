@@ -20,6 +20,7 @@ The datacats commands available are:
   list        List all environments for this user
   logs        Display or follow container logs
   open        Open web browser window to this environment
+  paster      Run a paster command from the current directory
   pull        Download or update required datacats docker images
   purge       Purge environment database and uploaded files
   reload      Reload environment source and configuration
@@ -48,6 +49,7 @@ COMMANDS = {
     'list': manage.list_,
     'logs': manage.logs,
     'open': manage.open_,
+    'paster': shell.paster,
     'pull': pull.pull,
     'purge': purge.purge,
     'reload': manage.reload_,
@@ -88,7 +90,8 @@ def main():
     if command_fn == shell.shell:
         # assume commands don't start with '-' and that those options
         # are intended for datacats
-        for j, a in enumerate(args[i + 2:], i + 2):
+        offset = 2
+        for j, a in enumerate(args[i + offset:], i + offset):
             if not a.startswith('-'):
                 # -- makes docopt parse the rest as positional args
                 args = args[:j] + ['--'] + args[j:]

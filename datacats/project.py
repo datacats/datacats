@@ -22,7 +22,7 @@ from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
     PortAllocatedError, container_logs, remove_image)
 from datacats.template import ckan_extension_template
-from datacats.scripts import WEB, SHELL
+from datacats.scripts import WEB, SHELL, PASTER
 from datacats.network import wait_for_service_available, ServiceTimeout
 
 WEB_START_TIMEOUT_SECONDS = 30
@@ -45,10 +45,12 @@ class Project(object):
     Create with Project.new(path) or Project.load(path)
     """
     def __init__(self, name, target, datadir, ckan_version=None, port=None,
-            deploy_target=None, site_url=None, always_prod=False):
+                deploy_target=None, site_url=None, always_prod=False,
+                extension_dir=None):
         self.name = name
         self.target = target
         self.datadir = datadir
+        self.extension_dir = extension_dir
         self.ckan_version = ckan_version
         self.port = int(port if port else self._choose_port())
         self.deploy_target = deploy_target
@@ -170,12 +172,17 @@ class Project(object):
                 raise ProjectError('No environment found with that name')
 
             first_wd = wd
+            oldwd = None
             while not exists(wd + '/.datacats-environment'):
                 oldwd = wd
                 wd, ignore = path_split(wd)
                 if wd == oldwd:
                     raise ProjectError(
                         'Environment not found in {0} or above', first_wd)
+
+            extension_dir = 'ckan'
+            if oldwd:
+                ignore, extension_dir = path_split(oldwd)
 
         if data_only and not used_path:
             return cls(project_name, None, datadir)
@@ -222,7 +229,7 @@ class Project(object):
             passwords[n.upper()] = cp.get('passwords', n)
 
         project = cls(name, wd, datadir, ckan_version, port, deploy_target,
-            site_url=site_url, always_prod=always_prod)
+        site_url=site_url, always_prod=always_prod, extension_dir=extension_dir)
         if passwords:
             project.passwords = passwords
         else:
@@ -608,7 +615,7 @@ class Project(object):
             )
         remove(self.datadir + '/run/admin.json')
 
-    def interactive_shell(self, command=None):
+    def interactive_shell(self, command=None, paster=False):
         """
         launch interactive shell session with all writable volumes
 
@@ -629,6 +636,16 @@ class Project(object):
 
         self._create_run_ini(self.port, production=False, output='run.ini')
 
+        script = SHELL
+        if paster:
+            script = PASTER
+            # mount .bash_profile in extension dir to activate virtualenv
+            venv_volumes += ['-v', self.target + '/.bash_profile:/project/'
+                + self.extension_dir + '/.bash_profile:ro']
+            if command and command != ['help']:
+                command += ['--config=/project/development.ini']
+            command = [self.extension_dir, 'paster'] + command
+
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
@@ -637,7 +654,7 @@ class Project(object):
             ] + venv_volumes + [
             '-v', self.target + ':/project:rw',
             '-v', self.datadir + '/files:/var/www/storage:rw',
-            '-v', SHELL + ':/scripts/shell.sh:ro',
+            '-v', script + ':/scripts/shell.sh:ro',
             '-v', self.datadir + '/run/run.ini:/project/development.ini:ro',
             '--link', 'datacats_solr_' + self.name + ':solr',
             '--link', 'datacats_postgres_' + self.name + ':db',
