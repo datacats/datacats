@@ -635,8 +635,16 @@ class Project(object):
 
         self._create_run_ini(self.port, production=False, output='run.ini')
 
-        sh = 'paster.sh' if paster else 'shell.sh'
-        
+        script = SHELL
+        if paster:
+            script = PASTER
+            # mount .bash_profile in extension dir to activate virtualenv
+            venv_volumes += ['-v', self.target + '/.bash_profile:/project/'
+                + self.extension_dir + '/.bash_profile:ro']
+            if command and command != ['help']:
+                command += ['--config=/project/development.ini']
+            command = [self.extension_dir, 'paster'] + command
+
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
@@ -645,12 +653,12 @@ class Project(object):
             ] + venv_volumes + [
             '-v', self.target + ':/project:rw',
             '-v', self.datadir + '/files:/var/www/storage:rw',
-            '-v', (PASTER if paster else SHELL) + ':/scripts/{0}:ro'.format(sh),
+            '-v', script + ':/scripts/shell.sh:ro',
             '-v', self.datadir + '/run/run.ini:/project/development.ini:ro',
             '--link', 'datacats_solr_' + self.name + ':solr',
             '--link', 'datacats_postgres_' + self.name + ':db',
             '--hostname', self.name,
-            'datacats/web', '/scripts/{0}'.format(sh)] + command)
+            'datacats/web', '/scripts/shell.sh'] + command)
 
     def install_package_requirements(self, psrc):
         """

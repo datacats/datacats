@@ -10,10 +10,7 @@ set -e
 
 userdel www-data
 
-useradd -d /project -u $(stat -c %u /project) -M -s /bin/bash shell
+useradd -d "/project/$1" -u $(stat -c %u /project) -M -s /bin/bash shell
 
 shift
-dir=/project/"$1"
-shift
-command="${@} --config=/project/development.ini"
-sudo -i -u shell bash -c "cd $dir ; $command"
+sudo -i -u shell "$@"

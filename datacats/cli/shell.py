@@ -20,7 +20,7 @@ Default: '.'
 
 
 def paster(opts):
-    """Run a paster command within this environment
+    """Run a paster command from the current directory
 
 Usage:
   datacats paster [COMMAND...]
@@ -31,7 +31,5 @@ specify the --plugin option. The --config option also need not be specified.
 """
     project = Project.load('.')
     project.start_postgres_and_solr()
-
-    opts['COMMAND'] = ['--', project.extension_dir, 'paster'] + opts['COMMAND']
 
     return project.interactive_shell(opts['COMMAND'], paster=True)
