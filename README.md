@@ -12,6 +12,7 @@ OSX | Linux | Windows
 --- | --- | ---
 1. Install boot2docker | 1. Install docker | coming soon
 2. `pip install datacats` | 2. `pip install datacats` |
+3. `datacats pull` | 3. `datacats pull` |
 
 
 ## Create a CKAN environment
