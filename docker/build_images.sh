@@ -16,7 +16,7 @@ docker build -t datacats/web web/
 
 docker rm datacats_preload_1 || true
 docker run -i --name datacats_preload_1 \
-    -e BRANCH=master datacats/web \
+    -e BRANCH=release-v2.3 datacats/web \
     /bin/bash < "$HERE/setup_ckan.sh"
 docker rmi datacats_preload_1_image || true
 docker commit datacats_preload_1 datacats_preload_1_image
@@ -38,8 +38,8 @@ docker run -i --name datacats_preload_2 \
     /bin/bash -c \
     'cat > /project/ckan/ckan/public/base/css/main.debug.css' \
     < "$HERE/src/main.debug.css"
-docker rmi datacats/web:preload_master
-docker commit datacats_preload_2 datacats/web:preload_master
+docker rmi datacats/web:preload-2.3 || true
+docker commit datacats_preload_2 datacats/web:preload-2.3
 
 rm -rf "$HERE/src"
 docker rm -f datacats_preload_1

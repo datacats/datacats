@@ -266,7 +266,7 @@ class Project(object):
         """
         Return the preloaded ckan src and venv image name
         """
-        return 'datacats/web:preload_{0}'.format(self.ckan_version)
+        return 'datacats/web:preload-{0}'.format(self.ckan_version)
 
     def create_virtualenv(self):
         """
