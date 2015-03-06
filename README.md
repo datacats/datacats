@@ -10,9 +10,9 @@ any platform, along with a command to deploy that exact environment to the cloud
 
 OSX | Linux | Windows
 --- | --- | ---
-1. Install boot2docker | 1. Install docker | coming soon
-2. `pip install datacats` | 2. `pip install datacats` |
-3. `datacats pull` | 3. `datacats pull` |
+1. [Install boot2docker](https://docs.docker.com/installation/mac/) | 1. [Install docker](https://docs.docker.com/installation/) | coming soon
+2. run `pip install datacats` | 2. run `pip install datacats` |
+3. run `datacats pull` | 3. run `datacats pull` |
 
 
 ## Create a CKAN environment
