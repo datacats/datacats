@@ -14,6 +14,7 @@ OSX | Linux | Windows
 2. run `pip install datacats` | 2. run `pip install datacats` |
 3. run `datacats pull` | 3. run `datacats pull` |
 
+See the full docs at [docs.datacats.com](http://docs.datacats.com)
 
 ## Create a CKAN environment
 
