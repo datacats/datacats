@@ -10,8 +10,9 @@ any platform, along with a command to deploy that exact environment to the cloud
 
 OSX | Linux | Windows
 --- | --- | ---
-1. Install boot2docker | 1. Install docker | coming soon
-2. `pip install datacats` | 2. `pip install datacats` |
+1. [Install boot2docker](https://docs.docker.com/installation/mac/) | 1. [Install latest docker](https://docs.docker.com/installation/ubuntulinux/#docker-maintained-package-installation) | coming soon
+2. run `pip install datacats` | 2. run `pip install datacats` |
+3. run `datacats pull` | 3. run `datacats pull` |
 
 
 ## Create a CKAN environment
@@ -64,7 +65,8 @@ environment directory or any subdirectory.
 
 ## Add CKAN extensions
 
-Install any of the 100+ existing CKAN extensions.
+Many of the [100+ existing CKAN extensions](http://extensions.ckan.org/)
+are already compatible with datacats.
 
 First download or clone an extension in to your environment directory.
 

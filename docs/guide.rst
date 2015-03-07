@@ -161,7 +161,7 @@ Deploying
 ---------
 To deploy your brand new CKAN instance to the DataCats.com managed cloud, simply run: ::
 
-    datacats deploy
+    datacats deploy --create
 
 This will create a new deployment with all your settings and installed extensions,
 as well as the correct CKAN version.

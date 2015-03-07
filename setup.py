@@ -7,43 +7,35 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from setuptools import setup
-from setuptools.command.install import install
 import sys
-
-class DataCatsInstall(install):
-    def run(self):
-        install.run(self)
-        from datacats.cli.pull import pull
-        print 'Downloading images. This may take a few minutes.'
-        pull({})
 
 install_requires=[
     'setuptools',
     'docopt',
     'docker-py',
-    'requests',
+    'requests<2.5.0',
 ]
 
 setup(
     name='datacats',
-    version='0.1',
-    description='The easiest way to develop and deploy CKAN cross-platform.',
+    version='0.4',
+    description='Developer tools for CKAN data catalogs built on Docker',
     license='AGPL3',
     author='Boxkite',
     author_email='contact@boxkite.ca',
-    url='https://github.com/dcats/datacats',
+    url='https://github.com/boxkite/datacats',
     packages=[
         'datacats',
         'datacats.tests',
         'datacats.cli',
         ],
     install_requires=install_requires,
+    include_package_data=True,
     test_suite='datacats.tests',
     zip_safe=False,
     entry_points = """
         [console_scripts]
         datacats=datacats.cli.main:main
         """,
-    cmdclass={'install': DataCatsInstall},
     )
 

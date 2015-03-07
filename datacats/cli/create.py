@@ -43,7 +43,8 @@ part of this path will be used as the environment name.
 def create_environment(environment_dir, port, ckan_version, create_skin,
         start_web, create_sysadmin):
     try:
-        project = Project.new(environment_dir, 'master', port)
+        # FIXME: only 2.3 preload supported at the moment
+        project = Project.new(environment_dir, '2.3', port)
     except ProjectError as e:
         print e
         return 1
