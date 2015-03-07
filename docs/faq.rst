@@ -1,4 +1,4 @@
-CKAN Reference
+FAQ
 ==============
 
 This page contains a few recipes on how to use DataCats to easily accomplish
@@ -37,3 +37,23 @@ In the ``/ckan`` directory of your datacats environment, run the following git
 command: ::
 
     git fetch --unshallow
+
+boot2docker - Upgrading or Recovering from failures
+---------------------------------------------------
+Sometimes you will need to upgrade boot2docker. Or, you may encounter a problem
+where the boot2docker VM is unreachable or otherwise broken. Whatever the case,
+if you had to delete the boot2docker VM and create a new one, follow these steps
+to get your CKAN environments up and running again:
+
+- First, you will need to pull the CKAN docker images again: ::
+
+    datacats pull
+
+- Clean your datacats environments so they can be re-initialized: ::
+
+    cd myckan
+    datacats purge
+
+- Finally, initialize the environment: ::
+
+    datacats init

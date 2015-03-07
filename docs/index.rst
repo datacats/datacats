@@ -47,7 +47,7 @@ Contents:
 
    guide
    commands
-   ckan
+   faq
    docker
 
 Indices and tables
