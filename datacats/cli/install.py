@@ -45,7 +45,8 @@ def install_all(project, clean):
         if not exists(fulld + '/setup.py'):
             continue
         srcdirs.add(d)
-        if exists(fulld + '/requirements.txt'):
+        if (exists(fulld + '/requirements.txt') or
+                exists(fulld + '/pip-requirements.txt')):
             reqdirs.add(d)
     try:
         srcdirs.remove('ckan')
