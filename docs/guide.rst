@@ -54,11 +54,11 @@ If you do not have ``pip`` installed, you can install it first by running: ::
 
     easy_install pip
 
-As part of the install datacats will pull the Docker images needed to
-create your environment. This will only happen **once**. Those images are then
-re-used for all subsequent environments you create.
+As a last setup step, we need to pull the Docker images needed to
+create your environment. This only needs to happen **once**. Those images are
+then re-used for all subsequent environments you create.
 
-To update the Docker images manually run::
+To pull the Docker images run::
 
     datacats pull
 

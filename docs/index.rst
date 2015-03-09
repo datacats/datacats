@@ -12,6 +12,7 @@ Quickstart
 Install Docker_. Then, in a shell, run:  ::
 
     pip install datacats
+    datacats pull
     datacats create myckan
 
 This will create a new CKAN dev environment, with all the source code
