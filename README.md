@@ -1,6 +1,6 @@
 # datacats
 
-Easy CKAN development and deployment
+CKAN Data Catalog Development Tools built on Docker
 
 datacats uses Docker to give you fully self-contained CKAN dev environments on
 any platform, along with a command to deploy that exact environment to the cloud.

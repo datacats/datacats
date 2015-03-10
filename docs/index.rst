@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-datacats - Easy CKAN development using Docker
-=============================================
+datacats - CKAN Data Catalog Developer Tools built on Docker
+============================================================
 
 Quickstart
 ---------------

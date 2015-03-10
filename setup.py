@@ -19,7 +19,7 @@ install_requires=[
 setup(
     name='datacats',
     version='0.4',
-    description='Developer tools for CKAN data catalogs built on Docker',
+    description='CKAN Data Catalog Developer Tools built on Docker',
     license='AGPL3',
     author='Boxkite',
     author_email='contact@boxkite.ca',
