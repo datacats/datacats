@@ -37,6 +37,10 @@ open
 ----
 .. program-output:: datacats help open
 
+paster
+------
+.. program-output:: datacats help paster
+
 pull
 ----
 .. program-output:: datacats help pull
