@@ -11,12 +11,6 @@ Anywhere within your datacats environment directory, run::
 
     datacats shell . paster --plugin=pylons shell
 
-Load data from one CKAN into another
-------------------------------------
-
-Run the CKAN test suite
------------------------
-
 Run Celery tasks
 ----------------
 If you have an extension that is using Celery, make sure that the extension is
