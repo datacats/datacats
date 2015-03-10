@@ -642,7 +642,7 @@ class Project(object):
             # mount .bash_profile in extension dir to activate virtualenv
             venv_volumes += ['-v', self.target + '/.bash_profile:/project/'
                 + self.extension_dir + '/.bash_profile:ro']
-            if command and command != ['help']:
+            if command and command != ['help'] and command != ['--help']:
                 command += ['--config=/project/development.ini']
             command = [self.extension_dir, 'paster'] + command
 

@@ -32,4 +32,5 @@ specify the --plugin option. The --config option also need not be specified.
     project = Project.load('.')
     project.start_postgres_and_solr()
 
-    return project.interactive_shell(opts['COMMAND'], paster=True)
+    assert opts['COMMAND'][0] == '--'
+    return project.interactive_shell(opts['COMMAND'][1:], paster=True)

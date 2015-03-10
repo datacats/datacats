@@ -85,17 +85,19 @@ def main():
     if not command_fn:
         return docopt(__doc__, ['--help'])
 
-    # shell is special: options might belong to the command being executed
-    # split args into args and shell_command
+    # shell, paster are special: options might belong to the command being
+    # executed
     if command_fn == shell.shell:
         # assume commands don't start with '-' and that those options
         # are intended for datacats
-        offset = 2
-        for j, a in enumerate(args[i + offset:], i + offset):
+        for j, a in enumerate(args[i + 2:], i + 2):
             if not a.startswith('-'):
                 # -- makes docopt parse the rest as positional args
                 args = args[:j] + ['--'] + args[j:]
                 break
+
+    if command_fn == shell.paster:
+        args = args[:i + 1] + ['--'] + args[i + 1:]
 
     if help_:
         args.insert(1, '--help')
