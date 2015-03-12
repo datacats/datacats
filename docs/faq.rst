@@ -19,6 +19,18 @@ container with a celery daemon like this: ::
 
     datacats paster celeryd
 
+Cleaning the database doesn't work.
+-----------------------------------
+When running the command ``paster db clean``, the command will freeze as it is
+blocked from cleaning the database if CKAN is connected to the db (`see issue`_)
+. To get around this, stop the ``web`` docker container for your environment
+first, then issue the command, and reload datacats: ::
+
+    docker stop datacats_web_myckan
+    datacats pasted db clean
+    datacats reload
+
+.. _see issue: https://github.com/ckan/ckan/issues/2306
 
 Working on Core CKAN
 --------------------
