@@ -16,9 +16,11 @@ install_requires=[
     'requests<2.5.0',
 ]
 
+exec(open("datacats/version.py").read())
+
 setup(
     name='datacats',
-    version='0.4',
+    version=__version__,
     description='CKAN Data Catalog Developer Tools built on Docker',
     license='AGPL3',
     author='Boxkite',
