@@ -13,7 +13,7 @@ install_requires=[
     'setuptools',
     'docopt',
     'docker-py',
-    'requests<2.5.0',
+    'requests',
 ]
 
 exec(open("datacats/version.py").read())
