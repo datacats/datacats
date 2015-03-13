@@ -26,6 +26,7 @@ from datacats.scripts import WEB, SHELL, PASTER
 from datacats.network import wait_for_service_available, ServiceTimeout
 
 WEB_START_TIMEOUT_SECONDS = 30
+DOCKER_EXE = 'docker'
 
 
 class ProjectError(Exception):
@@ -651,7 +652,7 @@ class Project(object):
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
-            '/usr/bin/docker', 'run', '--rm',
+            DOCKER_EXE, 'run', '--rm',
             '-it' if use_tty else '-i',
             ] + venv_volumes + [
             '-v', self.target + ':/project:rw',
