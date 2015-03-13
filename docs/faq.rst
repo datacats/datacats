@@ -27,7 +27,7 @@ blocked from cleaning the database if CKAN is connected to the db (`see issue`_)
 first, then issue the command, and reload datacats: ::
 
     docker stop datacats_web_myckan
-    datacats pasted db clean
+    datacats paster db clean
     datacats reload
 
 .. _see issue: https://github.com/ckan/ckan/issues/2306
