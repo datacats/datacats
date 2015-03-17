@@ -22,7 +22,7 @@ from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
     PortAllocatedError, container_logs, remove_image)
 from datacats.template import ckan_extension_template
-from datacats.scripts import WEB, SHELL, PASTER, PURGE
+from datacats.scripts import WEB, SHELL, PASTER, PASTER_CD, PURGE
 from datacats.network import wait_for_service_available, ServiceTimeout
 
 WEB_START_TIMEOUT_SECONDS = 30
@@ -642,12 +642,9 @@ class Project(object):
         script = SHELL
         if paster:
             script = PASTER
-            # mount .bash_profile in extension dir to activate virtualenv
-            venv_volumes += ['-v', self.target + '/.bash_profile:/project/'
-                + self.extension_dir + '/.bash_profile:ro']
             if command and command != ['help'] and command != ['--help']:
                 command += ['--config=/project/development.ini']
-            command = [self.extension_dir, 'paster'] + command
+            command = [self.extension_dir] + command
 
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
@@ -658,6 +655,7 @@ class Project(object):
             '-v', self.target + ':/project:rw',
             '-v', self.datadir + '/files:/var/www/storage:rw',
             '-v', script + ':/scripts/shell.sh:ro',
+            '-v', PASTER_CD + ':/scripts/paster_cd.sh:ro',
             '-v', self.datadir + '/run/run.ini:/project/development.ini:ro',
             '--link', 'datacats_solr_' + self.name + ':solr',
             '--link', 'datacats_postgres_' + self.name + ':db',

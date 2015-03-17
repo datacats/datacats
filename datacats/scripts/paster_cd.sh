@@ -8,8 +8,6 @@
 
 set -e
 
-userdel www-data
-
-useradd -d /project -u $(stat -c %u /project) -M -s /bin/bash shell
-
-sudo -i -u shell /scripts/paster_cd.sh "$@"
+cd "/project/$1"
+shift
+paster "$@"

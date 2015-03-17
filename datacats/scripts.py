@@ -10,6 +10,7 @@ SCRIPTS_DIR = dirname(abspath(__file__)) + '/scripts'
 
 SHELL = SCRIPTS_DIR + '/shell.sh'
 PASTER = SCRIPTS_DIR + '/paster.sh'
+PASTER_CD = SCRIPTS_DIR + '/paster_cd.sh'
 WEB = SCRIPTS_DIR + '/web.sh'
 KNOWN_HOSTS = SCRIPTS_DIR + '/known_hosts'
 SSH_CONFIG = SCRIPTS_DIR + '/ssh_config'
