@@ -22,7 +22,7 @@ from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
     PortAllocatedError, container_logs, remove_image)
 from datacats.template import ckan_extension_template
-from datacats.scripts import WEB, SHELL, PASTER
+from datacats.scripts import WEB, SHELL, PASTER, PURGE
 from datacats.network import wait_for_service_available, ServiceTimeout
 
 WEB_START_TIMEOUT_SECONDS = 30
@@ -747,8 +747,9 @@ class Project(object):
             datadirs += ['postgres', 'venv']
 
         web_command(
-            command=['/bin/rm', '-r']
+            command=['/scripts/purge.sh']
                 + ['/project/data/' + d for d in datadirs],
+            ro={PURGE: '/scripts/purge.sh'},
             rw={self.datadir: '/project/data'},
             )
         shutil.rmtree(self.datadir)
