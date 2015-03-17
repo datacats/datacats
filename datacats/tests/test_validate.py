@@ -6,7 +6,7 @@
 
 from unittest import TestCase
 
-from datacats.validate import valid_name
+from datacats.validate import valid_name, valid_deploy_name
 
 class TestValidate(TestCase):
     def test_good_name(self):
@@ -19,4 +19,4 @@ class TestValidate(TestCase):
         self.assertFalse(valid_name('42seven'))
 
     def test_name_too_short(self):
-        self.assertFalse(valid_name('foo'))
+        self.assertFalse(valid_deploy_name('foo'))
