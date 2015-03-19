@@ -5,7 +5,7 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from os.path import abspath, split as path_split, expanduser, isdir, exists
-from os import makedirs, getcwd, remove
+from os import makedirs, getcwd, remove, environ
 import sys
 import subprocess
 import shutil
@@ -710,6 +710,8 @@ class Project(object):
         rw = {} if rw is None else dict(rw)
         ro = {} if ro is None else dict(ro)
 
+	ro.update(self._proxy_settings())
+
         if is_boot2docker():
             volumes_from = 'datacats_venv_' + self.name
         else:
@@ -765,6 +767,40 @@ class Project(object):
             follow,
             timestamps)
 
+    def _proxy_settings(self):
+        """
+        Create/replace ~/.datacats/run/proxy-environment and return
+        entry for ro mount for containers
+        """
+        if not ('https_proxy' in environ or 'HTTPS_PROXY' in environ
+                or 'http_proxy' in environ or 'HTTP_PROXY' in environ):
+            return {}
+        https_proxy = environ.get('https_proxy')
+        if https_proxy is None:
+            https_proxy = environ.get('HTTPS_PROXY')
+        http_proxy = environ.get('http_proxy')
+        if http_proxy is None:
+            http_proxy = environ.get('HTTP_PROXY')
+        no_proxy = environ.get('no_proxy')
+        if no_proxy is None:
+            no_proxy = environ.get('NO_PROXY')
+
+        out = ['PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"\n']
+        if https_proxy is not None:
+            out.append('https_proxy=' + posix_quote(https_proxy) + '\n')
+            out.append('HTTPS_PROXY=' + posix_quote(https_proxy) + '\n')
+        if http_proxy is not None:
+            out.append('http_proxy=' + posix_quote(http_proxy) + '\n')
+            out.append('HTTP_PROXY=' + posix_quote(http_proxy) + '\n')
+        if no_proxy is not None:
+            out.append('no_proxy=' + posix_quote(no_proxy) + '\n')
+            out.append('NO_PROXY=' + posix_quote(no_proxy) + '\n')
+
+        with open(self.datadir + '/run/proxy-environment', 'w') as f:
+            f.write("".join(out))
+
+        return {self.datadir + '/run/proxy-environment': '/etc/environment'}
+
 
 def generate_db_password():
     """
@@ -773,3 +809,7 @@ def generate_db_password():
     """
     chars = uppercase + lowercase + digits
     return ''.join(SystemRandom().choice(chars) for x in xrange(16))
+
+
+def posix_quote(s):
+    return "\\'".join("'" + p + "'" for p in s.split("'"))
