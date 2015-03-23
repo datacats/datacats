@@ -646,6 +646,11 @@ class Project(object):
                 command += ['--config=/project/development.ini']
             command = [self.extension_dir] + command
 
+        proxy_settings = self._proxy_settings()
+        if proxy_settings:
+            venv_volumes += ['-v',
+                self.datadir + '/run/proxy-environment:/etc/environment:ro']
+
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
