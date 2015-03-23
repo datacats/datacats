@@ -22,7 +22,8 @@ from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
     PortAllocatedError, container_logs, remove_image)
 from datacats.template import ckan_extension_template
-from datacats.scripts import WEB, SHELL, PASTER, PASTER_CD, PURGE
+from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
+    INSTALL_REQS, INSTALL_REQS_USER)
 from datacats.network import wait_for_service_available, ServiceTimeout
 
 WEB_START_TIMEOUT_SECONDS = 30
@@ -682,9 +683,10 @@ class Project(object):
                 return
         self.run_command(
             command=[
-                '/usr/lib/ckan/bin/pip', 'install', '-r',
-                '/project/' + psrc + reqname,
+                '/scripts/install_reqs.sh', '/project/' + psrc + reqname,
                 ],
+            ro={INSTALL_REQS: '/scripts/install_reqs.sh',
+                INSTALL_REQS_USER: '/scripts/install_reqs_user.sh'},
             rw_venv=True,
             )
 
