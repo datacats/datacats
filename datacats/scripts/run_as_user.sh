@@ -8,10 +8,8 @@
 
 set -e
 
-if [ -e /etc/environment ]; then
-    source /etc/environment
-    export http_proxy HTTP_PROXY https_proxy HTTPS_PROXY no_proxy NO_PROXY
-fi
-env
+userdel www-data
 
-/usr/lib/ckan/bin/pip install -r "$1"
+useradd -d /project -u $(stat -c %u /project) -M -s /bin/bash shell
+
+sudo -i -u shell "$@"

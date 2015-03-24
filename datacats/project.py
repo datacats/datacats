@@ -23,7 +23,7 @@ from datacats.docker import (web_command, run_container, remove_container,
     PortAllocatedError, container_logs, remove_image)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
-    INSTALL_REQS, INSTALL_REQS_USER)
+    RUN_AS_USER, INSTALL_REQS)
 from datacats.network import wait_for_service_available, ServiceTimeout
 
 WEB_START_TIMEOUT_SECONDS = 30
@@ -681,13 +681,11 @@ class Project(object):
             reqname = '/pip-requirements.txt'
             if not exists(package + reqname):
                 return
-        self.run_command(
-            command=[
-                '/scripts/install_reqs.sh', '/project/' + psrc + reqname,
-                ],
-            ro={INSTALL_REQS: '/scripts/install_reqs.sh',
-                INSTALL_REQS_USER: '/scripts/install_reqs_user.sh'},
+        self.user_run_script(
+            script=INSTALL_REQS,
+            args=['/project/' + psrc + reqname],
             rw_venv=True,
+            rw_project=True,
             )
 
     def install_package_develop(self, psrc):
@@ -709,6 +707,20 @@ class Project(object):
         self.run_command(
             ['/bin/chown', '-R', '--reference=/project', '/project/' + psrc],
             rw={self.target + '/' + psrc: '/project/' + psrc},
+            )
+
+    def user_run_script(self, script, args, db_links=False, rw_venv=False,
+            rw_project=False, rw=None, ro=None):
+        return self.run_command(
+            command=['/scripts/run_as_user.sh', '/scripts/run.sh'] + args,
+            db_links=db_links,
+            rw_venv=rw_venv,
+            rw_project=rw_project,
+            rw=rw,
+            ro=dict(ro or {}, **{
+                RUN_AS_USER: '/scripts/run_as_user.sh',
+                script: '/scripts/run.sh',
+                }),
             )
 
     def run_command(self, command, db_links=False, rw_venv=False,

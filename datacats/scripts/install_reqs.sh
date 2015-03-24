@@ -8,8 +8,10 @@
 
 set -e
 
-userdel www-data
+if [ -e /etc/environment ]; then
+    source /etc/environment
+    export http_proxy HTTP_PROXY https_proxy HTTPS_PROXY no_proxy NO_PROXY
+fi
+env
 
-useradd -d /tmp -u $(stat -c %u /project) -M -s /bin/bash shell
-
-sudo -i -u shell /scripts/install_reqs_user.sh "$1"
+/usr/lib/ckan/bin/pip install -r "$1"
