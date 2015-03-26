@@ -72,6 +72,7 @@ Default: '.'
         project.port = int(opts['PORT'])
         project.save()
     if 'postgres' not in project.containers_running():
+        project.stop_postgres_and_solr()
         project.start_postgres_and_solr()
 
     project.start_web(opts['--production'])

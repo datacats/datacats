@@ -571,6 +571,8 @@ class Project(object):
         if info is None:
             return None
         try:
+            if not info['State']['Running']:
+                return None
             return info['NetworkSettings']['Ports']['5000/tcp'][0]['HostPort']
         except TypeError:
             return None
