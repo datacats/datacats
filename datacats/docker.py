@@ -138,7 +138,7 @@ def run_container(name, image, command=None, environment=None,
             volumes_from=volumes_from,
             port_bindings=port_bindings)
     except APIError as e:
-        if 'port is already allocated' in e.explanation:
+        if 'address already in use' in e.explanation:
             _docker.remove_container(name, force=True)
             raise PortAllocatedError()
         raise
