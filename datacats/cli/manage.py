@@ -104,11 +104,17 @@ Default: '.'
             print addr
         return
 
+    datadir = project.datadir
+    if not project.data_exists():
+        datadir = ''
+    elif not project.data_complete():
+        datadir += ' (damaged)'
+
     print 'Environment name: ' + project.name
     print '    CKAN version: ' + project.ckan_version
     print '    Default port: ' + str(project.port)
     print ' Environment dir: ' + project.target
-    print '        Data dir: ' + project.datadir
+    print '        Data dir: ' + datadir
     print '      Containers: ' + ' '.join(project.containers_running())
     if not addr:
         return
