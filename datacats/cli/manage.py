@@ -113,7 +113,6 @@ Default: '.'
         datadir += ' (damaged)'
 
     print 'Environment name: ' + project.name
-    print '    CKAN version: ' + project.ckan_version
     print '    Default port: ' + str(project.port)
     print ' Environment dir: ' + project.target
     print '        Data dir: ' + datadir
