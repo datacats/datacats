@@ -15,6 +15,7 @@ Usage:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+    project.require_data()
     project.start_postgres_and_solr()
     return project.interactive_shell(opts['COMMAND'])
 
@@ -30,6 +31,7 @@ run within your current directory inside the environment. You don't need to
 specify the --plugin option. The --config option also need not be specified.
 """
     project = Project.load('.')
+    project.require_data()
     project.start_postgres_and_solr()
 
     assert opts['COMMAND'][0] == '--'

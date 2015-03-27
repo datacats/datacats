@@ -26,6 +26,7 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+    project.require_data()
     install_all(project, opts['--clean'])
 
     if 'web' in project.containers_running():

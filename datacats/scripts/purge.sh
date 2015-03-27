@@ -11,3 +11,5 @@ set -e
 for f in "$@"; do
 	[ -e "$f" ] && rm -r "$f"
 done
+
+true

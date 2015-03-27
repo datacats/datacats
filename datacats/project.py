@@ -241,6 +241,37 @@ class Project(object):
 
         return project
 
+    def data_exists(self):
+        """
+        Return True if the datadir for this project exists
+        """
+        return isdir(self.datadir)
+
+    def data_complete(self):
+        """
+        Return True if all the expected datadir files are present
+        """
+        if (not isdir(self.datadir + '/files')
+                or not isdir(self.datadir + '/run')
+                or not isdir(self.datadir + '/search')):
+            return False
+        if is_boot2docker():
+            return True
+        return (
+            isdir(self.datadir + '/venv') and
+            isdir(self.datadir + '/data'))
+
+    def require_data(self):
+        """
+        raise a ProjectError if the datadir is missing or damaged
+        """
+        if not self.data_exists():
+            raise ProjectError('Environment datadir missing. '
+                'Try "datacats init".')
+        if not self.data_complete():
+            raise ProjectError('Environment datadir damaged. '
+                'Try "datacats purge" followed by "datacats init".')
+
     def create_directories(self, create_project_dir=True):
         """
         Call once for new projects to create the initial project directories.
