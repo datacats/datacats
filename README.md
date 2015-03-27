@@ -27,8 +27,12 @@ directory, new data files in "~/.datacats/mytown" and start
 serving your new site locally.
 
 ```
-Creating project "mytown".............
-Site available at http://localhost:5425/
+Creating environment "mytown"............
+Installing ckan requirements
+Installing ckan
+Installing ckanext-mytowntheme
+Initializing database
+Starting web server at http://localhost:5306/ ...
 admin user password:
 ```
 
