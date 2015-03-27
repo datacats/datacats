@@ -46,13 +46,7 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    if not project.data_exists():
-        print 'Environment datadir missing. Try "datacats init".'
-        return 1
-    if not project.data_complete():
-        print 'Environment datadir damaged. Try "datacats purge" followed by'
-        print '"datacats init"'
-        return 1
+    project.require_data()
     address = project.web_address()
     if address is not None:
         print 'Already running at {0}'.format(address)
@@ -74,13 +68,7 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    if not project.data_exists():
-        print 'Environment datadir missing. Try "datacats init".'
-        return 1
-    if not project.data_complete():
-        print 'Environment datadir damaged. Try "datacats purge" followed by'
-        print '"datacats init"'
-        return 1
+    project.require_data()
     project.stop_web()
     if opts['PORT']:
         project.port = int(opts['PORT'])
@@ -193,6 +181,7 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+    project.require_data()
     addr = project.web_address()
     if not addr:
         print "Site not currently running"
