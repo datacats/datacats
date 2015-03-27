@@ -16,3 +16,4 @@ Contents:
    faq
    docker
    commands
+   changelog
