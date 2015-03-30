@@ -688,7 +688,7 @@ class Project(object):
             venv_volumes = ['-v', self.datadir + '/venv:/usr/lib/ckan:rw']
 
         self._create_run_ini(self.port, production=False, output='run.ini')
-        self._create_run_ini(self.port, production=False, output='test.ini',
+        self._create_run_ini(self.port, production=True, output='test.ini',
             source='ckan/test-core.ini', override_site_url=False)
 
         script = SHELL
