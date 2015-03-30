@@ -46,6 +46,7 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+    project.require_data()
     address = project.web_address()
     if address is not None:
         print 'Already running at {0}'.format(address)
@@ -67,11 +68,13 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+    project.require_data()
     project.stop_web()
     if opts['PORT']:
         project.port = int(opts['PORT'])
         project.save()
     if 'postgres' not in project.containers_running():
+        project.stop_postgres_and_solr()
         project.start_postgres_and_solr()
 
     project.start_web(opts['--production'])
@@ -103,11 +106,16 @@ Default: '.'
             print addr
         return
 
+    datadir = project.datadir
+    if not project.data_exists():
+        datadir = ''
+    elif not project.data_complete():
+        datadir += ' (damaged)'
+
     print 'Environment name: ' + project.name
-    print '    CKAN version: ' + project.ckan_version
     print '    Default port: ' + str(project.port)
     print ' Environment dir: ' + project.target
-    print '        Data dir: ' + project.datadir
+    print '        Data dir: ' + datadir
     print '      Containers: ' + ' '.join(project.containers_running())
     if not addr:
         return
@@ -172,6 +180,7 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+    project.require_data()
     addr = project.web_address()
     if not addr:
         print "Site not currently running"

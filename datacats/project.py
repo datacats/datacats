@@ -10,6 +10,7 @@ import sys
 import subprocess
 import shutil
 import json
+import time
 from string import uppercase, lowercase, digits
 from random import SystemRandom
 from sha import sha
@@ -20,13 +21,15 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
-    PortAllocatedError, container_logs, remove_image)
+    PortAllocatedError, container_logs, remove_image, WebCommandError)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS)
 from datacats.network import wait_for_service_available, ServiceTimeout
 
 WEB_START_TIMEOUT_SECONDS = 30
+DB_INIT_RETRY_SECONDS = 30
+DB_INIT_RETRY_DELAY = 2
 DOCKER_EXE = 'docker'
 
 
@@ -242,6 +245,37 @@ class Project(object):
 
         return project
 
+    def data_exists(self):
+        """
+        Return True if the datadir for this project exists
+        """
+        return isdir(self.datadir)
+
+    def data_complete(self):
+        """
+        Return True if all the expected datadir files are present
+        """
+        if (not isdir(self.datadir + '/files')
+                or not isdir(self.datadir + '/run')
+                or not isdir(self.datadir + '/search')):
+            return False
+        if is_boot2docker():
+            return True
+        return (
+            isdir(self.datadir + '/venv') and
+            isdir(self.datadir + '/data'))
+
+    def require_data(self):
+        """
+        raise a ProjectError if the datadir is missing or damaged
+        """
+        if not self.data_exists():
+            raise ProjectError('Environment datadir missing. '
+                'Try "datacats init".')
+        if not self.data_complete():
+            raise ProjectError('Environment datadir damaged. '
+                'Try "datacats purge" followed by "datacats init".')
+
     def create_directories(self, create_project_dir=True):
         """
         Call once for new projects to create the initial project directories.
@@ -409,15 +443,26 @@ class Project(object):
             rw_project=True,
             )
 
-    def ckan_db_init(self):
+    def ckan_db_init(self, retry_seconds=DB_INIT_RETRY_SECONDS):
         """
         Run db init to create all ckan tables
+
+        :param retry_seconds: how long to retry waiting for db to start
         """
-        self.run_command(
-            '/usr/lib/ckan/bin/paster --plugin=ckan db init '
-            '-c /project/development.ini',
-            db_links=True,
-            )
+        started = time.time()
+        while True:
+            try:
+                self.run_command(
+                    '/usr/lib/ckan/bin/paster --plugin=ckan db init '
+                    '-c /project/development.ini',
+                    db_links=True,
+                    clean_up=True,
+                    )
+                return
+            except WebCommandError:
+                if started + retry_seconds > time.time():
+                    raise
+            time.sleep(DB_INIT_RETRY_DELAY)
 
     def _generate_passwords(self):
         """
@@ -572,6 +617,8 @@ class Project(object):
         if info is None:
             return None
         try:
+            if not info['State']['Running']:
+                return None
             return info['NetworkSettings']['Ports']['5000/tcp'][0]['HostPort']
         except TypeError:
             return None
@@ -724,7 +771,7 @@ class Project(object):
             )
 
     def run_command(self, command, db_links=False, rw_venv=False,
-            rw_project=False, rw=None, ro=None):
+            rw_project=False, rw=None, ro=None, clean_up=False):
 
         rw = {} if rw is None else dict(rw)
         ro = {} if ro is None else dict(ro)
@@ -751,7 +798,7 @@ class Project(object):
             links = None
 
         return web_command(command=command, ro=ro, rw=rw, links=links,
-                volumes_from=volumes_from)
+                volumes_from=volumes_from, clean_up=clean_up)
 
 
     def purge_data(self):
