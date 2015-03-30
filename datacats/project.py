@@ -505,7 +505,7 @@ class Project(object):
             break
 
     def _create_run_ini(self, port, production, output='development.ini',
-            source='development.ini'):
+            source='development.ini', override_site_url=True):
         """
         Create run/development.ini in datadir with debug and site_url overridden
         and with correct db passwords inserted
@@ -523,7 +523,8 @@ class Project(object):
         else:
             site_url = 'http://{0}:{1}/'.format(docker_host(), port)
 
-        cp.set('app:main', 'ckan.site_url', site_url)
+        if override_site_url:
+            cp.set('app:main', 'ckan.site_url', site_url)
 
         cp.set('app:main', 'sqlalchemy.url',
             'postgresql://ckan:{0}@db:5432/ckan'
@@ -688,7 +689,7 @@ class Project(object):
 
         self._create_run_ini(self.port, production=False, output='run.ini')
         self._create_run_ini(self.port, production=False, output='test.ini',
-            source='ckan/test-core.ini')
+            source='ckan/test-core.ini', override_site_url=False)
 
         script = SHELL
         if paster:
