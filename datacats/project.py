@@ -504,14 +504,15 @@ class Project(object):
                 continue
             break
 
-    def _create_run_ini(self, port, production, output='development.ini'):
+    def _create_run_ini(self, port, production, output='development.ini',
+            source='development.ini', override_site_url=True):
         """
         Create run/development.ini in datadir with debug and site_url overridden
         and with correct db passwords inserted
         """
         cp = SafeConfigParser()
         try:
-            cp.read([self.target + '/development.ini'])
+            cp.read([self.target + '/' + source])
         except ConfigParserError:
             raise ProjectError('Error reading development.ini')
 
@@ -522,7 +523,8 @@ class Project(object):
         else:
             site_url = 'http://{0}:{1}/'.format(docker_host(), port)
 
-        cp.set('app:main', 'ckan.site_url', site_url)
+        if override_site_url:
+            cp.set('app:main', 'ckan.site_url', site_url)
 
         cp.set('app:main', 'sqlalchemy.url',
             'postgresql://ckan:{0}@db:5432/ckan'
@@ -533,6 +535,7 @@ class Project(object):
         cp.set('app:main', 'ckan.datastore.write_url',
             'postgresql://ckan_datastore_readwrite:{0}@db:5432/ckan_datastore'
                 .format(self.passwords['DATASTORE_RW_PASSWORD']))
+        cp.set('app:main', 'solr_url', 'http://solr:8080/solr')
 
         if not isdir(self.datadir + '/run'):
             makedirs(self.datadir + '/run')  # upgrade old datadir
@@ -685,6 +688,8 @@ class Project(object):
             venv_volumes = ['-v', self.datadir + '/venv:/usr/lib/ckan:rw']
 
         self._create_run_ini(self.port, production=False, output='run.ini')
+        self._create_run_ini(self.port, production=True, output='test.ini',
+            source='ckan/test-core.ini', override_site_url=False)
 
         script = SHELL
         if paster:
@@ -704,6 +709,7 @@ class Project(object):
             '-v', script + ':/scripts/shell.sh:ro',
             '-v', PASTER_CD + ':/scripts/paster_cd.sh:ro',
             '-v', self.datadir + '/run/run.ini:/project/development.ini:ro',
+            '-v', self.datadir + '/run/test.ini:/project/ckan/test-core.ini:ro',
             '--link', 'datacats_solr_' + self.name + ':solr',
             '--link', 'datacats_postgres_' + self.name + ':db',
             '--hostname', self.name,
