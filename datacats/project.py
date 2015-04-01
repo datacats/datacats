@@ -849,7 +849,8 @@ class Project(object):
             http_proxy = environ.get('HTTP_PROXY')
         no_proxy = environ.get('no_proxy')
         if no_proxy is None:
-            no_proxy = environ.get('NO_PROXY')
+            no_proxy = environ.get('NO_PROXY', '')
+        no_proxy = no_proxy + ',solr,db'
 
         out = ['PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"\n']
         if https_proxy is not None:
