@@ -8,4 +8,6 @@ test:
   override:
     - python setup.py test
     - datacats create site1 -bin
+    - datacats info site1
     - datacats start site1 8999
+    - datacats info site1
