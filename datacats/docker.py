@@ -9,13 +9,28 @@ from __future__ import absolute_import
 from os import environ
 import json
 from urlparse import urlparse
+from functools import cmp_to_key
+from warnings import warn
 
 from docker import Client
-from docker.utils import kwargs_from_env
+from docker.client import DEFAULT_DOCKER_API_VERSION
+from docker.utils import kwargs_from_env, compare_version
 from docker.errors import APIError
 
+MINIMUM_API_VERSION = '1.16'
+
+def get_api_version(*versions):
+    # compare_version is backwards
+    def cmp(a, b):
+        return -1 * compare_version(a, b)
+    return min(versions, key=cmp_to_key(cmp))
+
+_version_client = Client(version=MINIMUM_API_VERSION)
+_version = get_api_version(DEFAULT_DOCKER_API_VERSION,
+    _version_client.version()['ApiVersion'])
+
 _docker_kwargs = kwargs_from_env()
-_docker = Client(**_docker_kwargs)
+_docker = Client(version=_version, **_docker_kwargs)
 
 class WebCommandError(Exception):
     def __str__(self):
@@ -97,11 +112,14 @@ def web_command(command, ro=None, rw=None, links=None,
             stream_output.write(output)
     if _docker.wait(c['Id']):
         if clean_up:
-            _docker.remove_container(container=c['Id'])
+            remove_container(c['Id'])
         raise WebCommandError(command, c['Id'][:12])
     if commit:
         rval = _docker.commit(c['Id'])
-    _docker.remove_container(container=c['Id'])
+    if not remove_container(c['Id']):
+        # circle ci doesn't let us remove containers, quiet the warnings
+        if not environ.get('CIRCLECI', False):
+            warn('failed to remove container: {0}'.format(c['Id']))
     if commit:
         return rval['Id']
 
@@ -139,7 +157,10 @@ def run_container(name, image, command=None, environment=None,
             port_bindings=port_bindings)
     except APIError as e:
         if 'address already in use' in e.explanation:
-            _docker.remove_container(name, force=True)
+            try:
+                _docker.remove_container(name, force=True)
+            except APIError:
+                pass
             raise PortAllocatedError()
         raise
     return c

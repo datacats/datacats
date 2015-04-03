@@ -1,0 +1,22 @@
+machine:
+  services:
+    - docker
+dependencies:
+  post:
+    - datacats pull
+test:
+  override:
+    - python setup.py test
+    - datacats create site1 -bn
+    - "[ ! -d site1/ckanext-site1theme ]"
+    - '[ "$(echo `datacats list`)" == "site1" ]'
+    - datacats info site1
+    - datacats start site1 8999
+    - datacats info site1
+    - datacats shell site1 echo hello from inside site1
+    - datacats create site2 -n
+    - "[ -d site2/ckanext-site2theme ]"
+    - '[ "$(echo `datacats list`)" == "site1 site2" ]'
+    - datacats purge site1
+    - '[ "$(echo `datacats list`)" == "site2" ]'
+    - datacats init site1 -n
