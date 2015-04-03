@@ -9,13 +9,27 @@ from __future__ import absolute_import
 from os import environ
 import json
 from urlparse import urlparse
+from functools import cmp_to_key
 
 from docker import Client
-from docker.utils import kwargs_from_env
+from docker.client import DEFAULT_DOCKER_API_VERSION
+from docker.utils import kwargs_from_env, compare_version
 from docker.errors import APIError
 
+MINIMUM_API_VERSION = '1.16'
+
+def get_api_version(*versions):
+    # compare_version is backwards
+    def cmp(a, b):
+        return -1 * compare_version(a, b)
+    return min(versions, key=cmp_to_key(cmp))
+
+_version_client = Client(version=MINIMUM_API_VERSION)
+_version = get_api_version(DEFAULT_DOCKER_API_VERSION,
+    _version_client.version()['ApiVersion'])
+
 _docker_kwargs = kwargs_from_env()
-_docker = Client(**_docker_kwargs)
+_docker = Client(version=_version, **_docker_kwargs)
 
 class WebCommandError(Exception):
     def __str__(self):
