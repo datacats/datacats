@@ -111,11 +111,12 @@ def web_command(command, ro=None, rw=None, links=None,
             stream_output.write(output)
     if _docker.wait(c['Id']):
         if clean_up:
-            _docker.remove_container(container=c['Id'])
+            remove_container(container=c['Id'])
         raise WebCommandError(command, c['Id'][:12])
     if commit:
         rval = _docker.commit(c['Id'])
-    _docker.remove_container(container=c['Id'])
+    if not remove_container(container=c['Id']):
+        warn('failed to remove container: {0}'.format(c['Id']))
     if commit:
         return rval['Id']
 
@@ -153,7 +154,10 @@ def run_container(name, image, command=None, environment=None,
             port_bindings=port_bindings)
     except APIError as e:
         if 'address already in use' in e.explanation:
-            _docker.remove_container(name, force=True)
+            try:
+                _docker.remove_container(name, force=True)
+            except APIError:
+                pass
             raise PortAllocatedError()
         raise
     return c
