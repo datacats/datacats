@@ -4,7 +4,7 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
-from datacats.project import Project
+from datacats.environment import Project
 
 def shell(project, opts):
     """Run a command or interactive shell within this environment

@@ -8,7 +8,7 @@ import sys
 from os.path import exists, abspath
 from getpass import getpass
 
-from datacats.project import Project, ProjectError
+from datacats.environment import Project, ProjectError
 from datacats.cli.install import install
 
 def write(s):

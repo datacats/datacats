@@ -7,7 +7,7 @@
 from os.path import isdir
 from shutil import rmtree
 
-from datacats.project import Project, ProjectError
+from datacats.environment import Project, ProjectError
 
 def purge(opts):
     """Purge environment database and uploaded files

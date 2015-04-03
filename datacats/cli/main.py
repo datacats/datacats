@@ -16,7 +16,7 @@ The datacats commands available are:
   deploy      Deploy environment to production DataCats.com cloud service
   info        Display information about environment and running containers
   init        Initialize a purged environment or copied environment directory
-  install     Install or reinstall Python packages within this project
+  install     Install or reinstall Python packages within this environment
   list        List all environments for this user
   logs        Display or follow container logs
   open        Open web browser window to this environment
@@ -38,7 +38,7 @@ from docopt import docopt
 import pkg_resources
 
 from datacats.cli import create, manage, install, pull, purge, shell, deploy
-from datacats.project import Project, ProjectError
+from datacats.environment import Project, ProjectError
 
 COMMANDS = {
     'create': create.create,

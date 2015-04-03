@@ -10,7 +10,7 @@ from os.path import expanduser
 import webbrowser
 import sys
 
-from datacats.project import Project, ProjectError
+from datacats.environment import Project, ProjectError
 
 def write(s):
     sys.stdout.write(s)
