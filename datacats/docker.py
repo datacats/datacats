@@ -112,11 +112,11 @@ def web_command(command, ro=None, rw=None, links=None,
             stream_output.write(output)
     if _docker.wait(c['Id']):
         if clean_up:
-            remove_container(container=c['Id'])
+            remove_container(c['Id'])
         raise WebCommandError(command, c['Id'][:12])
     if commit:
         rval = _docker.commit(c['Id'])
-    if not remove_container(container=c['Id']):
+    if not remove_container(c['Id']):
         warn('failed to remove container: {0}'.format(c['Id']))
     if commit:
         return rval['Id']
