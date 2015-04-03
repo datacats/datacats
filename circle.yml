@@ -4,3 +4,7 @@ machine:
 dependencies:
   post:
     - datacats pull
+test:
+  override:
+    - python setup.py test
+    - datacats create site1 -nap
