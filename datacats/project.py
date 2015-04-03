@@ -707,7 +707,8 @@ class Project(object):
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
-            DOCKER_EXE, 'run', '--rm',
+            DOCKER_EXE, 'run',
+            ] + (['--rm'] if not environ.get('CIRCLECI', False) else []) + [
             '-it' if use_tty else '-i',
             ] + venv_volumes + [
             '-v', self.target + ':/project:rw',
