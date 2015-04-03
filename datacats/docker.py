@@ -117,7 +117,9 @@ def web_command(command, ro=None, rw=None, links=None,
     if commit:
         rval = _docker.commit(c['Id'])
     if not remove_container(c['Id']):
-        warn('failed to remove container: {0}'.format(c['Id']))
+        # circle ci doesn't let us remove containers, quiet the warnings
+        if not environ.get('CIRCLECI', False):
+            warn('failed to remove container: {0}'.format(c['Id']))
     if commit:
         return rval['Id']
 
