@@ -10,6 +10,7 @@ from os import environ
 import json
 from urlparse import urlparse
 from functools import cmp_to_key
+from warnings import warn
 
 from docker import Client
 from docker.client import DEFAULT_DOCKER_API_VERSION
