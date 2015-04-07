@@ -32,6 +32,16 @@ first, then issue the command, and reload datacats: ::
 
 .. _see issue: https://github.com/ckan/ckan/issues/2306
 
+InsecurePlatformWarning
+-----------------------
+If you get an ``InsecurePlatformWarning``, this is an issue with the ``urllib3``
+library - `more info here`_. If you'd like to make it go away, you can run the
+following: ::
+
+    pip install pyopenssl ndg-httpsclient pyasn1
+
+.. _more info here: https://urllib3.readthedocs.org/en/latest/security.html
+
 Working on Core CKAN
 --------------------
 If you plan on working on core CKAN code, you should first ``unshallow`` your
