@@ -36,11 +36,12 @@ InsecurePlatformWarning
 -----------------------
 If you get an ``InsecurePlatformWarning``, this is an issue with the ``urllib3``
 library - `more info here`_. If you'd like to make it go away, you can run the
-following: ::
+following_: ::
 
     pip install pyopenssl ndg-httpsclient pyasn1
 
 .. _more info here: https://urllib3.readthedocs.org/en/latest/security.html
+.. _following: https://urllib3.readthedocs.org/en/latest/security.html#pyopenssl
 
 Working on Core CKAN
 --------------------
