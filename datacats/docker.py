@@ -25,11 +25,11 @@ def get_api_version(*versions):
         return -1 * compare_version(a, b)
     return min(versions, key=cmp_to_key(cmp))
 
-_version_client = Client(version=MINIMUM_API_VERSION)
+_docker_kwargs = kwargs_from_env()
+_version_client = Client(version=MINIMUM_API_VERSION, **_docker_kwargs)
 _version = get_api_version(DEFAULT_DOCKER_API_VERSION,
     _version_client.version()['ApiVersion'])
 
-_docker_kwargs = kwargs_from_env()
 _docker = Client(version=_version, **_docker_kwargs)
 
 class WebCommandError(Exception):
