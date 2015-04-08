@@ -11,10 +11,9 @@ is actually at least 3 different Docker containers. You can see this by running
 ``datacats info`` inside your project directory: ::
 
     $ datacats info
-    Project name: datapusher
-    CKAN version: master
+Environment name: datapusher
     Default port: 5716
-     Project dir: /Users/dz/source/dcats-envs/datapusher
+ Environment dir: /Users/dz/source/dcats-envs/datapusher
         Data dir: /Users/dz/.datacats/datapusher
       Containers: web postgres solr
     Available at: http://boot2docker:5716/
