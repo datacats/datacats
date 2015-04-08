@@ -38,7 +38,7 @@ from docopt import docopt
 import pkg_resources
 
 from datacats.cli import create, manage, install, pull, purge, shell, deploy
-from datacats.environment import Project, ProjectError
+from datacats.environment import Environment, DatacatsError
 
 COMMANDS = {
     'create': create.create,
@@ -111,9 +111,9 @@ def main():
 
         # purge handles loading differently
         if command_fn != purge.purge and 'ENVIRONMENT' in opts:
-            project = Project.load(opts['ENVIRONMENT'] or '.')
-            return command_fn(project, opts)
+            environment = Environment.load(opts['ENVIRONMENT'] or '.')
+            return command_fn(environment, opts)
         return command_fn(opts)
-    except ProjectError as e:
+    except DatacatsError as e:
         print e
         return 1

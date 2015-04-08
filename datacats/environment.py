@@ -33,21 +33,21 @@ DB_INIT_RETRY_DELAY = 2
 DOCKER_EXE = 'docker'
 
 
-class ProjectError(Exception):
+class DatacatsError(Exception):
     def __init__(self, message, format_args=()):
         self.message = message
         self.format_args = format_args
-        super(ProjectError, self).__init__(message, format_args)
+        super(DatacatsError, self).__init__(message, format_args)
 
     def __str__(self):
         return self.message.format(*self.format_args)
 
 
-class Project(object):
+class Environment(object):
     """
-    DataCats project settings object
+    DataCats environment settings object
 
-    Create with Project.new(path) or Project.load(path)
+    Create with Environment.new(path) or Environment.load(path)
     """
     def __init__(self, name, target, datadir, ckan_version=None, port=None,
                 deploy_target=None, site_url=None, always_prod=False,
@@ -64,7 +64,7 @@ class Project(object):
 
     def save(self):
         """
-        Save project settings into project directory
+        Save environment settings into environment directory
         """
         cp = SafeConfigParser()
 
@@ -100,8 +100,8 @@ class Project(object):
 
     def _update_saved_project_dir(self):
         """
-        Store the last place we've seen this project so the user
-        can use "datacats -p ..." to specify a project by name
+        Store the last place we've seen this environment so the user
+        can specify an environment by name
         """
         with open(self.datadir + '/project-dir', 'w') as pdir:
             pdir.write(self.target)
@@ -109,73 +109,73 @@ class Project(object):
     @classmethod
     def new(cls, path, ckan_version, port=None):
         """
-        Return a Project object with settings for a new project.
+        Return a Environment object with settings for a new project.
         No directories or containers are created by this call.
 
         :params path: location for new project directory, may be relative
         :params ckan_version: release of CKAN to install
         :params port: preferred port for local instance
 
-        Raises ProjectError if directories or project with same
+        Raises DatcatsError if directories or project with same
         name already exits.
         """
         workdir, name = path_split(abspath(expanduser(path)))
 
         if not valid_name(name):
-            raise ProjectError('Please choose an environment name starting'
+            raise DatacatsError('Please choose an environment name starting'
                 ' with a letter and including only lowercase letters'
                 ' and digits')
         if not isdir(workdir):
-            raise ProjectError('Parent directory for environment'
+            raise DatacatsError('Parent directory for environment'
                 ' does not exist')
 
         datadir = expanduser('~/.datacats/' + name)
         target = workdir + '/' + name
 
         if isdir(datadir):
-            raise ProjectError('Environment data directory {0} already exists',
+            raise DatacatsError('Environment data directory {0} already exists',
                 (datadir,))
         if isdir(target):
-            raise ProjectError('Environment directory already exists')
+            raise DatacatsError('Environment directory already exists')
 
-        project = cls(name, target, datadir, ckan_version, port)
-        project._generate_passwords()
-        return project
+        environment = cls(name, target, datadir, ckan_version, port)
+        environment._generate_passwords()
+        return environment
 
     @classmethod
-    def load(cls, project_name=None, data_only=False):
+    def load(cls, environment_name=None, data_only=False):
         """
-        Return a Project object based on an existing project.
+        Return an Environment object based on an existing project.
 
-        :param project_name: exising project name, path or None to look in
-            current or parent directories for project
+        :param environment_name: exising environment name, path or None to
+            look in current or parent directories for project
         :param data_only: set to True to only load from data dir, not
-            the project dir; Used for purging project data.
+            the project dir; Used for purging environment data.
 
-        Raises ProjectError if project can't be found or if there is an
-        error parsing the project information.
+        Raises DatacatsError if environment can't be found or if there is an
+        error parsing the environment information.
         """
-        if project_name is None:
-            project_name = '.'
+        if environment_name is None:
+            environment_name = '.'
 
         extension_dir = 'ckan'
-        if valid_name(project_name) and isdir(
-                expanduser('~/.datacats/' + project_name)):
+        if valid_name(environment_name) and isdir(
+                expanduser('~/.datacats/' + environment_name)):
             used_path = False
-            datadir = expanduser('~/.datacats/' + project_name)
+            datadir = expanduser('~/.datacats/' + environment_name)
             with open(datadir + '/project-dir') as pd:
                 wd = pd.read()
             if not data_only and not exists(wd + '/.datacats-environment'):
-                raise ProjectError(
+                raise DatacatsError(
                     'Environment data found but environment directory is'
                     ' missing. Try again from the new environment directory'
                     ' location or remove the environment data with'
                     ' "datacats purge"')
         else:
             used_path = True
-            wd = abspath(project_name)
+            wd = abspath(environment_name)
             if not isdir(wd):
-                raise ProjectError('No environment found with that name')
+                raise DatacatsError('No environment found with that name')
 
             first_wd = wd
             oldwd = None
@@ -183,20 +183,20 @@ class Project(object):
                 oldwd = wd
                 wd, ignore = path_split(wd)
                 if wd == oldwd:
-                    raise ProjectError(
+                    raise DatacatsError(
                         'Environment not found in {0} or above', first_wd)
 
             if oldwd:
                 ignore, extension_dir = path_split(oldwd)
 
         if data_only and not used_path:
-            return cls(project_name, None, datadir)
+            return cls(environment_name, None, datadir)
 
         cp = SafeConfigParser()
         try:
             cp.read([wd + '/.datacats-environment'])
         except ConfigParserError:
-            raise ProjectError('Error reading environment information')
+            raise DatacatsError('Error reading environment information')
 
         name = cp.get('datacats', 'name')
         datadir = expanduser('~/.datacats/' + name)
@@ -233,21 +233,21 @@ class Project(object):
         for n in pw_options:
             passwords[n.upper()] = cp.get('passwords', n)
 
-        project = cls(name, wd, datadir, ckan_version, port, deploy_target,
+        environment = cls(name, wd, datadir, ckan_version, port, deploy_target,
         site_url=site_url, always_prod=always_prod, extension_dir=extension_dir)
         if passwords:
-            project.passwords = passwords
+            environment.passwords = passwords
         else:
-            project._generate_passwords()
+            environment._generate_passwords()
 
         if not used_path:
-            project._update_saved_project_dir()
+            environment._update_saved_project_dir()
 
-        return project
+        return environment
 
     def data_exists(self):
         """
-        Return True if the datadir for this project exists
+        Return True if the datadir for this environment exists
         """
         return isdir(self.datadir)
 
@@ -267,13 +267,13 @@ class Project(object):
 
     def require_data(self):
         """
-        raise a ProjectError if the datadir is missing or damaged
+        raise a DatacatsError if the datadir is missing or damaged
         """
         if not self.data_exists():
-            raise ProjectError('Environment datadir missing. '
+            raise DatacatsError('Environment datadir missing. '
                 'Try "datacats init".')
         if not self.data_complete():
-            raise ProjectError('Environment datadir damaged. '
+            raise DatacatsError('Environment datadir damaged. '
                 'Try "datacats purge" followed by "datacats init".')
 
     def create_directories(self, create_project_dir=True):
@@ -402,9 +402,9 @@ class Project(object):
 
     def update_ckan_ini(self, skin=True):
         """
-        Use config-tool to update development.ini with our project settings
+        Use config-tool to update development.ini with our environment settings
 
-        :param skin: use project template skin plugin True/False
+        :param skin: use environment template skin plugin True/False
         """
         command = [
             '/usr/lib/ckan/bin/paster', '--plugin=ckan', 'config-tool',
@@ -425,7 +425,7 @@ class Project(object):
 
     def create_install_template_skin(self):
         """
-        Create an example ckan extension for this project and install it
+        Create an example ckan extension for this environment and install it
         """
         ckan_extension_template(self.name, self.target)
         self.install_package_develop('ckanext-' + self.name + 'theme')
@@ -515,7 +515,7 @@ class Project(object):
         try:
             cp.read([self.target + '/' + source])
         except ConfigParserError:
-            raise ProjectError('Error reading development.ini')
+            raise DatacatsError('Error reading development.ini')
 
         cp.set('DEFAULT', 'debug', 'false' if production else 'true')
 
@@ -573,7 +573,7 @@ class Project(object):
 
     def wait_for_web_available(self):
         """
-        Wait for the web server to become available or raise ProjectError
+        Wait for the web server to become available or raise DatacatsError
         if it fails to start.
         """
         try:
@@ -581,15 +581,15 @@ class Project(object):
                     'datacats_web_' + self.name,
                     self.web_address(),
                     WEB_START_TIMEOUT_SECONDS):
-                raise ProjectError('Failed to start web container.'
+                raise DatacatsError('Failed to start web container.'
                     ' Run "datacats logs" to check the output.')
         except ServiceTimeout:
-            raise ProjectError('Timeout waiting for web container to start.'
+            raise DatacatsError('Timeout waiting for web container to start.'
                 ' Run "datacats logs" to check the output.')
 
     def _choose_port(self):
         """
-        Return a port number from 5000-5999 based on the project name
+        Return a port number from 5000-5999 based on the environment name
         to be used as a default when the user hasn't selected one.
         """
         # instead of random let's base it on the name chosen
@@ -602,7 +602,7 @@ class Project(object):
         """
         port = 5000 + (port + 1) % 1000
         if port == self.port:
-            raise ProjectError('Too many instances running')
+            raise DatacatsError('Too many instances running')
         return port
 
     def stop_web(self):
@@ -724,9 +724,9 @@ class Project(object):
 
     def install_package_requirements(self, psrc):
         """
-        Install from requirements.txt file found in src_package
+        Install from requirements.txt file found in psrc
 
-        :param src_package: name of directory under project src directory
+        :param psrc: name of directory in environment directory
         """
         package = self.target + '/' + psrc
         assert isdir(package), package

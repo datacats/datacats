@@ -11,12 +11,12 @@ DATACATS_NAME_RE = r'[a-z][a-z0-9]{4,}$'
 
 def valid_name(n):
     """
-    Return True for project names that may be used locally
+    Return True for environment names that may be used locally
     """
     return bool(re.match(NAME_RE, n))
 
 def valid_deploy_name(n):
     """
-    Return True for project names that may be deployed to DataCats.com
+    Return True for environment names that may be deployed to DataCats.com
     """
     return bool(re.match(DATACATS_NAME_RE, n))

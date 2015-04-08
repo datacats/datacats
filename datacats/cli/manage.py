@@ -10,13 +10,11 @@ from os.path import expanduser
 import webbrowser
 import sys
 
-from datacats.environment import Project, ProjectError
-
 def write(s):
     sys.stdout.write(s)
     sys.stdout.flush()
 
-def stop(project, opts):
+def stop(environment, opts):
     """Stop serving environment and remove all its containers
 
 Usage:
@@ -28,10 +26,10 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    project.stop_web()
-    project.stop_postgres_and_solr()
+    environment.stop_web()
+    environment.stop_postgres_and_solr()
 
-def start(project, opts):
+def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
@@ -46,14 +44,14 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    project.require_data()
-    address = project.web_address()
+    environment.require_data()
+    address = environment.web_address()
     if address is not None:
         print 'Already running at {0}'.format(address)
         return
-    reload_(project, opts)
+    reload_(environment, opts)
 
-def reload_(project, opts):
+def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
@@ -68,26 +66,26 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    project.require_data()
-    project.stop_web()
+    environment.require_data()
+    environment.stop_web()
     if opts['PORT']:
-        project.port = int(opts['PORT'])
-        project.save()
-    if 'postgres' not in project.containers_running():
-        project.stop_postgres_and_solr()
-        project.start_postgres_and_solr()
+        environment.port = int(opts['PORT'])
+        environment.save()
+    if 'postgres' not in environment.containers_running():
+        environment.stop_postgres_and_solr()
+        environment.start_postgres_and_solr()
 
-    project.start_web(opts['--production'])
-    write('Starting web server at {0} ...'.format(project.web_address()))
+    environment.start_web(opts['--production'])
+    write('Starting web server at {0} ...'.format(environment.web_address()))
     if opts['--background']:
         write('\n')
         return
     try:
-        project.wait_for_web_available()
+        environment.wait_for_web_available()
     finally:
         write('\n')
 
-def info(project, opts):
+def info(environment, opts):
     """Display information about environment and running containers
 
 Usage:
@@ -100,23 +98,23 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    addr = project.web_address()
+    addr = environment.web_address()
     if opts['--quiet']:
         if addr:
             print addr
         return
 
-    datadir = project.datadir
-    if not project.data_exists():
+    datadir = environment.datadir
+    if not environment.data_exists():
         datadir = ''
-    elif not project.data_complete():
+    elif not environment.data_complete():
         datadir += ' (damaged)'
 
-    print 'Environment name: ' + project.name
-    print '    Default port: ' + str(project.port)
-    print ' Environment dir: ' + project.target
+    print 'Environment name: ' + environment.name
+    print '    Default port: ' + str(environment.port)
+    print ' Environment dir: ' + environment.target
     print '        Data dir: ' + datadir
-    print '      Containers: ' + ' '.join(project.containers_running())
+    print '      Containers: ' + ' '.join(environment.containers_running())
     if not addr:
         return
     print '    Available at: ' + addr
@@ -132,7 +130,7 @@ Usage:
             continue
         print p
 
-def logs(project, opts):
+def logs(environment, opts):
     """Display or follow container logs
 
 Usage:
@@ -158,7 +156,8 @@ Default: '.'
     tail = opts['--tail']
     if tail != 'all':
         tail = int(tail)
-    l = project.logs(container, tail, opts['--follow'], opts['--timestamps'])
+    l = environment.logs(container, tail, opts['--follow'],
+        opts['--timestamps'])
     if not opts['--follow']:
         print l
         return
@@ -168,7 +167,7 @@ Default: '.'
     except KeyboardInterrupt:
         print
 
-def open_(project, opts):
+def open_(environment, opts):
     """Open web browser window to this environment
 
 Usage:
@@ -180,8 +179,8 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    project.require_data()
-    addr = project.web_address()
+    environment.require_data()
+    addr = environment.web_address()
     if not addr:
         print "Site not currently running"
     else:

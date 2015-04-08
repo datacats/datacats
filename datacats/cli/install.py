@@ -14,7 +14,7 @@ def write(s):
     sys.stdout.write(s)
     sys.stdout.flush()
 
-def install(project, opts):
+def install(environment, opts):
     """Install or reinstall Python packages within this environment
 
 Usage:
@@ -26,21 +26,21 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    project.require_data()
-    install_all(project, opts['--clean'])
+    environment.require_data()
+    install_all(environment, opts['--clean'])
 
-    if 'web' in project.containers_running():
+    if 'web' in environment.containers_running():
         # FIXME: reload without changing debug setting?
-        manage.reload_(project, {
+        manage.reload_(environment, {
             '--production': False,
             'PORT': None,
             '--background': False})
 
-def install_all(project, clean):
+def install_all(environment, clean):
     srcdirs = set()
     reqdirs = set()
-    for d in listdir(project.target):
-        fulld = project.target + '/' + d
+    for d in listdir(environment.target):
+        fulld = environment.target + '/' + d
         if not isdir(fulld):
             continue
         if not exists(fulld + '/setup.py'):
@@ -58,9 +58,9 @@ def install_all(project, clean):
 
     for s in ['ckan'] + sorted(reqdirs):
         write('Installing ' + s + ' requirements')
-        project.install_package_requirements(s)
+        environment.install_package_requirements(s)
         write('\n')
     for s in ['ckan'] + sorted(srcdirs):
         write('Installing ' + s)
-        project.install_package_develop(s)
+        environment.install_package_develop(s)
         write('\n')

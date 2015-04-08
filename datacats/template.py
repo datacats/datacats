@@ -94,7 +94,7 @@ PROMOTED_SNIPPET = '''{% set intro = g.site_intro_text %}
     {% if intro %}
       {{ h.render_markdown(intro) }}
     {% else %}
-      <h1 class="page-heading">{{ _("New DataCats Project") }}</h1>
+      <h1 class="page-heading">{{ _("New DataCats Environment") }}</h1>
       <p>
         {% trans %}
         Welcome to your new data catalog!
@@ -107,7 +107,7 @@ PROMOTED_SNIPPET = '''{% set intro = g.site_intro_text %}
       <p>
         {% trans %}
         Customize this site by editing the site configuration,
-        templates and static files in your project directory
+        templates and static files in your environment directory
         then reload your changes with: <code>datacats reload</code>
         {% endtrans %}
       </p>
