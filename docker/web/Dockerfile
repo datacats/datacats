@@ -23,7 +23,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -q -y install \
         apache2 \
         libapache2-mod-wsgi \
         libgeos-dev \
-        curl
+        libcurl4-openssl-dev
 
 #Configure webserver
 ADD apache.wsgi /etc/ckan/apache.wsgi
