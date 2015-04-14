@@ -8,7 +8,7 @@ import sys
 from os.path import exists, abspath
 from getpass import getpass
 
-from datacats.project import Project, ProjectError
+from datacats.environment import Environment, DatacatsError
 from datacats.cli.install import install
 
 def write(s):
@@ -44,36 +44,36 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
         start_web, create_sysadmin):
     try:
         # FIXME: only 2.3 preload supported at the moment
-        project = Project.new(environment_dir, '2.3', port)
-    except ProjectError as e:
+        environment = Environment.new(environment_dir, '2.3', port)
+    except DatacatsError as e:
         print e
         return 1
 
-    write('Creating environment "{0}"'.format(project.name))
+    write('Creating environment "{0}"'.format(environment.name))
     steps = [
-        project.create_directories,
-        project.create_bash_profile,
-        project.save,
-        project.create_virtualenv,
-        project.create_source,
-        project.start_postgres_and_solr,
-        project.fix_storage_permissions,
-        project.create_ckan_ini,
-        lambda: project.update_ckan_ini(skin=create_skin),
-        project.fix_project_permissions,
+        environment.create_directories,
+        environment.create_bash_profile,
+        environment.save,
+        environment.create_virtualenv,
+        environment.create_source,
+        environment.start_postgres_and_solr,
+        environment.fix_storage_permissions,
+        environment.create_ckan_ini,
+        lambda: environment.update_ckan_ini(skin=create_skin),
+        environment.fix_project_permissions,
         ]
 
     if create_skin:
-        steps.append(project.create_install_template_skin)
+        steps.append(environment.create_install_template_skin)
 
-    steps.append(project.ckan_db_init)
+    steps.append(environment.ckan_db_init)
 
     for fn in steps:
         fn()
         write('.')
     write('\n')
 
-    return finish_init(project, start_web, create_sysadmin)
+    return finish_init(environment, start_web, create_sysadmin)
 
 
 def init(opts):
@@ -88,29 +88,29 @@ Options:
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
-    project_dir = opts['ENVIRONMENT_DIR']
+    environment_dir = opts['ENVIRONMENT_DIR']
     port = opts['PORT']
     start_web = not opts['--image-only']
     create_sysadmin = not opts['--no-sysadmin']
 
-    project_dir = abspath(project_dir or '.')
+    environment_dir = abspath(environment_dir or '.')
     try:
-        project = Project.load(project_dir)
+        environment = Environment.load(environment_dir)
         if port:
-            project.port = int(port)
-    except ProjectError as e:
+            environment.port = int(port)
+    except DatacatsError as e:
         print e
         return 1
 
     write('Creating from existing environment directory "{0}"'.format(
-        project.name))
+        environment.name))
     steps = [
-        lambda: project.create_directories(create_project_dir=False),
-        project.save,
-        project.create_virtualenv,
-        project.start_postgres_and_solr,
-        project.fix_storage_permissions,
-        project.fix_project_permissions,
+        lambda: environment.create_directories(create_project_dir=False),
+        environment.save,
+        environment.create_virtualenv,
+        environment.start_postgres_and_solr,
+        environment.fix_storage_permissions,
+        environment.fix_project_permissions,
         ]
 
     for fn in steps:
@@ -118,32 +118,33 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         write('.')
     write('\n')
 
-    return finish_init(project, start_web, create_sysadmin)
+    return finish_init(environment, start_web, create_sysadmin)
 
 
-def finish_init(project, start_web, create_sysadmin):
+def finish_init(environment, start_web, create_sysadmin):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """
-    install(project, {'--clean': False, 'PORT': None})
+    install(environment, {'--clean': False, 'PORT': None})
 
     write('Initializing database')
-    project.ckan_db_init()
+    environment.ckan_db_init()
     write('\n')
 
     if start_web:
-        project.start_web()
-        write('Starting web server at {0} ...\n'.format(project.web_address()))
+        environment.start_web()
+        write('Starting web server at {0} ...\n'.format(
+            environment.web_address()))
 
     if create_sysadmin:
         try:
             adminpw = confirm_password()
-            project.create_admin_set_password(adminpw)
+            environment.create_admin_set_password(adminpw)
         except KeyboardInterrupt:
             print
 
     if not start_web:
-        project.stop_postgres_and_solr()
+        environment.stop_postgres_and_solr()
 
 
 def confirm_password():

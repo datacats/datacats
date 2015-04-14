@@ -10,7 +10,7 @@ from datacats.cli.profile import get_working_profile
 from datacats.cli.create import confirm_password
 from datacats.validate import valid_deploy_name
 
-def deploy(project, opts):
+def deploy(environment, opts):
     """Deploy environment to production DataCats.com cloud service
 
 Usage:
@@ -26,13 +26,13 @@ Default: '.'
 TARGET_NAME is the name of the environment on DataCats.com. Defaults to
 the environment name.
 """
-    profile = get_working_profile(project)
+    profile = get_working_profile(environment)
     if not profile:
         return 1
 
     target_name = opts['TARGET_NAME']
     if target_name is None:
-        target_name = project.name
+        target_name = environment.name
 
     if not valid_deploy_name(target_name):
         print "Please choose a name at least 4 characters long"
@@ -40,15 +40,15 @@ the environment name.
         return 1
 
     if opts['--create']:
-        if not profile.create(project, target_name, stdout):
+        if not profile.create(environment, target_name, stdout):
             return 1
 
-    if not profile.deploy(project, target_name, stdout):
+    if not profile.deploy(environment, target_name, stdout):
         return 1
 
     if opts['--create']:
         try:
             pw = confirm_password()
-            profile.admin_password(project, target_name, pw)
+            profile.admin_password(environment, target_name, pw)
         except KeyboardInterrupt:
             pass

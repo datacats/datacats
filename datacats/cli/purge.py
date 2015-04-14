@@ -7,7 +7,7 @@
 from os.path import isdir
 from shutil import rmtree
 
-from datacats.project import Project, ProjectError
+from datacats.environment import Environment, DatacatsError
 
 def purge(opts):
     """Purge environment database and uploaded files
@@ -22,19 +22,19 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     try:
-        project = Project.load(opts['ENVIRONMENT'])
-    except ProjectError as e:
-        project = Project.load(opts['ENVIRONMENT'], data_only=True)
+        environment = Environment.load(opts['ENVIRONMENT'])
+    except DatacatsError as e:
+        environment = Environment.load(opts['ENVIRONMENT'], data_only=True)
 
-    project.stop_web()
-    project.stop_postgres_and_solr()
+    environment.stop_web()
+    environment.stop_postgres_and_solr()
 
     if opts['--delete-environment']:
-        if not project.target:
+        if not environment.target:
             print 'Failed to load environment.',
             print 'Not deleting environment directory.'
         else:
-            project.fix_project_permissions()
-            rmtree(project.target)
+            environment.fix_project_permissions()
+            rmtree(environment.target)
 
-    project.purge_data()
+    environment.purge_data()
