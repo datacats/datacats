@@ -22,7 +22,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -q -y install \
         git-core \
         apache2 \
         libapache2-mod-wsgi \
-        libgeos-dev
+        libgeos-dev \
+        curl
 
 #Configure webserver
 ADD apache.wsgi /etc/ckan/apache.wsgi
