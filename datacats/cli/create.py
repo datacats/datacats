@@ -10,6 +10,7 @@ from getpass import getpass
 
 from datacats.environment import Environment, DatacatsError
 from datacats.cli.install import install
+from datacats.validate import valid_deploy_name
 
 def write(s):
     sys.stdout.write(s)
@@ -48,6 +49,11 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
     except DatacatsError as e:
         print e
         return 1
+
+    if not valid_deploy_name(environment.name):
+        print "WARNING: When deploying you will need to choose a"
+        print "target name that is at least 5 characters long"
+        print
 
     write('Creating environment "{0}"'.format(environment.name))
     steps = [

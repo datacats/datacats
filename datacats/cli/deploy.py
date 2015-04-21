@@ -35,7 +35,7 @@ the environment name.
         target_name = environment.name
 
     if not valid_deploy_name(target_name):
-        print "Please choose a name at least 4 characters long"
+        print "Please choose a name at least 5 characters long"
         print "and containing only lowercase letters and numbers"
         return 1
 
