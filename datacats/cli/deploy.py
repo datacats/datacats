@@ -46,6 +46,8 @@ the environment name.
     if not profile.deploy(environment, target_name, stdout):
         return 1
 
+    print "Deployed source to http://{0}.datacats.io".format(target_name)
+
     if opts['--create']:
         try:
             pw = confirm_password()
