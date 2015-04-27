@@ -56,6 +56,9 @@ def install_all(environment, clean):
         print 'ckan not found in environment directory'
         return
 
+    if clean:
+        environment.clean_virtualenv()
+
     for s in ['ckan'] + sorted(srcdirs):
         write('Installing ' + s)
         environment.install_package_develop(s)
