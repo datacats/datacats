@@ -24,7 +24,7 @@ from datacats.docker import (web_command, run_container, remove_container,
     PortAllocatedError, container_logs, remove_image, WebCommandError)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
-    RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV)
+    RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE)
 from datacats.network import wait_for_service_available, ServiceTimeout
 
 WEB_START_TIMEOUT_SECONDS = 30
@@ -763,15 +763,11 @@ class Environment(object):
         assert isdir(package), package
         if not exists(package + '/setup.py'):
             return
-        self.run_command(
-            ['/usr/lib/ckan/bin/pip', 'install', '-e', '/project/' + psrc],
+        self.user_run_script(
+            script=INSTALL_PACKAGE,
+            args=['/project/' + psrc],
             rw_venv=True,
-            rw={self.target + '/' + psrc: '/project/' + psrc},
-            )
-        # .egg-info permissions
-        self.run_command(
-            ['/bin/chown', '-R', '--reference=/project', '/project/' + psrc],
-            rw={self.target + '/' + psrc: '/project/' + psrc},
+            rw_project=True,
             )
 
     def user_run_script(self, script, args, db_links=False, rw_venv=False,
