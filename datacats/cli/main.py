@@ -107,7 +107,6 @@ def main():
 
         option_not_yet_implemented(opts, '--ckan')
         option_not_yet_implemented(opts, '--remote')
-        option_not_yet_implemented(opts, '--clean')
 
         # purge handles loading differently
         if command_fn != purge.purge and 'ENVIRONMENT' in opts:
