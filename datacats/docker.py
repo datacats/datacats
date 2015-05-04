@@ -135,19 +135,16 @@ def run_container(name, image, command=None, environment=None,
     requested port.
     """
     binds = ro_rw_to_binds(ro, rw)
-    try:
-        c = _docker.create_container(
-            name=name,
-            image=image,
-            command=command,
-            environment=environment,
-            volumes=binds_to_volumes(binds),
-            detach=detach,
-            stdin_open=False,
-            tty=False,
-            ports=list(port_bindings) if port_bindings else None)
-    except APIError as e:
-        return None
+    c = _docker.create_container(
+        name=name,
+        image=image,
+        command=command,
+        environment=environment,
+        volumes=binds_to_volumes(binds),
+        detach=detach,
+        stdin_open=False,
+        tty=False,
+        ports=list(port_bindings) if port_bindings else None)
     try:
         _docker.start(
             container=c['Id'],
