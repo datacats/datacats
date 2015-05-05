@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+0.9.1
+-----
+
+- fix for shell command when containers already running
+
 0.9
 ---
 
