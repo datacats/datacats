@@ -41,7 +41,7 @@ class WebCommandError(Exception):
     def __init__(self, *args, **kwargs):
         self.args = args
         for key in kwargs:
-            setattr(key, kwargs[key])
+            setattr(self, key, kwargs[key])
 
     def __str__(self):
         return ('Command failed: {0}\n  View output:'

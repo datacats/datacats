@@ -815,10 +815,8 @@ class Environment(object):
             return web_command(command=command, ro=ro, rw=rw, links=links,
                     volumes_from=volumes_from, clean_up=clean_up)
         except WebCommandError as e:
-            if cleanup:
-                print 'Failied to run command %s. Container deleted due to cleanup. Logs are as follows:\n%s' % (e.args[0], e.logs)
-            else:
-                raise
+            print 'Failed to run command %s. Logs are as follows:\n%s' % (e.args[0], e.logs)
+            raise
 
 
     def purge_data(self):
