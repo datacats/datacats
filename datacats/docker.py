@@ -38,15 +38,15 @@ _version = get_api_version(DEFAULT_DOCKER_API_VERSION,
 _docker = Client(version=_version, **_docker_kwargs)
 
 class WebCommandError(Exception):
-    def __init__(self, *args, **kwargs):
-        self.args = args
-        for key in kwargs:
-            setattr(self, key, kwargs[key])
+    def __init__(self, command, container_id, logs):
+        self.command = command
+        self.container_id = container_id
+        self.logs = logs
 
     def __str__(self):
         return ('Command failed: {0}\n  View output:'
             ' docker logs {1}\n  Remove stopped container:'
-            ' docker rm {1}'.format(*self.args))
+            ' docker rm {1}'.format(self.command, self.container_id))
 
 class PortAllocatedError(Exception):
     pass
@@ -126,7 +126,7 @@ def web_command(command, ro=None, rw=None, links=None,
 
         if clean_up:
             remove_container(c['Id'])
-        raise WebCommandError(command, c['Id'][:12], logs=logs)
+        raise WebCommandError(command, c['Id'][:12], logs)
     if commit:
         rval = _docker.commit(c['Id'])
     if not remove_container(c['Id']):
