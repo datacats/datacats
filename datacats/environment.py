@@ -374,17 +374,20 @@ class Environment(object):
 
         # users are created when data dir is blank so we must pass
         # all the user passwords as environment vars
-        run_container(
-            name='datacats_postgres_' + self.name,
-            image='datacats/postgres',
-            environment=self.passwords,
-            rw=rw,
-            volumes_from=volumes_from)
-        run_container(
-            name='datacats_solr_' + self.name,
-            image='datacats/solr',
-            rw={self.datadir + '/solr': '/var/lib/solr'},
-            ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
+        running = self.containers_running()
+        if 'postgres' not in running or 'solr' not in running:
+            self.stop_postgres_and_solr()
+            run_container(
+                name='datacats_postgres_' + self.name,
+                image='datacats/postgres',
+                environment=self.passwords,
+                rw=rw,
+                volumes_from=volumes_from)
+            run_container(
+                name='datacats_solr_' + self.name,
+                image='datacats/solr',
+                rw={self.datadir + '/solr': '/var/lib/solr'},
+                ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
     def stop_postgres_and_solr(self):
         """
@@ -639,7 +642,7 @@ class Environment(object):
 
     def containers_running(self):
         """
-        Return a list including 0 or more of ['web', 'data', 'search']
+        Return a list including 0 or more of ['web', 'postgres', 'solr']
         for containers tracked by this project that are running
         """
         running = []
