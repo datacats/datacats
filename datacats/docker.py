@@ -38,6 +38,11 @@ _version = get_api_version(DEFAULT_DOCKER_API_VERSION,
 _docker = Client(version=_version, **_docker_kwargs)
 
 class WebCommandError(Exception):
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        for key in kwargs:
+            setattr(key, kwargs[key])
+
     def __str__(self):
         return ('Command failed: {0}\n  View output:'
             ' docker logs {1}\n  Remove stopped container:'
@@ -116,9 +121,12 @@ def web_command(command, ro=None, rw=None, links=None,
                 c['Id'], stdout=True, stderr=True, stream=True):
             stream_output.write(output)
     if _docker.wait(c['Id']):
+        # Before the (potential) cleanup, grab the logs!
+        logs = _docker.logs(c['Id'])
+
         if clean_up:
             remove_container(c['Id'])
-        raise WebCommandError(command, c['Id'][:12])
+        raise WebCommandError(command, c['Id'][:12], logs=logs)
     if commit:
         rval = _docker.commit(c['Id'])
     if not remove_container(c['Id']):
