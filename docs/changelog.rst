@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+0.9
+---
+
+- install --clean: install dependencies to an empty virtualenv
+  to support running datacats with older ckan versions (local only)
+- install: install packages before package requirements so that packages
+  in the environment may override dependencies listed in other
+  packages
+- deploy: show the URL of the deployed site like start does for local sites
+- create: warn when the name chosen may not be used with deploy
+- for for negotiating docker API version so that docker-py and docker don't
+  always need to be the exact matching versions
+- fix for a breaking API change in the docker 1.6 API
+- fix for docker-py constant moved to a different module in 1.2.0
+
 0.8
 ---
 
