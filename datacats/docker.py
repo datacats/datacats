@@ -13,7 +13,12 @@ from functools import cmp_to_key
 from warnings import warn
 
 from docker import Client
-from docker.client import DEFAULT_DOCKER_API_VERSION
+try:
+    # Versions after 1.2.0
+    from docker.constants import DEFAULT_DOCKER_API_VERSION
+except ImportError:
+    # Versions before 1.2.0
+    from docker.client import DEFAULT_DOCKER_API_VERSION
 from docker.utils import kwargs_from_env, compare_version
 from docker.errors import APIError
 

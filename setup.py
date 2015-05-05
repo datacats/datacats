@@ -12,7 +12,7 @@ import sys
 install_requires=[
     'setuptools',
     'docopt',
-    'docker-py==1.1.0',
+    'docker-py>=1.1.0',
     'requests>=2.5.2',  # help with docker-py requirement
 ]
 
