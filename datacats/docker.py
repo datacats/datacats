@@ -19,7 +19,7 @@ try:
 except ImportError:
     # Versions before 1.2.0
     from docker.client import DEFAULT_DOCKER_API_VERSION
-from docker.utils import kwargs_from_env, compare_version
+from docker.utils import kwargs_from_env, compare_version, create_host_config
 from docker.errors import APIError
 
 MINIMUM_API_VERSION = '1.16'
@@ -149,7 +149,8 @@ def run_container(name, image, command=None, environment=None,
         detach=detach,
         stdin_open=False,
         tty=False,
-        ports=list(port_bindings) if port_bindings else None)
+        ports=list(port_bindings) if port_bindings else None,
+        host_config=create_host_config(binds=binds))
     try:
         _docker.start(
             container=c['Id'],
