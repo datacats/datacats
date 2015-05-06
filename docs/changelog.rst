@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+0.9.2
+-----
+
+- fix for deploy with docker 1.6
+
 0.9.1
 -----
 
