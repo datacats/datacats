@@ -18,10 +18,10 @@ def install(environment, opts):
     """Install or reinstall Python packages within this environment
 
 Usage:
-  datacats install [-c] [ENVIRONMENT]
+  datacats install [--clean] [ENVIRONMENT]
 
 Options:
-  -c --clean         Reinstall packages into a clean virtualenv
+  --clean         Reinstall packages into a clean virtualenv
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'

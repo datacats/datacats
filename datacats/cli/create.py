@@ -20,7 +20,7 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bin] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
+  datacats create [-bin] [--child=<name>] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
 
 Options:
   --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION, defaults to
@@ -28,6 +28,7 @@ Options:
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
+  -c --child=<name>       Pick a child environment to create [default: default]
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
@@ -38,11 +39,12 @@ part of this path will be used as the environment name.
         create_skin=not opts['--bare'],
         start_web=not opts['--image-only'],
         create_sysadmin=not opts['--no-sysadmin'],
+        child_name=opts['--child'],
         ckan_version=opts['--ckan'],
         )
 
 def create_environment(environment_dir, port, ckan_version, create_skin,
-        start_web, create_sysadmin):
+        start_web, create_sysadmin, child_name):
     try:
         # FIXME: only 2.3 preload supported at the moment
         environment = Environment.new(environment_dir, '2.3', port)
@@ -91,6 +93,7 @@ Usage:
 Options:
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
+  -c --child=<name>       Pick a child environment to operate on [default: default]
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """

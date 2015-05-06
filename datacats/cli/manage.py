@@ -89,11 +89,14 @@ def info(environment, opts):
     """Display information about environment and running containers
 
 Usage:
-  datacats info [-qr] [ENVIRONMENT]
+  datacats info [-qr] [--child=<name>] [ENVIRONMENT]
 
 Options:
   -q --quiet         Echo only the web URL or nothing if not running
   -r --remote        Information about DataCats.com cloud instance
+  -c --child=<name>  Provide information about running containers in a specific
+                     child. If this isn't specified, information will be dispalyed
+                     about all children.
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -134,7 +137,7 @@ def logs(environment, opts):
     """Display or follow container logs
 
 Usage:
-  datacats logs [-d | -s] [-tr] [--tail=LINES] [ENVIRONMENT]
+  datacats logs [-d | -s] [--child=<name>] [-tr] [--tail=LINES] [ENVIRONMENT]
   datacats logs -f [-d | -s] [-r] [ENVIRONMENT]
 
 Options:
@@ -143,6 +146,7 @@ Options:
   -r --remote        Retrieve logs from DataCats.com cloud instance
   -s --solr-logs     Show solr search logs instead of web logs
   -t --timestamps    Add timestamps to log lines
+  -c --child=<name>  Specify a child environment for logs if needed [default: default]
   --tail=LINES       Number of lines to show [default: all]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
@@ -171,10 +175,11 @@ def open_(environment, opts):
     """Open web browser window to this environment
 
 Usage:
-  datacats open [-r] [ENVIRONMENT]
+  datacats open [-r] [--child=<name>] [ENVIRONMENT]
 
 Options:
   -r --remote        Open DataCats.com cloud instance address
+  -c --child=<name>  Choose a child environment to open [default: default]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'

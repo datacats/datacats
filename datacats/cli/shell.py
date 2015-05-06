@@ -24,7 +24,10 @@ def paster(opts):
     """Run a paster command from the current directory
 
 Usage:
-  datacats paster [COMMAND...]
+  datacats paster [--child=<name>] [COMMAND...]
+
+Options:
+  -c --child=<name>   Specify a child to run this paster command on [default: default]
 
 You must be inside a datacats environment to run this. The paster command will
 run within your current directory inside the environment. You don't need to
