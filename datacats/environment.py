@@ -814,8 +814,12 @@ class Environment(object):
         else:
             links = None
 
-        return web_command(command=command, ro=ro, rw=rw, links=links,
-                volumes_from=volumes_from, clean_up=clean_up)
+        try:
+            return web_command(command=command, ro=ro, rw=rw, links=links,
+                    volumes_from=volumes_from, clean_up=clean_up)
+        except WebCommandError as e:
+            print 'Failed to run command %s. Logs are as follows:\n%s' % (e.e.command, e.logs)
+            raise
 
 
     def purge_data(self):
