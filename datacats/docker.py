@@ -105,7 +105,8 @@ def web_command(command, ro=None, rw=None, links=None,
         image=image,
         command=command,
         volumes=binds_to_volumes(binds),
-        detach=False)
+        detach=False,
+        host_config=create_host_config(binds=binds))
     _docker.start(
         container=c['Id'],
         links=links,
