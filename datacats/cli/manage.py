@@ -18,10 +18,11 @@ def stop(environment, opts):
     """Stop serving environment and remove all its containers
 
 Usage:
-  datacats stop [-r] [ENVIRONMENT]
+  datacats stop [--child=<name>] [-r] [ENVIRONMENT]
 
 Options:
   -r --remote        Stop DataCats.com cloud instance
+  -c --child=<name>  Specify a child environment to stop [default: default]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -33,13 +34,14 @@ def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
-  datacats start [-bp] [ENVIRONMENT [PORT]]
-  datacats start -r [-b] [ENVIRONMENT]
+  datacats start [-bp] [--child=<name>] [ENVIRONMENT [PORT]]
+  datacats start -r [-b] [--child=<name>] [ENVIRONMENT]
 
 Options:
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
+  -c --child=<name>  Specify a child environment to start [default: default]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
