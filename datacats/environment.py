@@ -100,11 +100,13 @@ class Environment(object):
 
         cp.set('datacats', 'children', ','.join(self.children))
 
-        cp.add_section(self.child_name)
-        cp.set(self.child_name, 'port', str(self.port))
+        section_name = 'child_' + self.child_name
+
+        cp.add_section(section_name)
+        cp.set(section_name, 'port', str(self.port))
 
         if self.site_url:
-            cp.set(self.child_name, 'site_url', self.site_url)
+            cp.set(section_name, 'site_url', self.site_url)
 
         with open(self.target + '/.datacats-environment', 'w') as config:
             cp.write(config)
@@ -254,15 +256,16 @@ class Environment(object):
         except ConfigParserError:
             raise DatacatsError('Error reading environment information')
 
+        child_section = 'child_' + child_name
         name = cp.get('datacats', 'name')
         datadir = expanduser('~/.datacats/' + name)
         ckan_version = cp.get('datacats', 'ckan_version')
         try:
-            port = cp.getint(child_name, 'port')
+            port = cp.getint(child_section, 'port')
         except NoOptionError:
             port = None
         try:
-            site_url = cp.get(child_name, 'site_url')
+            site_url = cp.get(child_section, 'site_url')
         except NoOptionError:
             site_url = None
         try:
@@ -280,7 +283,7 @@ class Environment(object):
             pw_options = cp.options('passwords')
         except NoSectionError:
             cp = SafeConfigParser()
-            cp.read(datadir + '/passwords.ini')
+            cp.read(join(datadir, child_name) + '/passwords.ini')
             try:
                 pw_options = cp.options('passwords')
             except NoSectionError:
@@ -289,7 +292,7 @@ class Environment(object):
         for n in pw_options:
             passwords[n.upper()] = cp.get('passwords', n)
 
-        environment = cls(name, wd, datadir, ckan_version, port, deploy_target,
+        environment = cls(name, wd, datadir, child_name, ckan_version, port, deploy_target,
         site_url=site_url, always_prod=always_prod, extension_dir=extension_dir)
         if passwords:
             environment.passwords = passwords
@@ -298,6 +301,8 @@ class Environment(object):
 
         if not used_path:
             environment._update_saved_project_dir()
+
+        environment._load_children()
 
         return environment
 

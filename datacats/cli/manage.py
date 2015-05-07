@@ -18,17 +18,25 @@ def stop(environment, opts):
     """Stop serving environment and remove all its containers
 
 Usage:
-  datacats stop [--child=<name>] [-r] [ENVIRONMENT]
+  datacats stop [-r] [ENVIRONMENT]
 
 Options:
   -r --remote        Stop DataCats.com cloud instance
-  -c --child=<name>  Specify a child environment to stop [default: default]
+  -c --child=<name>  Specify a child environment to stop. This command defaults
+                     to stopping all instances of all children.
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    environment.stop_web()
-    environment.stop_postgres_and_solr()
+    if '--child' in opts:
+        children = [opts['--child']]
+    else:
+        children = environment.children
+
+    for child in children:
+        environment.child_name = child
+        environment.stop_web()
+        environment.stop_postgres_and_solr()
 
 def start(environment, opts):
     """Create containers and start serving environment
