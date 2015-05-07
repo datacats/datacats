@@ -110,8 +110,8 @@ def main():
 
         # purge handles loading differently
         if command_fn != purge.purge and 'ENVIRONMENT' in opts:
-            import pdb; pdb.set_trace()
-            environment = Environment.load(opts['ENVIRONMENT'] or '.')
+            environment = Environment.load(opts['ENVIRONMENT'] or '.',
+                            opts['--child'] if '--child' in opts else 'default')
             return command_fn(environment, opts)
         return command_fn(opts)
     except DatacatsError as e:

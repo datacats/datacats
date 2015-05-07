@@ -90,7 +90,7 @@ def init(opts):
     """Initialize a purged environment or copied environment directory
 
 Usage:
-  datacats init [-in] [ENVIRONMENT_DIR [PORT]]
+  datacats init [-in] [--child=<name>] [ENVIRONMENT_DIR [PORT]]
 
 Options:
   -i --image-only         Create the environment but don't start containers
@@ -119,6 +119,7 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     steps = [
         lambda: environment.create_directories(create_project_dir=False),
         environment.save,
+        environment.save_child,
         environment.create_virtualenv,
         environment.start_postgres_and_solr,
         environment.fix_storage_permissions,

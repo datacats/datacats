@@ -103,7 +103,21 @@ class Environment(object):
         cp.add_section(self.child_name)
         cp.set(self.child_name, 'port', str(self.port))
 
+        if self.site_url:
+            cp.set(self.child_name, 'site_url', self.site_url)
+
         with open(self.target + '/.datacats-environment', 'w') as config:
+            cp.write(config)
+
+        # save passwords to datadir
+        cp = SafeConfigParser()
+
+        cp.add_section('passwords')
+        for n in sorted(self.passwords):
+            cp.set('passwords', n.lower(), self.passwords[n])
+
+        # Write to the childdir so we maintain separate passwords.
+        with open(self.childdir + '/passwords.ini', 'w') as config:
             cp.write(config)
 
     def save(self):
@@ -120,25 +134,12 @@ class Environment(object):
             cp.add_section('deploy')
             cp.set('deploy', 'target', self.deploy_target)
 
-        if self.site_url or self.always_prod:
-            if self.site_url:
-                cp.set('datacats', 'site_url', self.site_url)
-            if self.always_prod:
-                cp.set('datacats', 'always_prod', 'true')
+        if self.always_prod:
+            cp.set('datacats', 'always_prod', 'true')
 
         with open(self.target + '/.datacats-environment', 'w') as config:
             cp.write(config)
 
-        # save passwords to datadir
-        cp = SafeConfigParser()
-
-        cp.add_section('passwords')
-        for n in sorted(self.passwords):
-            cp.set('passwords', n.lower(), self.passwords[n])
-
-        # Write to the childdir so we maintain separate passwords.
-        with open(self.childdir + '/passwords.ini', 'w') as config:
-            cp.write(config)
 
         self._update_saved_project_dir()
 
@@ -176,7 +177,13 @@ class Environment(object):
 
         datadir = expanduser('~/.datacats/' + name)
         childdir = join(datadir, child_name)
-        target = workdir + '/' + name
+        # We track through the datadir to the target if we are just making a
+        # child
+        if isdir(datadir):
+            with open(join(datadir, 'project-dir')) as pd:
+                target = pd.read()
+        else:
+            target = workdir + '/' + name
 
         if isdir(childdir):
             raise DatacatsError('Child environment data directory {0} already exists',
@@ -251,11 +258,11 @@ class Environment(object):
         datadir = expanduser('~/.datacats/' + name)
         ckan_version = cp.get('datacats', 'ckan_version')
         try:
-            port = cp.getint('datacats', 'port')
+            port = cp.getint(child_name, 'port')
         except NoOptionError:
             port = None
         try:
-            site_url = cp.get('datacats', 'site_url')
+            site_url = cp.get(child_name, 'site_url')
         except NoOptionError:
             site_url = None
         try:
