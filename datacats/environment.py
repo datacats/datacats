@@ -57,13 +57,14 @@ class Environment(object):
         self.datadir = datadir
         self.extension_dir = extension_dir
         self.ckan_version = ckan_version
+        # This is the child that all commands will operate on.
+        self.child_name = child_name
+        self.childdir = join(datadir, child_name)
         self.port = int(port if port else self._choose_port())
         self.deploy_target = deploy_target
         self.site_url = site_url
         self.always_prod = always_prod
-        # This is the child that all commands will operate on.
-        self.child_name = child_name
-        self.childdir = join(datadir, child_name)
+
 
     def save(self):
         """
@@ -402,7 +403,7 @@ class Environment(object):
             run_container(
                 name='datacats_solr_' + self.name + '_' + self.child_name,
                 image='datacats/solr',
-                rw={self.datadir + '/solr': '/var/lib/solr'},
+                rw={self.childdir + '/solr': '/var/lib/solr'},
                 ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
     def stop_postgres_and_solr(self):
@@ -418,7 +419,7 @@ class Environment(object):
         """
         web_command(
             command='/bin/chown -R www-data: /var/www/storage',
-            rw={self.datadir + '/files': '/var/www/storage'})
+            rw={self.childdir + '/files': '/var/www/storage'})
 
     def create_ckan_ini(self):
         """
@@ -568,9 +569,9 @@ class Environment(object):
                 .format(self.passwords['DATASTORE_RW_PASSWORD']))
         cp.set('app:main', 'solr_url', 'http://solr:8080/solr')
 
-        if not isdir(self.datadir + '/run'):
-            makedirs(self.datadir + '/run')  # upgrade old datadir
-        with open(self.datadir + '/run/' + output, 'w') as runini:
+        if not isdir(self.childdir + '/run'):
+            makedirs(self.childdir + '/run')  # upgrade old datadir
+        with open(self.childdir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
     def _run_web_container(self, port, command):
@@ -587,10 +588,10 @@ class Environment(object):
         run_container(
             name='datacats_web_' + self.name + '_' + self.child_name,
             image='datacats/web',
-            rw={self.datadir + '/files': '/var/www/storage'},
+            rw={self.childdir + '/files': '/var/www/storage'},
             ro=dict({
                 self.target: '/project/',
-                self.datadir + '/run/development.ini':
+                self.childdir + '/run/development.ini':
                     '/project/development.ini',
                 WEB: '/scripts/web.sh'}, **ro),
             links={'datacats_solr_' + self.name + '_' + self.child_name: 'solr',
@@ -608,7 +609,7 @@ class Environment(object):
         """
         try:
             if not wait_for_service_available(
-                    'datacats_web_' + self.name,
+                    'datacats_web_' + self.name + '_' + self.child_name,
                     self.web_address(),
                     WEB_START_TIMEOUT_SECONDS):
                 raise DatacatsError('Failed to start web container.'
@@ -622,9 +623,9 @@ class Environment(object):
         Return a port number from 5000-5999 based on the environment name
         to be used as a default when the user hasn't selected one.
         """
-        # instead of random let's base it on the name chosen
+        # instead of random let's base it on the name chosen (and the childname)
         return 5000 + unpack('Q',
-            sha(self.name.decode('ascii')).digest()[:8])[0] % 1000
+            sha((self.name + self.child_name).decode('ascii')).digest()[:8])[0] % 1000
 
     def _next_port(self, port):
         """
@@ -639,14 +640,14 @@ class Environment(object):
         """
         Stop and remove the web container
         """
-        remove_container('datacats_web_' + self.name, force=True)
+        remove_container('datacats_web_' + self.name + '_' + self.child_name, force=True)
 
     def _current_web_port(self):
         """
         return just the port number for the web container, or None if
         not running
         """
-        info = inspect_container('datacats_web_' + self.name)
+        info = inspect_container('datacats_web_' + self.name + '_' + self.child_name)
         if info is None:
             return None
         try:
@@ -663,7 +664,7 @@ class Environment(object):
         """
         running = []
         for n in ['web', 'postgres', 'solr']:
-            info = inspect_container('datacats_' + n + '_' + self.name)
+            info = inspect_container('datacats_' + n + '_' + self.name + '_' + self.child_name)
             if info and not info['State']['Running']:
                 running.append(n + '(halted)')
             elif info:
@@ -683,7 +684,7 @@ class Environment(object):
         """
         create 'admin' account with given password
         """
-        with open(self.datadir + '/run/admin.json', 'w') as out:
+        with open(self.childdir + '/run/admin.json', 'w') as out:
             json.dump({
                 'name': 'admin',
                 'email': 'none',
@@ -695,9 +696,9 @@ class Environment(object):
                 'action user_create -i -c /project/development.ini '
                 '< /input/admin.json'],
             db_links=True,
-            ro={self.datadir + '/run/admin.json': '/input/admin.json'},
+            ro={self.childdir + '/run/admin.json': '/input/admin.json'},
             )
-        remove(self.datadir + '/run/admin.json')
+        remove(self.childdir + '/run/admin.json')
 
     def interactive_shell(self, command=None, paster=False):
         """
@@ -716,7 +717,7 @@ class Environment(object):
         if is_boot2docker():
             venv_volumes = ['--volumes-from', 'datacats_venv_' + self.name]
         else:
-            venv_volumes = ['-v', self.datadir + '/venv:/usr/lib/ckan:rw']
+            venv_volumes = ['-v', self.childdir + '/venv:/usr/lib/ckan:rw']
 
         self._create_run_ini(self.port, production=False, output='run.ini')
         self._create_run_ini(self.port, production=True, output='test.ini',
@@ -732,7 +733,7 @@ class Environment(object):
         proxy_settings = self._proxy_settings()
         if proxy_settings:
             venv_volumes += ['-v',
-                self.datadir + '/run/proxy-environment:/etc/environment:ro']
+                self.childdir + '/run/proxy-environment:/etc/environment:ro']
 
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
@@ -742,11 +743,11 @@ class Environment(object):
             '-it' if use_tty else '-i',
             ] + venv_volumes + [
             '-v', self.target + ':/project:rw',
-            '-v', self.datadir + '/files:/var/www/storage:rw',
+            '-v', self.childdir + '/files:/var/www/storage:rw',
             '-v', script + ':/scripts/shell.sh:ro',
             '-v', PASTER_CD + ':/scripts/paster_cd.sh:ro',
-            '-v', self.datadir + '/run/run.ini:/project/development.ini:ro',
-            '-v', self.datadir + '/run/test.ini:/project/ckan/test-core.ini:ro',
+            '-v', self.childdir + '/run/run.ini:/project/development.ini:ro',
+            '-v', self.childdir + '/run/test.ini:/project/ckan/test-core.ini:ro',
             '--link', 'datacats_solr_' + self.name + ':solr',
             '--link', 'datacats_postgres_' + self.name + ':db',
             '--hostname', self.name,
@@ -826,7 +827,7 @@ class Environment(object):
                 'datacats_solr_' + self.name + '_' + self.child_name: 'solr',
                 'datacats_postgres_' + self.name + '_' + self.child_name: 'db',
                 }
-            ro[self.datadir + '/run/run.ini'] = '/project/development.ini'
+            ro[self.childdir + '/run/run.ini'] = '/project/development.ini'
         else:
             links = None
 
@@ -865,7 +866,7 @@ class Environment(object):
         :param timestamps: True to include timestamps
         """
         return container_logs(
-            'datacats_' + container + '_' + self.name,
+            'datacats_' + container + '_' + self.name + '_' + self.child_name,
             tail,
             follow,
             timestamps)

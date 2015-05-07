@@ -59,7 +59,6 @@ def is_boot2docker():
     return _boot2docker
 
 def docker_host():
-    import pdb;pdb.set_trace()
     url = _docker_kwargs.get('base_url')
     if not url:
         return 'localhost'
