@@ -95,7 +95,7 @@ Usage:
 Options:
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
-  -c --child=<name>       Pick a child environment to operate on [default: default]
+  -c --child=<name>       Pick a child environment to initialize [default: default]
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
@@ -103,10 +103,11 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     port = opts['PORT']
     start_web = not opts['--image-only']
     create_sysadmin = not opts['--no-sysadmin']
+    child_name = opts['--child']
 
     environment_dir = abspath(environment_dir or '.')
     try:
-        environment = Environment.load(environment_dir)
+        environment = Environment.load(environment_dir, child_name)
         if port:
             environment.port = int(port)
     except DatacatsError as e:

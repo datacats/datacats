@@ -1,4 +1,4 @@
-# Copyright 2014-2015 Boxkite Inc.
+
 
 # This file is part of the DataCats package and is released under
 # the terms of the GNU Affero General Public License version 3.0.
@@ -290,7 +290,7 @@ class Environment(object):
         """
         Call once for new projects to create the initial project directories.
         """
-        # It's possible that the datadir already exists (we're making a secondary one)
+        # It's possible that the datadir already exists (we're making a secondary child)
         if not isdir(self.datadir):
             makedirs(self.datadir, mode=0o700)
         makedirs(self.childdir, mode=0o700)
