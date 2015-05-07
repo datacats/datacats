@@ -63,11 +63,11 @@ def create_environment(environment_dir, port, ckan_version, create_skin, child_n
     write('Creating environment "{0}/{1}"'.format(environment.name, environment.child_name))
     steps = [
         lambda: environment.create_directories(making_full_environment),
-        environment.create_bash_profile,
-        environment.save] + ([environment.create_virtualenv,
+        environment.create_bash_profile,] + ([environment.create_virtualenv,
+        environment.save,
         environment.create_source,
         environment.create_ckan_ini,] if making_full_environment else []
-        ) + [environment.start_postgres_and_solr,
+        ) + [environment.save_child, environment.start_postgres_and_solr,
         environment.fix_storage_permissions,
         lambda: environment.update_ckan_ini(skin=create_skin),
         environment.fix_project_permissions,

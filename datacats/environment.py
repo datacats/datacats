@@ -64,7 +64,47 @@ class Environment(object):
         self.deploy_target = deploy_target
         self.site_url = site_url
         self.always_prod = always_prod
+        self.children = None
 
+    def _load_children(self):
+        """
+        Loads child names for this env from the .datacats-environment file.
+        This sets the property 'children' of the Environment.
+        This method is safe to call as long as a valid .datacats-environment
+        exists (it doesn't need a 'datacats/children' directive).
+        """
+        if not self.children:
+            cp = SafeConfigParser()
+            cp.read([self.target + '/.datacats-environment'])
+
+            try:
+                self.children = cp.get('datacats', 'children').split(',')
+            except NoOptionError:
+                # No children yet
+                self.children = []
+        else:
+            return self.children
+
+    def save_child(self):
+        """
+        Save environment settings in the directory that need to be saved
+        even when creating only a new child env.
+        """
+        cp = SafeConfigParser()
+
+        cp.read([self.target + '/.datacats-environment'])
+
+        self._load_children()
+
+        self.children.append(self.child_name)
+
+        cp.set('datacats', 'children', ','.join(self.children))
+
+        cp.add_section(self.child_name)
+        cp.set(self.child_name, 'port', str(self.port))
+
+        with open(self.target + '/.datacats-environment', 'w') as config:
+            cp.write(config)
 
     def save(self):
         """
@@ -75,7 +115,6 @@ class Environment(object):
         cp.add_section('datacats')
         cp.set('datacats', 'name', self.name)
         cp.set('datacats', 'ckan_version', self.ckan_version)
-        cp.set('datacats', 'port', str(self.port))
 
         if self.deploy_target:
             cp.add_section('deploy')
@@ -200,7 +239,7 @@ class Environment(object):
                 ignore, extension_dir = path_split(oldwd)
 
         if data_only and not used_path:
-            return cls(environment_name, None, datadir)
+            return cls(environment_name, None, datadir, child_name)
 
         cp = SafeConfigParser()
         try:

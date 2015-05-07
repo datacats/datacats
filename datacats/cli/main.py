@@ -110,6 +110,7 @@ def main():
 
         # purge handles loading differently
         if command_fn != purge.purge and 'ENVIRONMENT' in opts:
+            import pdb; pdb.set_trace()
             environment = Environment.load(opts['ENVIRONMENT'] or '.')
             return command_fn(environment, opts)
         return command_fn(opts)
