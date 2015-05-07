@@ -43,11 +43,11 @@ part of this path will be used as the environment name.
         ckan_version=opts['--ckan'],
         )
 
-def create_environment(environment_dir, port, ckan_version, create_skin,
-        start_web, create_sysadmin, child_name):
+def create_environment(environment_dir, port, ckan_version, create_skin, child_name,
+        start_web, create_sysadmin):
     try:
         # FIXME: only 2.3 preload supported at the moment
-        environment = Environment.new(environment_dir, '2.3', port)
+        environment = Environment.new(environment_dir, '2.3', child_name, port)
     except DatacatsError as e:
         print e
         return 1
@@ -57,21 +57,23 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
         print "target name that is at least 5 characters long"
         print
 
-    write('Creating environment "{0}"'.format(environment.name))
+    # There are a lot of steps we can/must skip if we're making a child only
+    making_full_environment = not environment.data_exists()
+
+    write('Creating environment "{0}/{1}"'.format(environment.name, environment.child_name))
     steps = [
-        environment.create_directories,
+        lambda: environment.create_directories(making_full_environment),
         environment.create_bash_profile,
-        environment.save,
-        environment.create_virtualenv,
+        environment.save] + ([environment.create_virtualenv,
         environment.create_source,
-        environment.start_postgres_and_solr,
+        environment.create_ckan_ini,] if making_full_environment else []
+        ) + [environment.start_postgres_and_solr,
         environment.fix_storage_permissions,
-        environment.create_ckan_ini,
         lambda: environment.update_ckan_ini(skin=create_skin),
         environment.fix_project_permissions,
         ]
 
-    if create_skin:
+    if create_skin and making_full_environment:
         steps.append(environment.create_install_template_skin)
 
     steps.append(environment.ckan_db_init)

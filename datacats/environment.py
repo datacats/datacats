@@ -4,7 +4,7 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
-from os.path import abspath, split as path_split, expanduser, isdir, exists
+from os.path import abspath, split as path_split, expanduser, isdir, exists, join
 from os import makedirs, getcwd, remove, environ
 import sys
 import subprocess
@@ -49,7 +49,7 @@ class Environment(object):
 
     Create with Environment.new(path) or Environment.load(path)
     """
-    def __init__(self, name, target, datadir, ckan_version=None, port=None,
+    def __init__(self, name, target, datadir, child_name, ckan_version=None, port=None,
                 deploy_target=None, site_url=None, always_prod=False,
                 extension_dir='ckan'):
         self.name = name
@@ -61,6 +61,9 @@ class Environment(object):
         self.deploy_target = deploy_target
         self.site_url = site_url
         self.always_prod = always_prod
+        # This is the child that all commands will operate on.
+        self.child_name = child_name
+        self.childdir = join(datadir, child_name)
 
     def save(self):
         """
@@ -93,7 +96,8 @@ class Environment(object):
         for n in sorted(self.passwords):
             cp.set('passwords', n.lower(), self.passwords[n])
 
-        with open(self.datadir + '/passwords.ini', 'w') as config:
+        # Write to the childdir so we maintain separate passwords.
+        with open(self.childdir + '/passwords.ini', 'w') as config:
             cp.write(config)
 
         self._update_saved_project_dir()
@@ -107,13 +111,14 @@ class Environment(object):
             pdir.write(self.target)
 
     @classmethod
-    def new(cls, path, ckan_version, port=None):
+    def new(cls, path, ckan_version, child_name, port=None):
         """
         Return a Environment object with settings for a new project.
         No directories or containers are created by this call.
 
         :params path: location for new project directory, may be relative
         :params ckan_version: release of CKAN to install
+        :params child_name: The name of the child environment to install database and solr eventually.
         :params port: preferred port for local instance
 
         Raises DatcatsError if directories or project with same
@@ -130,20 +135,24 @@ class Environment(object):
                 ' does not exist')
 
         datadir = expanduser('~/.datacats/' + name)
+        childdir = join(datadir, child_name)
         target = workdir + '/' + name
 
-        if isdir(datadir):
-            raise DatacatsError('Environment data directory {0} already exists',
-                (datadir,))
-        if isdir(target):
-            raise DatacatsError('Environment directory already exists')
+        if isdir(childdir):
+            raise DatacatsError('Child environment data directory {0} already exists',
+                (childdir,))
+        # This is the case where the data dir has been removed,
+        if isdir(target) and not isdir(datadir):
+            raise DatacatsError('Environment directory exists, but data directory does not.\n'
+                                'If you simply want to recreate the data directory, run "datacats init"'
+                                ' in the environment directory.')
 
-        environment = cls(name, target, datadir, ckan_version, port)
+        environment = cls(name, target, datadir, child_name, ckan_version, port)
         environment._generate_passwords()
         return environment
 
     @classmethod
-    def load(cls, environment_name=None, data_only=False):
+    def load(cls, environment_name=None, child_name='default', data_only=False):
         """
         Return an Environment object based on an existing project.
 
@@ -255,15 +264,15 @@ class Environment(object):
         """
         Return True if all the expected datadir files are present
         """
-        if (not isdir(self.datadir + '/files')
-                or not isdir(self.datadir + '/run')
-                or not isdir(self.datadir + '/search')):
+        if (not isdir(self.childdir + '/files')
+                or not isdir(self.childdir + '/run')
+                or not isdir(self.childdir + '/search')):
             return False
         if is_boot2docker():
             return True
         return (
             isdir(self.datadir + '/venv') and
-            isdir(self.datadir + '/data'))
+            isdir(self.childdir + '/data'))
 
     def require_data(self):
         """
@@ -280,13 +289,19 @@ class Environment(object):
         """
         Call once for new projects to create the initial project directories.
         """
-        makedirs(self.datadir, mode=0o700)
-        makedirs(self.datadir + '/search')
+        # It's possible that the datadir already exists (we're making a secondary one)
+        if not isdir(self.datadir):
+            makedirs(self.datadir, mode=0o700)
+        makedirs(self.childdir, mode=0o700)
+
+        # venv isn't child-specific, the rest are.
+        makedirs(self.childdir + '/search')
         if not is_boot2docker():
             makedirs(self.datadir + '/venv')
-            makedirs(self.datadir + '/data')
-        makedirs(self.datadir + '/files')
-        makedirs(self.datadir + '/run')
+            makedirs(self.childdir + '/data')
+        makedirs(self.childdir + '/files')
+        makedirs(self.childdir + '/run')
+
         if create_project_dir:
             makedirs(self.target)
 
@@ -364,27 +379,28 @@ class Environment(object):
         # complicated because postgres needs hard links to
         # work on its data volume. see issue #5
         if is_boot2docker():
-            data_only_container('datacats_pgdata_' + self.name,
+            data_only_container('datacats_pgdata_' + self.name + '_' + self.child_name,
                 ['/var/lib/postgresql/data'])
             rw = {}
-            volumes_from = 'datacats_pgdata_' + self.name
+            volumes_from = 'datacats_pgdata_' + self.name + '_' + self.child_name
         else:
             rw = {self.datadir + '/postgres': '/var/lib/postgresql/data'}
             volumes_from = None
 
-        # users are created when data dir is blank so we must pass
-        # all the user passwords as environment vars
         running = self.containers_running()
+
         if 'postgres' not in running or 'solr' not in running:
+            # users are created when data dir is blank so we must pass
+            # all the user passwords as environment vars
             self.stop_postgres_and_solr()
             run_container(
-                name='datacats_postgres_' + self.name,
+                name='datacats_postgres_' + self.name + '_' + self.child_name,
                 image='datacats/postgres',
                 environment=self.passwords,
                 rw=rw,
                 volumes_from=volumes_from)
             run_container(
-                name='datacats_solr_' + self.name,
+                name='datacats_solr_' + self.name + '_' + self.child_name,
                 image='datacats/solr',
                 rw={self.datadir + '/solr': '/var/lib/solr'},
                 ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
@@ -393,8 +409,8 @@ class Environment(object):
         """
         stop and remove postgres and solr containers
         """
-        remove_container('datacats_postgres_' + self.name)
-        remove_container('datacats_solr_' + self.name)
+        remove_container('datacats_postgres_' + self.name + '_' + self.child_name)
+        remove_container('datacats_solr_' + self.name + '_' + self.child_name)
 
     def fix_storage_permissions(self):
         """
@@ -569,7 +585,7 @@ class Environment(object):
             volumes_from = None
 
         run_container(
-            name='datacats_web_' + self.name,
+            name='datacats_web_' + self.name + '_' + self.child_name,
             image='datacats/web',
             rw={self.datadir + '/files': '/var/www/storage'},
             ro=dict({
@@ -577,8 +593,8 @@ class Environment(object):
                 self.datadir + '/run/development.ini':
                     '/project/development.ini',
                 WEB: '/scripts/web.sh'}, **ro),
-            links={'datacats_solr_' + self.name: 'solr',
-                'datacats_postgres_' + self.name: 'db'},
+            links={'datacats_solr_' + self.name + '_' + self.child_name: 'solr',
+                'datacats_postgres_' + self.name + '_' + self.child_name: 'db'},
             volumes_from=volumes_from,
             command=command,
             port_bindings={
@@ -807,8 +823,8 @@ class Environment(object):
         if db_links:
             self._create_run_ini(self.port, production=False, output='run.ini')
             links = {
-                'datacats_solr_' + self.name: 'solr',
-                'datacats_postgres_' + self.name: 'db',
+                'datacats_solr_' + self.name + '_' + self.child_name: 'solr',
+                'datacats_postgres_' + self.name + '_' + self.child_name: 'db',
                 }
             ro[self.datadir + '/run/run.ini'] = '/project/development.ini'
         else:
