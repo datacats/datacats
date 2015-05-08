@@ -222,6 +222,7 @@ class Environment(object):
 
         print 'Making sure that containers are stopped...'
         env_name = split[1]
+        # Old-style names on purpose! We need to stop old containers!
         remove_container('datacats_web_' + env_name)
         remove_container('datacats_solr_' + env_name)
         remove_container('datacats_postgres_' + env_name)
