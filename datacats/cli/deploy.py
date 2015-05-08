@@ -19,7 +19,7 @@ Usage:
 Options:
   --create                Create a new environment on DataCats.com instead
                           of updating an existing environment
-  -c --child=<name>       Pick a child environment to operate on [default: default]
+  -c --child=<name>       Pick a child environment to operate on [default: primary]
 
 ENVIRONMENT may be an environment name or a path to a environment directory.
 Default: '.'

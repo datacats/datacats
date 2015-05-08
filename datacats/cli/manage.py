@@ -22,7 +22,7 @@ Usage:
 
 Options:
   -r --remote        Stop DataCats.com cloud instance
-  -c --child=<name>  Specify a child environment to stop. [default: default]
+  -c --child=<name>  Specify a child environment to stop. [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -41,7 +41,7 @@ Options:
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
-  -c --child=<name>  Specify a child environment to start [default: default]
+  -c --child=<name>  Specify a child environment to start [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -64,7 +64,7 @@ Options:
   -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
-  -c --child=<name>  Specify a child to reload [default: default]
+  -c --child=<name>  Specify a child to reload [default: primary]
   -a --all           Reload all children of the given environment
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
@@ -99,7 +99,7 @@ Options:
   -q --quiet         Echo only the web URL or nothing if not running
   -r --remote        Information about DataCats.com cloud instance
   -c --child=<name>  Provide information about running containers in a specific
-                     child [default: default]
+                     child [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -149,7 +149,7 @@ Options:
   -r --remote        Retrieve logs from DataCats.com cloud instance
   -s --solr-logs     Show solr search logs instead of web logs
   -t --timestamps    Add timestamps to log lines
-  -c --child=<name>  Specify a child environment for logs if needed [default: default]
+  -c --child=<name>  Specify a child environment for logs if needed [default: primary]
   --tail=LINES       Number of lines to show [default: all]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
@@ -182,7 +182,7 @@ Usage:
 
 Options:
   -r --remote        Open DataCats.com cloud instance address
-  -c --child=<name>  Choose a child environment to open [default: default]
+  -c --child=<name>  Choose a child environment to open [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'

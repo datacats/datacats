@@ -28,7 +28,7 @@ Options:
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
-  -c --child=<name>       Pick a child environment to create [default: default]
+  -c --child=<name>       Pick a child environment to create [default: primary]
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
@@ -95,7 +95,7 @@ Usage:
 Options:
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
-  -c --child=<name>       Pick a child environment to initialize [default: default]
+  -c --child=<name>       Pick a child environment to initialize [default: primary]
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """

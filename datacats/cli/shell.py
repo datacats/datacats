@@ -33,7 +33,7 @@ Usage:
   datacats paster [-d] [--child=<name>] [COMMAND...]
 
 Options:
-  -c --child=<name>   Specify a child to run this paster command on [default: default]
+  -c --child=<name>   Specify a child to run this paster command on [default: primary]
   -d --detach       Run the resulting container in the background
 
 You must be inside a datacats environment to run this. The paster command will
