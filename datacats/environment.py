@@ -751,7 +751,7 @@ class Environment(object):
             )
         remove(self.childdir + '/run/admin.json')
 
-    def interactive_shell(self, command=None, paster=False):
+    def interactive_shell(self, command=None, paster=False, detach=False):
         """
         launch interactive shell session with all writable volumes
 
@@ -764,6 +764,8 @@ class Environment(object):
         if not command:
             command = []
         use_tty = sys.stdin.isatty() and sys.stdout.isatty()
+
+        background = environ.get('CIRCLECI', False) or detach
 
         if is_boot2docker():
             venv_volumes = ['--volumes-from', 'datacats_venv_' + self.name]
@@ -790,8 +792,9 @@ class Environment(object):
         # using subprocess for docker client's interactive session
         return subprocess.call([
             DOCKER_EXE, 'run',
-            ] + (['--rm'] if not environ.get('CIRCLECI', False) else []) + [
-            '-it' if use_tty else '-i',
+            ] + (['--rm'] if not background else []) + [
+            '-t' if use_tty else '',
+            '-d' if detach else '-i',
             ] + venv_volumes + [
             '-v', self.target + ':/project:rw',
             '-v', self.childdir + '/files:/var/www/storage:rw',

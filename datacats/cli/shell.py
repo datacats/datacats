@@ -10,24 +10,31 @@ def shell(environment, opts):
     """Run a command or interactive shell within this environment
 
 Usage:
-  datacats shell [ENVIRONMENT [COMMAND...]]
+  datacats [-d] shell [ENVIRONMENT [COMMAND...]]
+
+Options:
+  -d --detach       Run the resulting container in the background
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.require_data()
     environment.start_postgres_and_solr()
-    return environment.interactive_shell(opts['COMMAND'])
+    return environment.interactive_shell(
+        opts['COMMAND'],
+        detach=opts['--detach']
+    )
 
 
 def paster(opts):
     """Run a paster command from the current directory
 
 Usage:
-  datacats paster [--child=<name>] [COMMAND...]
+  datacats paster [-d] [--child=<name>] [COMMAND...]
 
 Options:
   -c --child=<name>   Specify a child to run this paster command on [default: default]
+  -d --detach       Run the resulting container in the background
 
 You must be inside a datacats environment to run this. The paster command will
 run within your current directory inside the environment. You don't need to
@@ -38,4 +45,8 @@ specify the --plugin option. The --config option also need not be specified.
     environment.start_postgres_and_solr()
 
     assert opts['COMMAND'][0] == '--'
-    return environment.interactive_shell(opts['COMMAND'][1:], paster=True)
+    return environment.interactive_shell(
+        opts['COMMAND'][1:],
+        paster=True,
+        detach=opts['--detach']
+        )
