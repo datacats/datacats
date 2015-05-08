@@ -201,6 +201,80 @@ class Environment(object):
         return environment
 
     @classmethod
+    def _needs_format_conversion(cls, datadir):
+        """
+        Returns True if `datadir` requires conversion to the new format (child envs).
+        """
+        return isdir(datadir) and isdir(join(datadir, 'run')) and exists(join(datadir, 'passwords.ini')) and exists(
+                join(datadir, 'search')) and exists(join(datadir, 'solr')) and exists(join(datadir, 'project-dir'))
+
+    @classmethod
+    def _convert_environment(cls, datadir):
+        new_child_name = 'primary'
+        inp = None
+
+        while inp != 'y' and inp != 'n':
+            inp = raw_input('You are using a file in the old DataCats format. Would you like to convert it (y/n) [n]: ')
+
+        # Get around a quirk in path_split where a / at the end will make the dirname the entire path
+        datadir = datadir[:-1] if datadir[-1] == '/' else datadir
+        split = path_split(datadir)
+
+        print 'Making sure that containers are stopped...'
+        env_name = split[1]
+        remove_container('datacats_web_' + env_name)
+        remove_container('datacats_solr_' + env_name)
+        remove_container('datacats_postgres_' + env_name)
+
+        backup_loc = join(path_split(datadir)[0], split[1] + '.bak')
+
+        print 'Making a backup at {}...'.format(backup_loc)
+
+        # Make a backup of the current version
+        shutil.copytree(datadir, backup_loc)
+
+        # Begin the actual conversion
+        to_move = ['files', 'passwords.ini', 'run', 'search', 'solr']
+        # Make a primary child
+        child_path = join(datadir, 'primary')
+        makedirs(child_path)
+
+        print 'Doing conversion...'
+        for directory in to_move:
+            shutil.move(join(datadir, directory), join(child_path, directory))
+
+        # Lastly, grab the project directory and update the ini file
+        with open(join(datadir, 'project-dir')) as pd:
+            project = pd.read()
+
+        cp = SafeConfigParser()
+        config_loc = join(project, '.datacats-environment')
+        cp.read([config_loc])
+
+        new_section = 'child_' + new_child_name
+        cp.add_section('child_' + new_child_name)
+
+        # Ports need to be moved into the new section
+        port = cp.get('datacats', 'port')
+        cp.remove_option('datacats', 'port')
+
+        cp.set(new_section, 'port', port)
+
+        with open(config_loc, 'w') as config:
+            cp.write(config)
+
+        # Make a session secret for it (make it per-child)
+        cp = SafeConfigParser()
+        config_loc = join(child_path, 'passwords.ini')
+        cp.read([config_loc])
+
+        cp.set('passwords', 'beaker_session_secret', generate_db_password())
+
+        with open(config_loc, 'w') as config:
+            cp.write(config)
+
+
+    @classmethod
     def load(cls, environment_name=None, child_name='primary', data_only=False):
         """
         Return an Environment object based on an existing project.
@@ -249,6 +323,9 @@ class Environment(object):
 
         if data_only and not used_path:
             return cls(environment_name, None, datadir, child_name)
+
+        if cls._needs_format_conversion(datadir):
+            cls._convert_environment(datadir)
 
         cp = SafeConfigParser()
         try:
@@ -555,6 +632,7 @@ class Environment(object):
             'CKAN_PASSWORD': generate_db_password(),
             'DATASTORE_RO_PASSWORD': generate_db_password(),
             'DATASTORE_RW_PASSWORD': generate_db_password(),
+            'BEAKER_SESSION_SECRET': generate_db_password(),
             }
 
     def start_web(self, production=False):
@@ -619,6 +697,7 @@ class Environment(object):
             'postgresql://ckan_datastore_readwrite:{0}@db:5432/ckan_datastore'
                 .format(self.passwords['DATASTORE_RW_PASSWORD']))
         cp.set('app:main', 'solr_url', 'http://solr:8080/solr')
+        cp.set('app:main', 'beaker.session.secret', self.passwords['BEAKER_SESSION_SECRET'])
 
         if not isdir(self.childdir + '/run'):
             makedirs(self.childdir + '/run')  # upgrade old datadir
@@ -893,16 +972,36 @@ class Environment(object):
             raise
 
 
-    def purge_data(self):
+    def purge_data(self, which_children=None):
         """
         Remove uploaded files, postgres db, solr index, venv
         """
+        # Default to the set of all children
+        if not which_children:
+            which_children = self.children
+
         datadirs = ['files', 'solr']
-        if is_boot2docker():
-            remove_container('datacats_pgdata_' + self.name)
-            remove_container('datacats_venv_' + self.name)
-        else:
-            datadirs += ['postgres', 'venv']
+        boot2docker = is_boot2docker()
+
+        if which_children:
+            if self.target:
+                cp = SafeConfigParser()
+                cp.read([self.target + '/.datacats-environment'])
+
+            for child in which_children:
+                if boot2docker:
+                    remove_container('datacats_pgdata_' + self.name + '_' + child)
+                else:
+                    datadirs += [child + '/postgres', child + '/venv']
+                # Always rm the child dir
+                datadirs += [child]
+                if self.target:
+                    cp.remove_section('child_' + child)
+                    self.children.remove(child)
+
+            if self.target:
+                with open(self.target + '/.datacats-environment', 'w') as conf:
+                    cp.write(conf)
 
         web_command(
             command=['/scripts/purge.sh']
@@ -910,7 +1009,8 @@ class Environment(object):
             ro={PURGE: '/scripts/purge.sh'},
             rw={self.datadir: '/project/data'},
             )
-        shutil.rmtree(self.datadir)
+        if not self.children:
+            shutil.rmtree(self.datadir)
 
     def logs(self, container, tail='all', follow=False, timestamps=False):
         """
