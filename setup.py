@@ -25,7 +25,7 @@ setup(
     license='AGPL3',
     author='Boxkite',
     author_email='contact@boxkite.ca',
-    url='https://github.com/boxkite/datacats',
+    url='https://github.com/datacats/datacats',
     packages=[
         'datacats',
         'datacats.tests',
