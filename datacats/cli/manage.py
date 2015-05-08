@@ -18,64 +18,47 @@ def stop(environment, opts):
     """Stop serving environment and remove all its containers
 
 Usage:
-  datacats stop [-r] [--child=<name>|--all] [ENVIRONMENT]
+  datacats stop [-r] [--child=<name>] [ENVIRONMENT]
 
 Options:
   -r --remote        Stop DataCats.com cloud instance
   -c --child=<name>  Specify a child environment to stop. [default: default]
-  -a --all           Stop all instances of all children. This option has higher
-                     prescedence than --child.
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    if '--all' in opts:
-        children = environment.children
-    else:
-        children = [opts['--child']]
-
-    for child in children:
-        environment.child_name = child
-        environment.stop_web()
-        environment.stop_postgres_and_solr()
+    environment.stop_web()
+    environment.stop_postgres_and_solr()
 
 def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
   datacats start [-bp] [--child=<name>] [ENVIRONMENT [PORT]]
-  datacats start -r [-b] [--child=<name>|--all] [ENVIRONMENT]
+  datacats start -r [-b] [--child=<name>] [ENVIRONMENT]
 
 Options:
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
   -c --child=<name>  Specify a child environment to start [default: default]
-  -a --all           Start all children. This option has higher prescedence than
-                     --child.
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.require_data()
-    if '--all' in opts:
-        children = environment.children
-    else:
-        children = opts['--child']
-
-    for child in children:
-        address = environment.web_address()
-        if address is not None:
-            print 'Already running at {0}'.format(address)
-            return
-        reload_(environment, opts)
+    address = environment.web_address()
+    if address is not None:
+        print 'Already running at {0}'.format(address)
+        return
+    reload_(environment, opts)
 
 def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
-  datacats reload [-bp] [--child=<name>|--all] [ENVIRONMENT [PORT]]
-  datacats reload -r [-b] [--child=<name>|--all] [ENVIRONMENT]
+  datacats reload [-bp] [--child=<name>] [ENVIRONMENT [PORT]]
+  datacats reload -r [-b] [--child=<name>] [ENVIRONMENT]
 
 Options:
   -b --background    Don't wait for response from web server
@@ -116,8 +99,7 @@ Options:
   -q --quiet         Echo only the web URL or nothing if not running
   -r --remote        Information about DataCats.com cloud instance
   -c --child=<name>  Provide information about running containers in a specific
-                     child. If this isn't specified, information will be dispalyed
-                     about all children.
+                     child [default: default]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -159,7 +141,7 @@ def logs(environment, opts):
 
 Usage:
   datacats logs [-d | -s] [--child=<name>] [-tr] [--tail=LINES] [ENVIRONMENT]
-  datacats logs -f [-d | -s] [-r] [ENVIRONMENT]
+  datacats logs -f [-d | -s] [--child=<name>] [-r] [ENVIRONMENT]
 
 Options:
   -d --postgres-logs Show postgres database logs instead of web logs
@@ -204,7 +186,7 @@ Options:
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
-"""
+t"""
     environment.require_data()
     addr = environment.web_address()
     if not addr:
