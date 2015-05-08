@@ -18,20 +18,21 @@ def stop(environment, opts):
     """Stop serving environment and remove all its containers
 
 Usage:
-  datacats stop [-r] [ENVIRONMENT]
+  datacats stop [-r] [--child=<name>|--all] [ENVIRONMENT]
 
 Options:
   -r --remote        Stop DataCats.com cloud instance
-  -c --child=<name>  Specify a child environment to stop. This command defaults
-                     to stopping all instances of all children.
+  -c --child=<name>  Specify a child environment to stop. [default: default]
+  -a --all           Stop all instances of all children. This option has higher
+                     prescedence than --child.
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    if '--child' in opts:
-        children = [opts['--child']]
-    else:
+    if '--all' in opts:
         children = environment.children
+    else:
+        children = [opts['--child']]
 
     for child in children:
         environment.child_name = child
@@ -43,35 +44,45 @@ def start(environment, opts):
 
 Usage:
   datacats start [-bp] [--child=<name>] [ENVIRONMENT [PORT]]
-  datacats start -r [-b] [--child=<name>] [ENVIRONMENT]
+  datacats start -r [-b] [--child=<name>|--all] [ENVIRONMENT]
 
 Options:
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
   -c --child=<name>  Specify a child environment to start [default: default]
+  -a --all           Start all children. This option has higher prescedence than
+                     --child.
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.require_data()
-    address = environment.web_address()
-    if address is not None:
-        print 'Already running at {0}'.format(address)
-        return
-    reload_(environment, opts)
+    if '--all' in opts:
+        children = environment.children
+    else:
+        children = opts['--child']
+
+    for child in children:
+        address = environment.web_address()
+        if address is not None:
+            print 'Already running at {0}'.format(address)
+            return
+        reload_(environment, opts)
 
 def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
-  datacats reload [-bp] [ENVIRONMENT [PORT]]
-  datacats reload -r [-b] [ENVIRONMENT]
+  datacats reload [-bp] [--child=<name>|--all] [ENVIRONMENT [PORT]]
+  datacats reload -r [-b] [--child=<name>|--all] [ENVIRONMENT]
 
 Options:
   -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
+  -c --child=<name>  Specify a child to reload [default: default]
+  -a --all           Reload all children of the given environment
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
