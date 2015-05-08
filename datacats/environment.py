@@ -201,7 +201,7 @@ class Environment(object):
         return environment
 
     @classmethod
-    def load(cls, environment_name=None, child_name='default', data_only=False):
+    def load(cls, environment_name=None, child_name='primary', data_only=False):
         """
         Return an Environment object based on an existing project.
 

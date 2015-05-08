@@ -65,7 +65,6 @@ Options:
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
   -c --child=<name>  Specify a child to reload [default: primary]
-  -a --all           Reload all children of the given environment
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -121,6 +120,7 @@ Default: '.'
     print ' Environment dir: ' + environment.target
     print '        Data dir: ' + datadir
     print '      Containers: ' + ' '.join(environment.containers_running())
+    print '        Children: ' + ' '.join(environment.children)
     if not addr:
         return
     print '    Available at: ' + addr
