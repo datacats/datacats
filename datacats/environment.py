@@ -234,7 +234,8 @@ class Environment(object):
         shutil.copytree(datadir, backup_loc)
 
         # Begin the actual conversion
-        to_move = ['files', 'passwords.ini', 'run', 'search', 'solr']
+        to_move = ['files', 'passwords.ini', 'run', 'search', 'solr'] + [
+                    'postgres', 'venv'] if not is_boot2docker() else []
         # Make a primary child
         child_path = join(datadir, 'primary')
         makedirs(child_path)
