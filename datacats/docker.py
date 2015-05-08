@@ -12,6 +12,11 @@ from urlparse import urlparse
 from functools import cmp_to_key
 from warnings import warn
 
+# XXX our fixes on top of fixes to work with docker-py and docker
+# incompatibilities are approaching the level of superstition.
+# let's hope docker calms down a bit so we can clean this out
+# in the future.
+
 from docker import Client
 try:
     # Versions after 1.2.0
@@ -21,6 +26,7 @@ except ImportError:
     from docker.client import DEFAULT_DOCKER_API_VERSION
 from docker.utils import kwargs_from_env, compare_version, create_host_config
 from docker.errors import APIError
+from requests import ConnectionError
 
 MINIMUM_API_VERSION = '1.16'
 
@@ -32,9 +38,16 @@ def get_api_version(*versions):
 
 _docker_kwargs = kwargs_from_env()
 _version_client = Client(version=MINIMUM_API_VERSION, **_docker_kwargs)
-_version = get_api_version(DEFAULT_DOCKER_API_VERSION,
-    _version_client.version()['ApiVersion'])
 
+try:
+    _api_version = _version_client.version()['ApiVersion']
+except ConnectionError:
+    # workaround for connection issue when old version specified
+    # on some clients
+    _version_client = Client(**_docker_kwargs)
+    _api_version = _version_client.version()['ApiVersion']
+
+_version = get_api_version(DEFAULT_DOCKER_API_VERSION, _api_version)
 _docker = Client(version=_version, **_docker_kwargs)
 
 class WebCommandError(Exception):
