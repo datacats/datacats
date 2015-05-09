@@ -524,7 +524,7 @@ class Environment(object):
             rw = {}
             volumes_from = 'datacats_pgdata_' + self.name + '_' + self.child_name
         else:
-            rw = {self.datadir + '/postgres': '/var/lib/postgresql/data'}
+            rw = {self.childdir + '/postgres': '/var/lib/postgresql/data'}
             volumes_from = None
 
         running = self.containers_running()
