@@ -883,8 +883,8 @@ class Environment(object):
             '-v', PASTER_CD + ':/scripts/paster_cd.sh:ro',
             '-v', self.childdir + '/run/run.ini:/project/development.ini:ro',
             '-v', self.childdir + '/run/test.ini:/project/ckan/test-core.ini:ro',
-            '--link', 'datacats_solr_' + self.name + ':solr',
-            '--link', 'datacats_postgres_' + self.name + ':db',
+            '--link', 'datacats_solr_' + self.name + '_' + self.child_name  + ':solr',
+            '--link', 'datacats_postgres_' + self.name + '_' + self.child_name + ':db',
             '--hostname', self.name,
             'datacats/web', '/scripts/shell.sh'] + command)
 
