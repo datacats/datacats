@@ -326,8 +326,6 @@ class Environment(object):
         if data_only and not used_path:
             return cls(environment_name, None, datadir, child_name)
 
-        if cls._needs_format_conversion(datadir):
-            cls._convert_environment(datadir)
 
         cp = SafeConfigParser()
         try:
@@ -338,6 +336,17 @@ class Environment(object):
         child_section = 'child_' + child_name
         name = cp.get('datacats', 'name')
         datadir = expanduser('~/.datacats/' + name)
+        # Kinda a hack... we read the config and if datadir is being upgraded,
+        # load it again.
+        if cls._needs_format_conversion(datadir):
+            cls._convert_environment(datadir)
+            cp = SafeConfigParser()
+            try:
+                cp.read([wd + '/.datacats-environment'])
+            except ConfigParserError:
+                raise DatacatsError('Something went wrong with the upgrade! There is a backup of the old files in ' +
+                                    datadir + '.bak')
+
         ckan_version = cp.get('datacats', 'ckan_version')
         try:
             port = cp.getint(child_section, 'port')
