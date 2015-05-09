@@ -10,10 +10,11 @@ def shell(environment, opts):
     """Run a command or interactive shell within this environment
 
 Usage:
-  datacats [-d] shell [ENVIRONMENT [COMMAND...]]
+  datacats [-d] [-c NAME] shell [ENVIRONMENT [COMMAND...]]
 
 Options:
   -d --detach       Run the resulting container in the background
+  -c --child=NAME   Specify a child to run the shell on [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
