@@ -13,12 +13,12 @@ def purge(opts):
     """Purge environment database and uploaded files
 
 Usage:
-  datacats purge [--child=<name> | --delete-environment] [ENVIRONMENT]
+  datacats purge [-c NAME | --delete-environment] [ENVIRONMENT]
 
 Options:
   --delete-environment   Delete environment directory as well as its data, as
                          well as the data for **all** children.
-  -c --child=<name>      Specify a child to be purge [default: primary]
+  -c --child=NAME      Specify a child to be purge [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'

@@ -20,7 +20,7 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bin] [--child=<name>] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
+  datacats create [-bin] [-c NAME] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
 
 Options:
   --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION, defaults to
@@ -28,7 +28,7 @@ Options:
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
-  -c --child=<name>       Pick a child environment to create [default: primary]
+  -c --child=NAME         Pick a child environment to create [default: primary]
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
@@ -90,12 +90,12 @@ def init(opts):
     """Initialize a purged environment or copied environment directory
 
 Usage:
-  datacats init [-in] [--child=<name>] [ENVIRONMENT_DIR [PORT]]
+  datacats init [-in] [-c NAME] [ENVIRONMENT_DIR [PORT]]
 
 Options:
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
-  -c --child=<name>       Pick a child environment to initialize [default: primary]
+  -c --child=NAME         Pick a child environment to initialize [default: primary]
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """

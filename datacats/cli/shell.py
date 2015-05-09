@@ -30,10 +30,10 @@ def paster(opts):
     """Run a paster command from the current directory
 
 Usage:
-  datacats paster [-d] [--child=<name>] [COMMAND...]
+  datacats paster [-d] [-c NAME] [COMMAND...]
 
 Options:
-  -c --child=<name>   Specify a child to run this paster command on [default: primary]
+  -c --child=NAME   Specify a child to run this paster command on [default: primary]
   -d --detach       Run the resulting container in the background
 
 You must be inside a datacats environment to run this. The paster command will

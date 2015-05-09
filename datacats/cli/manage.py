@@ -18,11 +18,11 @@ def stop(environment, opts):
     """Stop serving environment and remove all its containers
 
 Usage:
-  datacats stop [-r] [--child=<name>] [ENVIRONMENT]
+  datacats stop [-r] [-c NAME] [ENVIRONMENT]
 
 Options:
   -r --remote        Stop DataCats.com cloud instance
-  -c --child=<name>  Specify a child environment to stop. [default: primary]
+  -c --child=NAME    Specify a child environment to stop. [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -34,14 +34,14 @@ def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
-  datacats start [-bp] [--child=<name>] [ENVIRONMENT [PORT]]
-  datacats start -r [-b] [--child=<name>] [ENVIRONMENT]
+  datacats start [-bp] [-c NAME] [ENVIRONMENT [PORT]]
+  datacats start -r [-b] [-c NAME] [ENVIRONMENT]
 
 Options:
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
-  -c --child=<name>  Specify a child environment to start [default: primary]
+  -c --child=NAME  Specify a child environment to start [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -57,14 +57,14 @@ def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
-  datacats reload [-bp] [--child=<name>] [ENVIRONMENT [PORT]]
-  datacats reload -r [-b] [--child=<name>] [ENVIRONMENT]
+  datacats reload [-bp] [-c NAME] [ENVIRONMENT [PORT]]
+  datacats reload -r [-b] [-c NAME] [ENVIRONMENT]
 
 Options:
   -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
-  -c --child=<name>  Specify a child to reload [default: primary]
+  -c --child=NAME  Specify a child to reload [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -92,12 +92,12 @@ def info(environment, opts):
     """Display information about environment and running containers
 
 Usage:
-  datacats info [-qr] [--child=<name>] [ENVIRONMENT]
+  datacats info [-qr] [-c NAME] [ENVIRONMENT]
 
 Options:
   -q --quiet         Echo only the web URL or nothing if not running
   -r --remote        Information about DataCats.com cloud instance
-  -c --child=<name>  Provide information about running containers in a specific
+  -c --child=NAME  Provide information about running containers in a specific
                      child [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
@@ -140,8 +140,8 @@ def logs(environment, opts):
     """Display or follow container logs
 
 Usage:
-  datacats logs [-d | -s] [--child=<name>] [-tr] [--tail=LINES] [ENVIRONMENT]
-  datacats logs -f [-d | -s] [--child=<name>] [-r] [ENVIRONMENT]
+  datacats logs [-d | -s] [-c NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
+  datacats logs -f [-d | -s] [-c NAME] [-r] [ENVIRONMENT]
 
 Options:
   -d --postgres-logs Show postgres database logs instead of web logs
@@ -149,7 +149,7 @@ Options:
   -r --remote        Retrieve logs from DataCats.com cloud instance
   -s --solr-logs     Show solr search logs instead of web logs
   -t --timestamps    Add timestamps to log lines
-  -c --child=<name>  Specify a child environment for logs if needed [default: primary]
+  -c --child=NAME  Specify a child environment for logs if needed [default: primary]
   --tail=LINES       Number of lines to show [default: all]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
@@ -178,11 +178,11 @@ def open_(environment, opts):
     """Open web browser window to this environment
 
 Usage:
-  datacats open [-r] [--child=<name>] [ENVIRONMENT]
+  datacats open [-r] [-c NAME] [ENVIRONMENT]
 
 Options:
   -r --remote        Open DataCats.com cloud instance address
-  -c --child=<name>  Choose a child environment to open [default: primary]
+  -c --child=NAME  Choose a child environment to open [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
