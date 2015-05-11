@@ -1,3 +1,8 @@
+# Copyright 2014-2015 Boxkite Inc.
+# This file is part of the DataCats package and is released under
+# the terms of the GNU Affero General Public License version 3.0.
+# See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
+
 from os import makedirs
 from os.path import isdir, exists, join as path_join, split as path_split
 from datacats.docker import is_boot2docker, remove_container
