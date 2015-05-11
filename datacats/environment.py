@@ -74,7 +74,10 @@ class Environment(object):
         if not self.children:
             # get a list of all of the subdirectories. We'll call this the list
             # of children.
-            self.children = listdir(join(self.datadir, 'children'))
+            try:
+                self.children = listdir(join(self.datadir, 'children'))
+            except OSError:
+                self.children = []
 
         return self.children
 
@@ -306,12 +309,7 @@ class Environment(object):
         if not used_path:
             environment._update_saved_project_dir()
 
-        try:
-            environment._load_children()
-        except OSError:
-            # We ignore this because this means that the datadir hasn't been
-            # made yet (i.e. we're using init).
-            pass
+        environment._load_children()
 
         return environment
 
