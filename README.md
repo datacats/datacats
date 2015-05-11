@@ -1,6 +1,6 @@
 # datacats
 
-[![Circle CI](https://circleci.com/gh/boxkite/datacats.svg?style=svg)](https://circleci.com/gh/boxkite/datacats)
+[![Circle CI](https://circleci.com/gh/datacats/datacats.svg?style=svg)](https://circleci.com/gh/boxkite/datacats)
 
 datacats uses Docker to give you fully self-contained [CKAN](http://ckan.org) dev environments on
 any platform, along with a command to deploy that exact environment to the cloud.
