@@ -26,6 +26,8 @@ from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE)
 from datacats.network import wait_for_service_available, ServiceTimeout
+from datacats.migrate import needs_format_conversion, convert_environment
+from datacats.password import generate_password
 
 WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
@@ -201,82 +203,6 @@ class Environment(object):
         return environment
 
     @classmethod
-    def _needs_format_conversion(cls, datadir):
-        """
-        Returns True if `datadir` requires conversion to the new format (child envs).
-        """
-        return isdir(datadir) and isdir(join(datadir, 'run')) and exists(join(datadir, 'passwords.ini')) and exists(
-                join(datadir, 'search')) and exists(join(datadir, 'solr')) and exists(join(datadir, 'project-dir'))
-
-    @classmethod
-    def _convert_environment(cls, datadir):
-        new_child_name = 'primary'
-        inp = None
-
-        while inp != 'y' and inp != 'n':
-            inp = raw_input('You are using a file in the old DataCats format. Would you like to convert it (y/n) [n]: ')
-
-        # Get around a quirk in path_split where a / at the end will make the dirname the entire path
-        datadir = datadir[:-1] if datadir[-1] == '/' else datadir
-        split = path_split(datadir)
-
-        print 'Making sure that containers are stopped...'
-        env_name = split[1]
-        # Old-style names on purpose! We need to stop old containers!
-        remove_container('datacats_web_' + env_name)
-        remove_container('datacats_solr_' + env_name)
-        remove_container('datacats_postgres_' + env_name)
-
-        backup_loc = join(path_split(datadir)[0], split[1] + '.bak')
-
-        print 'Making a backup at {}...'.format(backup_loc)
-
-        # Make a backup of the current version
-        shutil.copytree(datadir, backup_loc)
-
-        # Begin the actual conversion
-        to_move = ['files', 'passwords.ini', 'run', 'search', 'solr'] + [
-                    'postgres', 'venv'] if not is_boot2docker() else []
-        # Make a primary child
-        child_path = join(datadir, 'primary')
-        makedirs(child_path)
-
-        print 'Doing conversion...'
-        for directory in to_move:
-            shutil.move(join(datadir, directory), join(child_path, directory))
-
-        # Lastly, grab the project directory and update the ini file
-        with open(join(datadir, 'project-dir')) as pd:
-            project = pd.read()
-
-        cp = SafeConfigParser()
-        config_loc = join(project, '.datacats-environment')
-        cp.read([config_loc])
-
-        new_section = 'child_' + new_child_name
-        cp.add_section('child_' + new_child_name)
-
-        # Ports need to be moved into the new section
-        port = cp.get('datacats', 'port')
-        cp.remove_option('datacats', 'port')
-
-        cp.set(new_section, 'port', port)
-
-        with open(config_loc, 'w') as config:
-            cp.write(config)
-
-        # Make a session secret for it (make it per-child)
-        cp = SafeConfigParser()
-        config_loc = join(child_path, 'passwords.ini')
-        cp.read([config_loc])
-
-        cp.set('passwords', 'beaker_session_secret', generate_db_password())
-
-        with open(config_loc, 'w') as config:
-            cp.write(config)
-
-
-    @classmethod
     def load(cls, environment_name=None, child_name='primary', data_only=False):
         """
         Return an Environment object based on an existing project.
@@ -338,13 +264,14 @@ class Environment(object):
         datadir = expanduser('~/.datacats/' + name)
         # Kinda a hack... we read the config and if datadir is being upgraded,
         # load it again.
-        if cls._needs_format_conversion(datadir):
-            cls._convert_environment(datadir)
+        if needs_format_conversion(datadir):
+            convert_environment(datadir)
             cp = SafeConfigParser()
             try:
                 cp.read([wd + '/.datacats-environment'])
             except ConfigParserError:
-                raise DatacatsError('Something went wrong with the upgrade! There is a backup of the old files in ' +
+                raise DatacatsError('Something went wrong with the upgrade! '
+                                    'There is a backup of the old files in ' +
                                     datadir + '.bak')
 
         ckan_version = cp.get('datacats', 'ckan_version')
@@ -639,11 +566,11 @@ class Environment(object):
         Generate new DB passwords and store them in self.passwords
         """
         self.passwords = {
-            'POSTGRES_PASSWORD': generate_db_password(),
-            'CKAN_PASSWORD': generate_db_password(),
-            'DATASTORE_RO_PASSWORD': generate_db_password(),
-            'DATASTORE_RW_PASSWORD': generate_db_password(),
-            'BEAKER_SESSION_SECRET': generate_db_password(),
+            'POSTGRES_PASSWORD': generate_password(),
+            'CKAN_PASSWORD': generate_password(),
+            'DATASTORE_RO_PASSWORD': generate_password(),
+            'DATASTORE_RW_PASSWORD': generate_password(),
+            'BEAKER_SESSION_SECRET': generate_password(),
             }
 
     def start_web(self, production=False):
@@ -1070,15 +997,6 @@ class Environment(object):
             f.write("".join(out))
 
         return {self.datadir + '/run/proxy-environment': '/etc/environment'}
-
-
-def generate_db_password():
-    """
-    Return a 16-character alphanumeric random string generated by the
-    operating system's secure pseudo random number generator
-    """
-    chars = uppercase + lowercase + digits
-    return ''.join(SystemRandom().choice(chars) for x in xrange(16))
 
 
 def posix_quote(s):
