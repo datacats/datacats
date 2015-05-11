@@ -11,8 +11,6 @@ import subprocess
 import shutil
 import json
 import time
-from string import uppercase, lowercase, digits
-from random import SystemRandom
 from sha import sha
 from struct import unpack
 from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
