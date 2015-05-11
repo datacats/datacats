@@ -186,7 +186,7 @@ Options:
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
-t"""
+"""
     environment.require_data()
     addr = environment.web_address()
     if not addr:
