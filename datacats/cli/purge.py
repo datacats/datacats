@@ -28,10 +28,16 @@ Default: '.'
     except DatacatsError as e:
         environment = Environment.load(opts['ENVIRONMENT'], opts['--child'], data_only=True)
 
+    # We need a valid child if they don't want to blow away everything.
+    if not opts['--delete-environment']:
+        environment.require_valid_child()
+
     children = [opts['--child']] if not opts['--delete-environment'] else environment.children
 
     environment.stop_web()
     environment.stop_postgres_and_solr()
+
+    environment.purge_data(children)
 
     if opts['--delete-environment']:
         if not environment.target:
@@ -40,5 +46,3 @@ Default: '.'
         else:
             environment.fix_project_permissions()
             rmtree(environment.target)
-
-    environment.purge_data(children)

@@ -5,7 +5,7 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from os.path import abspath, split as path_split, expanduser, isdir, exists, join
-from os import makedirs, getcwd, remove, environ
+from os import makedirs, getcwd, remove, environ, listdir
 import sys
 import subprocess
 import shutil
@@ -59,7 +59,7 @@ class Environment(object):
         self.ckan_version = ckan_version
         # This is the child that all commands will operate on.
         self.child_name = child_name
-        self.childdir = join(datadir, child_name)
+        self.childdir = join(datadir, 'children', child_name)
         self.port = int(port if port else self._choose_port())
         self.deploy_target = deploy_target
         self.site_url = site_url
@@ -68,22 +68,15 @@ class Environment(object):
 
     def _load_children(self):
         """
-        Loads child names for this env from the .datacats-environment file.
-        This sets the property 'children' of the Environment.
-        This method is safe to call as long as a valid .datacats-environment
-        exists (it doesn't need a 'datacats/children' directive).
+        Gets the names of all of the children from the datadir and stores them
+        in self.children. Also returns this list.
         """
         if not self.children:
-            cp = SafeConfigParser()
-            cp.read([self.target + '/.datacats-environment'])
+            # get a list of all of the subdirectories. We'll call this the list
+            # of children.
+            self.children = listdir(join(self.datadir, 'children'))
 
-            try:
-                self.children = cp.get('datacats', 'children').split(',')
-            except NoOptionError:
-                # No children yet
-                self.children = []
-        else:
-            return self.children
+        return self.children
 
     def save_child(self):
         """
@@ -97,8 +90,6 @@ class Environment(object):
         self._load_children()
 
         self.children.append(self.child_name)
-
-        cp.set('datacats', 'children', ','.join(self.children))
 
         section_name = 'child_' + self.child_name
 
@@ -275,11 +266,11 @@ class Environment(object):
         ckan_version = cp.get('datacats', 'ckan_version')
         try:
             port = cp.getint(child_section, 'port')
-        except NoOptionError:
+        except (NoOptionError, NoSectionError):
             port = None
         try:
             site_url = cp.get(child_section, 'site_url')
-        except NoOptionError:
+        except (NoOptionError, NoSectionError):
             site_url = None
         try:
             always_prod = cp.getboolean('datacats', 'always_prod')
@@ -315,7 +306,12 @@ class Environment(object):
         if not used_path:
             environment._update_saved_project_dir()
 
-        environment._load_children()
+        try:
+            environment._load_children()
+        except OSError:
+            # We ignore this because this means that the datadir hasn't been
+            # made yet (i.e. we're using init).
+            pass
 
         return environment
 
@@ -324,6 +320,12 @@ class Environment(object):
         Return True if the datadir for this environment exists
         """
         return isdir(self.datadir)
+
+    def require_valid_child(self):
+        if self.child_name not in self.children:
+            raise DatacatsError('Invalid child name: {}. Valid names are: {}'
+                                .format(self.childname,
+                                        ', '.join(self.children)))
 
     def data_complete(self):
         """
@@ -357,6 +359,7 @@ class Environment(object):
         # It's possible that the datadir already exists (we're making a secondary child)
         if not isdir(self.datadir):
             makedirs(self.datadir, mode=0o700)
+        # This should take care if the 'child' subdir if needed
         makedirs(self.childdir, mode=0o700)
 
         # venv isn't child-specific, the rest are.

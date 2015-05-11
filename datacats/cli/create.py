@@ -114,16 +114,24 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         print e
         return 1
 
-    write('Creating from existing environment directory "{0}"'.format(
-        environment.name))
+    if child_name in environment.children:
+        raise DatacatsError('Child environment {0} already exists.'
+                            .format(child_name))
+    # There are a couple of steps we can/must skip if we're making a child only
+    making_full_environment = not environment.data_exists()
+
+    write('Creating environment {0}/{1} '
+          'from existing environment directory "{0}"'
+          .format(environment.name, environment.child_name))
     steps = [
-        lambda: environment.create_directories(create_project_dir=False),
-        environment.save,
-        environment.save_child,
-        environment.create_virtualenv,
-        environment.start_postgres_and_solr,
-        environment.fix_storage_permissions,
-        environment.fix_project_permissions,
+        lambda: environment.create_directories(create_project_dir=False)] + ([
+         environment.save,
+         environment.create_virtualenv
+         ] if making_full_environment else []) + [
+         environment.save_child,
+         environment.start_postgres_and_solr,
+         environment.fix_storage_permissions,
+         environment.fix_project_permissions,
         ]
 
     for fn in steps:
