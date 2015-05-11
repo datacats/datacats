@@ -919,7 +919,7 @@ class Environment(object):
         if not which_children:
             which_children = self.children
 
-        datadirs = ['files', 'solr']
+        datadirs = []
         boot2docker = is_boot2docker()
 
         if which_children:
@@ -931,9 +931,9 @@ class Environment(object):
                 if boot2docker:
                     remove_container('datacats_pgdata_' + self.name + '_' + child)
                 else:
-                    datadirs += [child + '/postgres', child + '/venv']
-                # Always rm the child dir
-                datadirs += [child]
+                    datadirs += [child + '/postgres']
+                # Always rm the child dir & solr & files
+                datadirs += [child, child + '/files', child + '/solr']
                 if self.target:
                     cp.remove_section('child_' + child)
                     self.children.remove(child)
@@ -944,7 +944,7 @@ class Environment(object):
 
         web_command(
             command=['/scripts/purge.sh']
-                + ['/project/data/' + d for d in datadirs],
+                + ['/project/data/children/' + d for d in datadirs],
             ro={PURGE: '/scripts/purge.sh'},
             rw={self.datadir: '/project/data'},
             )

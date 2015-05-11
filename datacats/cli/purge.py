@@ -37,8 +37,6 @@ Default: '.'
     environment.stop_web()
     environment.stop_postgres_and_solr()
 
-    environment.purge_data(children)
-
     if opts['--delete-environment']:
         if not environment.target:
             print 'Failed to load environment.',
@@ -46,3 +44,4 @@ Default: '.'
         else:
             environment.fix_project_permissions()
             rmtree(environment.target)
+    environment.purge_data(children)
