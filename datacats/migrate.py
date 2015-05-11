@@ -5,10 +5,13 @@
 
 from os import makedirs
 from os.path import isdir, exists, join as path_join, split as path_split
-from datacats.docker import is_boot2docker, remove_container
 from ConfigParser import SafeConfigParser
 import shutil
+import sys
 
+from datacats.docker import is_boot2docker, remove_container, web_command
+from datacats.scripts import PURGE, MIGRATE_BACKUP, MIGRATE
+from datacats.password import generate_password
 
 def needs_format_conversion(datadir):
     """
@@ -29,6 +32,9 @@ def convert_environment(datadir):
         inp = raw_input('You are using a file in the old DataCats format. '
                         'Would you like to convert it (y/n) [n]: ')
 
+    if inp == 'n':
+        sys.exit(1)
+
     # Get around a quirk in path_split where a / at the end will make the
     # dirname (split[0]) the entire path
     datadir = datadir[:-1] if datadir[-1] == '/' else datadir
@@ -41,27 +47,48 @@ def convert_environment(datadir):
     remove_container('datacats_solr_' + env_name)
     remove_container('datacats_postgres_' + env_name)
 
-    backup_loc = path_join(path_split(datadir)[0], split[1] + '.bak')
+
+    backup_name = split[1] + '.bak'
+    backup_loc = path_join(split[0], backup_name)
 
     print 'Making a backup at {}...'.format(backup_loc)
 
     if exists(backup_loc):
         # Remove any old backups
-        shutil.rmtree(backup_loc)
+        web_command(
+                command=['/scripts/purge.sh'] + 
+                        ['/project/.datacats/' + split[1] + '.bak'],
+                ro={PURGE: '/scripts/purge.sh'},
+                rw={split[0]: '/project/.datacats'},
+                # Change this to True after we know it works
+                clean_up=True)
+ 
     # Make a backup of the current version
-    shutil.copytree(datadir, backup_loc)
+    web_command(
+            command=['/scripts/migrate_backup.sh', 
+                     '/project/.datacats/' + env_name,
+                     '/project/.datacats/' + backup_name],
+            ro={MIGRATE_BACKUP: '/scripts/migrate_backup.sh'},
+            rw={split[0]: '/project/.datacats'},
+            clean_up=True)
 
     # Begin the actual conversion
-    to_move = ['files', 'passwords.ini', 'run', 'search', 'solr'] + [
-                'postgres', 'venv'] if not is_boot2docker() else []
+    to_move = (['files', 'passwords.ini', 'run', 'solr', 'search'] +
+               ['postgres', 'data'] if not is_boot2docker() else [])
     # Make a primary child
-    child_path = path_join(datadir, 'primary')
+    child_path = path_join(datadir, 'children', new_child_name)
     makedirs(child_path)
 
     print 'Doing conversion...'
-    for directory in to_move:
-        shutil.move(path_join(datadir, directory), path_join(child_path,
-                                                             directory))
+    web_command(
+            command=['/scripts/migrate.sh',
+                     '/project/data',
+                     '/project/data/children/' + new_child_name] + 
+                    to_move,
+            ro={MIGRATE: '/scripts/migrate.sh'},
+            rw={datadir: '/project/data'},
+            clean_up=False
+            )
 
     # Lastly, grab the project directory and update the ini file
     with open(path_join(datadir, 'project-dir')) as pd:

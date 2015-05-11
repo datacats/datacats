@@ -322,7 +322,7 @@ class Environment(object):
     def require_valid_child(self):
         if self.child_name not in self.children:
             raise DatacatsError('Invalid child name: {}. Valid names are: {}'
-                                .format(self.childname,
+                                .format(self.child_name,
                                         ', '.join(self.children)))
 
     def data_complete(self):
