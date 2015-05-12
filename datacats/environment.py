@@ -122,6 +122,10 @@ class Environment(object):
         """
         cp = SafeConfigParser()
 
+        with open(join(self.datadir, '.version'), 'w') as f:
+            # Version 2
+            f.write('2')
+
         cp.add_section('datacats')
         cp.set('datacats', 'name', self.name)
         cp.set('datacats', 'ckan_version', self.ckan_version)
@@ -244,7 +248,6 @@ class Environment(object):
         if data_only and not used_path:
             return cls(environment_name, None, datadir, child_name)
 
-
         cp = SafeConfigParser()
         try:
             cp.read([wd + '/.datacats-environment'])
@@ -254,6 +257,13 @@ class Environment(object):
         child_section = 'child_' + child_name
         name = cp.get('datacats', 'name')
         datadir = expanduser('~/.datacats/' + name)
+
+        if exists(join(datadir, '.migration_lock')):
+            raise DatacatsError('Migration in progress, cannot continue.\n'
+                                'If you interrupted a migration, your best'
+                                ' course of action would be to do '
+                                ' "datacats purge".')
+
         # Kinda a hack... we read the config and if datadir is being upgraded,
         # load it again.
         if needs_format_conversion(datadir):

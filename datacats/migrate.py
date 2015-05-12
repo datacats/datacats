@@ -3,15 +3,17 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
-from os import makedirs
+from os import makedirs, remove
 from os.path import isdir, exists, join as path_join, split as path_split
 from ConfigParser import SafeConfigParser
 import shutil
 import sys
 
-from datacats.docker import is_boot2docker, remove_container, rename_container, web_command
+from datacats.docker import (is_boot2docker, remove_container,
+                             rename_container, web_command)
 from datacats.scripts import PURGE, MIGRATE_BACKUP, MIGRATE
 from datacats.password import generate_password
+
 
 def needs_format_conversion(datadir):
     """
@@ -24,7 +26,19 @@ def needs_format_conversion(datadir):
             exists(path_join(datadir, 'project-dir')))
 
 
+def get_migration_lock(datadir):
+    lock_location = path_join(datadir, '.migration_lock')
+    # Just 'touch' the file to make sure it exists.
+    open(lock_location, 'wb').close()
+
+
+def release_migration_lock(datadir):
+    lock_location = path_join(datadir, '.migration_lock')
+    remove(lock_location)
+
+
 def convert_environment(datadir):
+    get_migration_lock(datadir)
     new_child_name = 'primary'
     inp = None
 
@@ -46,7 +60,6 @@ def convert_environment(datadir):
     remove_container('datacats_web_' + env_name)
     remove_container('datacats_solr_' + env_name)
     remove_container('datacats_postgres_' + env_name)
-
 
     backup_name = split[1] + '.bak'
     backup_loc = path_join(split[0], backup_name)
@@ -90,7 +103,13 @@ def convert_environment(datadir):
             )
 
     if is_boot2docker():
-        rename_container('datacats_pgdata_' + env_name, 'datacats_pgdata_' + env_name + '_' + new_child_name)
+        # Stick the child name in the file
+        rename_container('datacats_pgdata_' + env_name,
+                         'datacats_pgdata_' + env_name + '_' + new_child_name)
+
+    with open(path_join(datadir, '.version'), 'w') as f:
+        # Version 2
+        f.write('2')
 
     # Lastly, grab the project directory and update the ini file
     with open(path_join(datadir, 'project-dir')) as pd:
@@ -118,16 +137,16 @@ def convert_environment(datadir):
     cp.read([config_loc])
 
     # Grab the secret from config
-    if not is_boot2docker():
-        dev_ini_loc = path_join(child_path, 'run', 'development.ini')
-        dev_ini_cp = SafeConfigParser()
-        dev_ini_cp.read(dev_ini_loc)
-        secret = dev_ini_cp.get('app:main', 'beaker.session.secret')
-    else:
-        # NOT IMPLEMENTED --- GRAB IT FROM THE DATA ONLY CONTAINER
-        pass
+    # Find the project-dir
+    with open(datadir + '/project-dir') as pd:
+        dev_ini_loc = path_join(pd.read(), 'development.ini')
+    dev_ini_cp = SafeConfigParser()
+    dev_ini_cp.read(dev_ini_loc)
+    secret = dev_ini_cp.get('app:main', 'beaker.session.secret')
 
     cp.set('passwords', 'beaker_session_secret', generate_password())
 
     with open(config_loc, 'w') as config:
         cp.write(config)
+
+    release_migration_lock(datadir)
