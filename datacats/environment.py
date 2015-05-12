@@ -290,7 +290,7 @@ class Environment(object):
             pw_options = cp.options('passwords')
         except NoSectionError:
             cp = SafeConfigParser()
-            cp.read(join(datadir, child_name) + '/passwords.ini')
+            cp.read(join(datadir, 'children', child_name) + '/passwords.ini')
             try:
                 pw_options = cp.options('passwords')
             except NoSectionError:
