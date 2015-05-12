@@ -27,6 +27,7 @@ The datacats commands available are:
   shell       Run a command or interactive shell within this environment
   start       Create containers and start serving environment
   stop        Stop serving environment and remove all its containers
+  migrate     Migrates an environment to the newest datadir format
 
 See 'datacats help COMMAND' for information about options and
 arguments available to each command.
@@ -37,7 +38,7 @@ import sys
 from docopt import docopt
 import pkg_resources
 
-from datacats.cli import create, manage, install, pull, purge, shell, deploy
+from datacats.cli import create, manage, install, pull, purge, shell, deploy, migrate
 from datacats.environment import Environment, DatacatsError
 
 COMMANDS = {
@@ -56,6 +57,7 @@ COMMANDS = {
     'shell': shell.shell,
     'start': manage.start,
     'stop': manage.stop,
+    'migrate': migrate.migrate,
 }
 
 def option_not_yet_implemented(opts, name):
@@ -111,7 +113,7 @@ def main():
         # purge handles loading differently
         if command_fn != purge.purge and 'ENVIRONMENT' in opts:
             environment = Environment.load(opts['ENVIRONMENT'] or '.',
-                            opts['--child'])
+                            opts['--child'] if '--child' in opts else 'primary')
             return command_fn(environment, opts)
         return command_fn(opts)
     except DatacatsError as e:
