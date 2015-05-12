@@ -87,7 +87,7 @@ def convert_environment(datadir):
                     to_move,
             ro={MIGRATE: '/scripts/migrate.sh'},
             rw={datadir: '/project/data'},
-            clean_up=False
+            clean_up=True
             )
 
     # Lastly, grab the project directory and update the ini file
@@ -114,6 +114,16 @@ def convert_environment(datadir):
     cp = SafeConfigParser()
     config_loc = path_join(child_path, 'passwords.ini')
     cp.read([config_loc])
+
+    # Grab the secret from config
+    if not is_boot2docker():
+        dev_ini_loc = path_join(child_path, 'run', 'development.ini')
+        dev_ini_cp = SafeConfigParser()
+        dev_ini_cp.read(dev_ini_loc)
+        secret = dev_ini_cp.get('app:main', 'beaker.session.secret')
+    else:
+        # NOT IMPLEMENTED --- GRAB IT FROM THE DATA ONLY CONTAINER
+        pass
 
     cp.set('passwords', 'beaker_session_secret', generate_password())
 
