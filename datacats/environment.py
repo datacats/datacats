@@ -786,7 +786,7 @@ class Environment(object):
         if is_boot2docker():
             venv_volumes = ['--volumes-from', 'datacats_venv_' + self.name]
         else:
-            venv_volumes = ['-v', self.childdir + '/venv:/usr/lib/ckan:rw']
+            venv_volumes = ['-v', self.datadir + '/venv:/usr/lib/ckan:rw']
 
         self._create_run_ini(self.port, production=False, output='run.ini')
         self._create_run_ini(self.port, production=True, output='test.ini',
