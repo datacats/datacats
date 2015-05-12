@@ -8,9 +8,9 @@
 
 set -e
 
-datadir=$1
-child_path=$2
+echo "${@:3}"
 
 for f in "${@:3}"; do
-    [ -e $1/$f ] && mv $1/$f $2/$f
+    echo 'test'
+    [ -e "$1/$f" ] && mv "$1/$f" "$2/$f"
 done

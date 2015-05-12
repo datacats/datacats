@@ -60,7 +60,6 @@ def convert_environment(datadir):
                         ['/project/.datacats/' + split[1] + '.bak'],
                 ro={PURGE: '/scripts/purge.sh'},
                 rw={split[0]: '/project/.datacats'},
-                # Change this to True after we know it works
                 clean_up=True)
  
     # Make a backup of the current version
@@ -74,7 +73,7 @@ def convert_environment(datadir):
 
     # Begin the actual conversion
     to_move = (['files', 'passwords.ini', 'run', 'solr', 'search'] +
-               ['postgres', 'data'] if not is_boot2docker() else [])
+               (['postgres', 'data'] if not is_boot2docker() else []))
     # Make a primary child
     child_path = path_join(datadir, 'children', new_child_name)
     makedirs(child_path)
