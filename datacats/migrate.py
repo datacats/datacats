@@ -9,7 +9,7 @@ from ConfigParser import SafeConfigParser
 import shutil
 import sys
 
-from datacats.docker import is_boot2docker, remove_container, web_command
+from datacats.docker import is_boot2docker, remove_container, rename_container, web_command
 from datacats.scripts import PURGE, MIGRATE_BACKUP, MIGRATE
 from datacats.password import generate_password
 
@@ -56,15 +56,15 @@ def convert_environment(datadir):
     if exists(backup_loc):
         # Remove any old backups
         web_command(
-                command=['/scripts/purge.sh'] + 
+                command=['/scripts/purge.sh'] +
                         ['/project/.datacats/' + split[1] + '.bak'],
                 ro={PURGE: '/scripts/purge.sh'},
                 rw={split[0]: '/project/.datacats'},
                 clean_up=True)
- 
+
     # Make a backup of the current version
     web_command(
-            command=['/scripts/migrate_backup.sh', 
+            command=['/scripts/migrate_backup.sh',
                      '/project/.datacats/' + env_name,
                      '/project/.datacats/' + backup_name],
             ro={MIGRATE_BACKUP: '/scripts/migrate_backup.sh'},
@@ -82,12 +82,15 @@ def convert_environment(datadir):
     web_command(
             command=['/scripts/migrate.sh',
                      '/project/data',
-                     '/project/data/children/' + new_child_name] + 
-                    to_move,
+                     '/project/data/children/' + new_child_name] +
+            to_move,
             ro={MIGRATE: '/scripts/migrate.sh'},
             rw={datadir: '/project/data'},
             clean_up=True
             )
+
+    if is_boot2docker():
+        rename_container('datacats_pgdata_' + env_name, 'datacats_pgdata_' + env_name + '_' + new_child_name)
 
     # Lastly, grab the project directory and update the ini file
     with open(path_join(datadir, 'project-dir')) as pd:

@@ -178,6 +178,9 @@ def run_container(name, image, command=None, environment=None,
         raise
     return c
 
+def rename_container(old_name, new_name):
+    _docker.rename(old_name, new_name)
+
 def remove_container(name, force=False):
     """
     Wrapper for docker remove_container
