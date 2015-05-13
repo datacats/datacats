@@ -9,6 +9,8 @@ from ConfigParser import SafeConfigParser
 import shutil
 import sys
 
+from lockfile import LockFile
+
 from datacats.docker import (is_boot2docker, remove_container,
                              rename_container, web_command)
 from datacats.scripts import PURGE, MIGRATE_BACKUP, MIGRATE
@@ -26,19 +28,10 @@ def needs_format_conversion(datadir):
             exists(path_join(datadir, 'project-dir')))
 
 
-def get_migration_lock(datadir):
-    lock_location = path_join(datadir, '.migration_lock')
-    # Just 'touch' the file to make sure it exists.
-    open(lock_location, 'wb').close()
-
-
-def release_migration_lock(datadir):
-    lock_location = path_join(datadir, '.migration_lock')
-    remove(lock_location)
-
-
 def convert_environment(datadir):
-    get_migration_lock(datadir)
+    lockfile = LockFile(path_join(datadir, '.migration_lock'))
+    lockfile.acquire()
+
     new_child_name = 'primary'
     inp = None
 
@@ -149,4 +142,4 @@ def convert_environment(datadir):
     with open(config_loc, 'w') as config:
         cp.write(config)
 
-    release_migration_lock(datadir)
+    lockfile.release()

@@ -16,6 +16,8 @@ from struct import unpack
 from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
     NoOptionError, NoSectionError)
 
+from lockfile import LockFile
+
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
@@ -24,7 +26,7 @@ from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE)
 from datacats.network import wait_for_service_available, ServiceTimeout
-from datacats.migrate import needs_format_conversion, convert_environment
+from datacats.migrate import needs_format_conversion
 from datacats.password import generate_password
 
 WEB_START_TIMEOUT_SECONDS = 30
@@ -258,24 +260,18 @@ class Environment(object):
         name = cp.get('datacats', 'name')
         datadir = expanduser('~/.datacats/' + name)
 
-        if exists(join(datadir, '.migration_lock')):
+        lockfile = LockFile(join(datadir, '.migration_lock'))
+
+        if lockfile.is_locked():
             raise DatacatsError('Migration in progress, cannot continue.\n'
                                 'If you interrupted a migration, your best'
                                 ' course of action would be to do '
                                 ' "datacats purge".')
 
-        # Kinda a hack... we read the config and if datadir is being upgraded,
-        # load it again.
         if needs_format_conversion(datadir):
-            convert_environment(datadir)
-            cp = SafeConfigParser()
-            try:
-                cp.read([wd + '/.datacats-environment'])
-            except ConfigParserError:
-                raise DatacatsError('Something went wrong with the upgrade! '
-                                    'There is a backup of the old files in ' +
-                                    datadir + '.bak')
-
+            raise DatacatsError('This environment uses an old format. You must'
+                                ' migrate to the new format. To do so, use the'
+                                ' "datacats migrate" command.')
         ckan_version = cp.get('datacats', 'ckan_version')
         try:
             port = cp.getint(child_section, 'port')

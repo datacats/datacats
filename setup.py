@@ -14,6 +14,7 @@ install_requires=[
     'docopt',
     'docker-py>=1.1.0',
     'requests>=2.5.2',  # help with docker-py requirement
+    'lockfile'
 ]
 
 exec(open("datacats/version.py").read())
