@@ -215,6 +215,8 @@ class Environment(object):
         """
         if environment_name is None:
             environment_name = '.'
+        if not valid_name(child_name):
+            raise DatacatsError('{} is not a valid child name.'.format(child_name))
 
         extension_dir = 'ckan'
         if valid_name(environment_name) and isdir(
@@ -363,9 +365,11 @@ class Environment(object):
         # It's possible that the datadir already exists (we're making a secondary child)
         if not isdir(self.datadir):
             makedirs(self.datadir, mode=0o700)
-        # This should take care if the 'child' subdir if needed
-        makedirs(self.childdir, mode=0o700)
-
+        try:
+            # This should take care if the 'child' subdir if needed
+            makedirs(self.childdir, mode=0o700)
+        except OSError as e:
+            raise DatacatsError('Child environment {} already exists.'.format(self.child_name))
         # venv isn't child-specific, the rest are.
         makedirs(self.childdir + '/search')
         if not is_boot2docker():
