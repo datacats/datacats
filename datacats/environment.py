@@ -17,6 +17,7 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
     NoOptionError, NoSectionError)
 
 from lockfile import LockFile
+from docker import APIError
 
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
@@ -661,23 +662,28 @@ class Environment(object):
         else:
             ro = {self.datadir + '/venv': '/usr/lib/ckan'}
             volumes_from = None
-
-        run_container(
-            name='datacats_web_' + self.name + '_' + self.child_name,
-            image='datacats/web',
-            rw={self.childdir + '/files': '/var/www/storage'},
-            ro=dict({
-                self.target: '/project/',
-                self.childdir + '/run/development.ini':
-                    '/project/development.ini',
-                WEB: '/scripts/web.sh'}, **ro),
-            links={'datacats_solr_' + self.name + '_' + self.child_name: 'solr',
-                'datacats_postgres_' + self.name + '_' + self.child_name: 'db'},
-            volumes_from=volumes_from,
-            command=command,
-            port_bindings={
-                5000: port if is_boot2docker() else ('127.0.0.1', port)},
-            )
+        try:
+            run_container(
+                name='datacats_web_' + self.name + '_' + self.child_name,
+                image='datacats/web',
+                rw={self.childdir + '/files': '/var/www/storage'},
+                ro=dict({
+                    self.target: '/project/',
+                    self.childdir + '/run/development.ini':
+                        '/project/development.ini',
+                    WEB: '/scripts/web.sh'}, **ro),
+                links={'datacats_solr_' + self.name + '_' + self.child_name: 'solr',
+                    'datacats_postgres_' + self.name + '_' + self.child_name: 'db'},
+                volumes_from=volumes_from,
+                command=command,
+                port_bindings={
+                    5000: port if is_boot2docker() else ('127.0.0.1', port)},
+                )
+        except APIError as e:
+            if '409' in str(e):
+                raise DatacatsError('Web container already running. Please stop_web before running.')
+            else:
+                raise
 
     def wait_for_web_available(self):
         """
