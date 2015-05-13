@@ -489,11 +489,12 @@ class Environment(object):
             'DATASTORE_RW_PASSWORD': generate_db_password(),
             }
 
-    def start_web(self, production=False):
+    def start_web(self, host='127.0.0.1', production=False):
         """
         Start the apache server or paster serve
 
         :param production: True for apache, False for paster serve + debug on
+        :param host: On Linux, the host to serve from (can be 0.0.0.0 for listening on all hosts)
         """
         port = self.port
         command = None
@@ -513,7 +514,7 @@ class Environment(object):
         while True:
             self._create_run_ini(port, production)
             try:
-                self._run_web_container(port, command)
+                self._run_web_container(port, command, host)
             except PortAllocatedError:
                 port = self._next_port(port)
                 continue
@@ -557,9 +558,9 @@ class Environment(object):
         with open(self.datadir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command):
+    def _run_web_container(self, port, command, host='127.0.0.1'):
         """
-        Start web comtainer on port with command
+        Start web container on port with command
         """
         if is_boot2docker():
             ro = {}
@@ -568,6 +569,7 @@ class Environment(object):
             ro = {self.datadir + '/venv': '/usr/lib/ckan'}
             volumes_from = None
 
+        print 'Binding on host {}'.format(host)
         run_container(
             name='datacats_web_' + self.name,
             image='datacats/web',
@@ -582,7 +584,7 @@ class Environment(object):
             volumes_from=volumes_from,
             command=command,
             port_bindings={
-                5000: port if is_boot2docker() else ('127.0.0.1', port)},
+                5000: port if is_boot2docker() else (host, port)},
             )
 
     def wait_for_web_available(self):
