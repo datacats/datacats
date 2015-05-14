@@ -58,6 +58,7 @@ class Environment(object):
         self.extension_dir = extension_dir
         self.ckan_version = ckan_version
         self.port = int(port if port else self._choose_port())
+        self.host = None
         self.deploy_target = deploy_target
         self.site_url = site_url
         self.always_prod = always_prod
@@ -518,6 +519,8 @@ class Environment(object):
             self._create_run_ini(port, production)
             try:
                 self._run_web_container(port, command, host)
+                if not is_boot2docker():
+                    self.host = host
             except PortAllocatedError:
                 port = self._next_port(port)
                 continue
@@ -627,6 +630,7 @@ class Environment(object):
         """
         Stop and remove the web container
         """
+        self.host = None
         remove_container('datacats_web_' + self.name, force=True)
 
     def _current_web_port(self):
@@ -663,9 +667,10 @@ class Environment(object):
         Return the url of the web server or None if not running
         """
         port = self._current_web_port()
-        if port is None:
+        host = self.host
+        if port is None or host is None:
             return None
-        return 'http://{0}:{1}/'.format(docker_host(), port)
+        return 'http://{0}:{1}/'.format(host if host else docker_host(), port)
 
     def create_admin_set_password(self, password):
         """
