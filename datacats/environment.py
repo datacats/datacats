@@ -503,6 +503,9 @@ class Environment(object):
         if not production:
             command = ['/scripts/web.sh']
 
+        if host != '127.0.0.1' and is_boot2docker():
+            raise DatacatsError('Cannot specify host on boot2docker.')
+
         # XXX nasty hack, remove this once we have a lessc command
         # for users (not just for building our preload image)
         if not production:
