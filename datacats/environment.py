@@ -161,6 +161,8 @@ class Environment(object):
         if environment_name is None:
             environment_name = '.'
 
+        require_images()
+
         extension_dir = 'ckan'
         if valid_name(environment_name) and isdir(
                 expanduser('~/.datacats/' + environment_name)):
