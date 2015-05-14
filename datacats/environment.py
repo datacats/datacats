@@ -925,7 +925,7 @@ class Environment(object):
             raise
 
 
-    def purge_data(self, which_children=None):
+    def purge_data(self, which_children=None, never_delete=False):
         """
         Remove uploaded files, postgres db, solr index, venv
         """
@@ -962,7 +962,7 @@ class Environment(object):
             ro={PURGE: '/scripts/purge.sh'},
             rw={self.datadir: '/project/data'},
             )
-        if not self.children:
+        if not self.children and not never_delete:
             shutil.rmtree(self.datadir)
 
     def logs(self, container, tail='all', follow=False, timestamps=False):
