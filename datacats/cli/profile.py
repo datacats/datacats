@@ -7,6 +7,8 @@
 from os.path import exists
 
 from datacats.userprofile import UserProfile
+from datacats.environment import DatacatsError
+
 
 def get_working_profile(environment):
     """
@@ -15,31 +17,28 @@ def get_working_profile(environment):
     user interactively.
     """
     profile = UserProfile()
+    if not (profile.ssh_private_key is None) and \
+        exists(profile.ssh_private_key) and \
+        exists(profile.ssh_public_key):
+        key_recognized = profile.test_ssh_key(environment)
+        if key_recognized:
+            # we sucessfully loaded the ssh key and tested it by connecting to the server, so all is good and
+            # we have got ourselves a working profile
+            return profile
 
-    new_key = False
-    if profile.ssh_private_key is None or not exists(
-            profile.ssh_private_key) or not exists(profile.ssh_public_key):
-        new_key = _create_profile(profile)
+        user_error_message = """Your ssh key (which is an equivalent of your password so that datacats.io could recognize you) does not
+        does not seem to be recognized by the datacats.io server.\n \n
+        Most likely it is because you need to go to www.datacats.com/account/key and add the following public key: \n \n {public_key} \n \n
+        to your profile so that datacat's server could recognize you. So maybe try that?
+        If the problem persists, please contact the developer team.""".format(public_key=profile.read_public_key())
+        raise  DatacatsError(user_error_message)
 
-    if new_key:
-        print 'New key generated. Please visit'
-        print 'https://www.datacats.com/account/key'
-        print 'and paste your public key in to the form:'
+    new_key = _create_profile(profile)
+    user_error_message = """Your profile does not seem to have an ssh key (which is an equivalent of your password so that datacats.io could recognize you).
+            So we generated a new ssh key for you. Please go to www.datacats.com/account/key and add the following public key: \n \n {public_key} \n \n to your profile.
+            """.format(public_key=profile.read_public_key())
+    raise DatacatsError(user_error_message)
 
-    if not new_key and not profile.test_ssh_key(environment):
-        print 'There was an error connecting to DataCats.com'
-        print 'If you have not installed your key please visit'
-        print 'https://www.datacats.com/account/key'
-        print 'and paste your public key in to the form:'
-        new_key = True
-
-    if new_key:
-        print
-        with open(profile.ssh_public_key) as pub_key:
-            print pub_key.read()
-        return
-
-    return profile
 
 def _create_profile(profile):
     """
