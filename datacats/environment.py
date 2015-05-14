@@ -569,7 +569,6 @@ class Environment(object):
             ro = {self.datadir + '/venv': '/usr/lib/ckan'}
             volumes_from = None
 
-        print 'Binding on host {}'.format(host)
         run_container(
             name='datacats_web_' + self.name,
             image='datacats/web',
