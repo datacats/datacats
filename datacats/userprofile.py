@@ -31,6 +31,14 @@ class UserProfile(object):
             self.ssh_private_key = None
             self.ssh_public_key = None
 
+    def read_public_key(self):
+        """
+        Read public key from file and reuturn as a string
+        """
+        with open(self.ssh_public_key) as pub_key:
+            return pub_key.read()
+
+
     def save(self):
         """
         Save profile settings into user profile directory
@@ -47,6 +55,8 @@ class UserProfile(object):
 
         with open(config, 'w') as cfile:
             cp.write(cfile)
+
+
 
     def generate_ssh_key(self):
         """
