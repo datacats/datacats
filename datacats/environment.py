@@ -21,7 +21,8 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
-    PortAllocatedError, container_logs, remove_image, WebCommandError)
+    PortAllocatedError, container_logs, remove_image, WebCommandError,
+    image_exists)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE)
@@ -128,6 +129,8 @@ class Environment(object):
         if not isdir(workdir):
             raise DatacatsError('Parent directory for environment'
                 ' does not exist')
+
+        require_images()
 
         datadir = expanduser('~/.datacats/' + name)
         target = workdir + '/' + name
@@ -901,6 +904,14 @@ def generate_db_password():
     chars = uppercase + lowercase + digits
     return ''.join(SystemRandom().choice(chars) for x in xrange(16))
 
+def require_images():
+    """
+    Raises a DatacatsError if the images required to use Datacats don't exist.
+    """
+    if (not image_exists('datacats/web') or
+       not image_exists('datacats/solr') or
+       not image_exists('datacats/postgres')):
+        raise DatacatsError('You do not have the needed Docker images. Please run "datacats pull"')
 
 def posix_quote(s):
     return "\\'".join("'" + p + "'" for p in s.split("'"))
