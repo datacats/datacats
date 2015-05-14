@@ -33,14 +33,14 @@ def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
-  datacats start [-bp] [-a IP] [ENVIRONMENT [PORT]]
-  datacats start -r [-b] [-a IP] [ENVIRONMENT]
+  datacats start [-bp] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats start -r [-b] [--address=IP] [ENVIRONMENT]
 
 Options:
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
-  -a --address=IP    Address to listen on (Linux-only) [default: 127.0.0.1]
+  --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -55,14 +55,14 @@ def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
-  datacats reload [-bp] [-a IP] [ENVIRONMENT [PORT]]
-  datacats reload -r [-b] [-a IP] [ENVIRONMENT]
+  datacats reload [-bp] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats reload -r [-b] [--address=IP] [ENVIRONMENT]
 
 Options:
   -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
-  -a --address=IP    Address to listen on (Linux-only) [default: 127.0.0.1]
+  --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
