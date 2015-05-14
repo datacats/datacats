@@ -27,6 +27,7 @@ The datacats commands available are:
   shell       Run a command or interactive shell within this environment
   start       Create containers and start serving environment
   stop        Stop serving environment and remove all its containers
+  less        Recompile less files in an environment
 
 See 'datacats help COMMAND' for information about options and
 arguments available to each command.
@@ -37,7 +38,7 @@ import sys
 from docopt import docopt
 import pkg_resources
 
-from datacats.cli import create, manage, install, pull, purge, shell, deploy
+from datacats.cli import create, manage, install, pull, purge, shell, deploy, less
 from datacats.environment import Environment, DatacatsError
 
 COMMANDS = {
@@ -56,6 +57,7 @@ COMMANDS = {
     'shell': shell.shell,
     'start': manage.start,
     'stop': manage.stop,
+    'less': less.less
 }
 
 def option_not_yet_implemented(opts, name):
