@@ -21,26 +21,18 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
     inspect_container, is_boot2docker, data_only_container, docker_host,
-    PortAllocatedError, container_logs, remove_image, WebCommandError)
+    PortAllocatedError, container_logs, remove_image, WebCommandError,
+    image_exists)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE)
 from datacats.network import wait_for_service_available, ServiceTimeout
+from datacats.error import DatacatsError
 
 WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
 DB_INIT_RETRY_DELAY = 2
 DOCKER_EXE = 'docker'
-
-
-class DatacatsError(Exception):
-    def __init__(self, message, format_args=()):
-        self.message = message
-        self.format_args = format_args
-        super(DatacatsError, self).__init__(message, format_args)
-
-    def __str__(self):
-        return self.message.format(*self.format_args)
 
 
 class Environment(object):
@@ -130,6 +122,8 @@ class Environment(object):
             raise DatacatsError('Parent directory for environment'
                 ' does not exist')
 
+        require_images()
+
         datadir = expanduser('~/.datacats/' + name)
         target = workdir + '/' + name
 
@@ -158,6 +152,8 @@ class Environment(object):
         """
         if environment_name is None:
             environment_name = '.'
+
+        require_images()
 
         extension_dir = 'ckan'
         if valid_name(environment_name) and isdir(
@@ -490,7 +486,7 @@ class Environment(object):
             'DATASTORE_RW_PASSWORD': generate_db_password(),
             }
 
-    def start_web(self, host='127.0.0.1', production=False):
+    def start_web(self, production=False, address='127.0.0.1'):
         """
         Start the apache server or paster serve
 
@@ -504,7 +500,7 @@ class Environment(object):
         if not production:
             command = ['/scripts/web.sh']
 
-        if host != '127.0.0.1' and is_boot2docker():
+        if address != '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify host on boot2docker.')
 
         # XXX nasty hack, remove this once we have a lessc command
@@ -518,9 +514,9 @@ class Environment(object):
         while True:
             self._create_run_ini(port, production)
             try:
-                self._run_web_container(port, command, host)
+                self._run_web_container(port, command, address)
                 if not is_boot2docker():
-                    self.host = host
+                    self.address = address
             except PortAllocatedError:
                 port = self._next_port(port)
                 continue
@@ -564,7 +560,7 @@ class Environment(object):
         with open(self.datadir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command, host='127.0.0.1'):
+    def _run_web_container(self, port, command, address='127.0.0.1'):
         """
         Start web container on port with command
         """
@@ -589,7 +585,7 @@ class Environment(object):
             volumes_from=volumes_from,
             command=command,
             port_bindings={
-                5000: port if is_boot2docker() else (host, port)},
+                5000: port if is_boot2docker() else (address, port)},
             )
 
     def wait_for_web_available(self):
@@ -910,6 +906,14 @@ def generate_db_password():
     chars = uppercase + lowercase + digits
     return ''.join(SystemRandom().choice(chars) for x in xrange(16))
 
+def require_images():
+    """
+    Raises a DatacatsError if the images required to use Datacats don't exist.
+    """
+    if (not image_exists('datacats/web') or
+       not image_exists('datacats/solr') or
+       not image_exists('datacats/postgres')):
+        raise DatacatsError('You do not have the needed Docker images. Please run "datacats pull"')
 
 def posix_quote(s):
     return "\\'".join("'" + p + "'" for p in s.split("'"))
