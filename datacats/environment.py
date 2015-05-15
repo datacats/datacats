@@ -65,6 +65,7 @@ class Environment(object):
         cp.set('datacats', 'name', self.name)
         cp.set('datacats', 'ckan_version', self.ckan_version)
         cp.set('datacats', 'port', str(self.port))
+        cp.set('datacats', 'host', self.host)
 
         if self.deploy_target:
             cp.add_section('deploy')
