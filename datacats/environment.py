@@ -204,7 +204,7 @@ class Environment(object):
         try:
             address = cp.get('datacats', 'address')
         except:
-            port = None
+            address = None
         try:
             port = cp.getint('datacats', 'port')
         except NoOptionError:

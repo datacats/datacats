@@ -44,20 +44,10 @@ part of this path will be used as the environment name.
         )
 
 def create_environment(environment_dir, port, ckan_version, create_skin,
-<<<<<<< HEAD
-        start_web, create_sysadmin, address):
-    try:
-        # FIXME: only 2.3 preload supported at the moment
-        environment = Environment.new(environment_dir, '2.3', port)
-    except DatacatsError as e:
-        print e
-        return 1
-=======
         start_web, create_sysadmin):
 
     # FIXME: only 2.3 preload supported at the moment
     environment = Environment.new(environment_dir, '2.3', port)
->>>>>>> b70d1c4... Moving to error handling with exceptions for create command
 
     try:
         if not valid_deploy_name(environment.name):
