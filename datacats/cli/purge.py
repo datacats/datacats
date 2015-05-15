@@ -13,12 +13,13 @@ def purge(opts):
     """Purge environment database and uploaded files
 
 Usage:
-  datacats purge [-c NAME | --delete-environment] [ENVIRONMENT]
+  datacats purge [-c NAME | --delete-environment] [-y] [ENVIRONMENT]
 
 Options:
   --delete-environment   Delete environment directory as well as its data, as
                          well as the data for **all** children.
-  -c --child=NAME      Specify a child to be purge [default: primary]
+  -c --child=NAME        Specify a child to be purge [default: primary]
+  -y --yes               Respond yes to all prompts (i.e. force)
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -34,8 +35,19 @@ Default: '.'
 
     children = [opts['--child']] if not opts['--delete-environment'] else environment.children
 
+    if not opts['--yes']:
+        inp = None
+        # Nothing (default, n), y and n are our valid inputs
+        while inp is None or inp.lower()[:1] not in ['y', 'n', '']:
+            inp = raw_input('datacats purge will delete all stored data. Are you sure? [n] (y/n): ')
+
+        if inp.lower()[:1] == 'n' or not inp:
+            raise DatacatsError('Aborting purge by user request.')
+
     environment.stop_web()
     environment.stop_postgres_and_solr()
+
+    environment.purge_data(children)
 
     if opts['--delete-environment']:
         if not environment.target:
@@ -44,4 +56,3 @@ Default: '.'
         else:
             environment.fix_project_permissions()
             rmtree(environment.target)
-    environment.purge_data(children)

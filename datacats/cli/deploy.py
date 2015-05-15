@@ -19,7 +19,7 @@ Usage:
 Options:
   --create                Create a new environment on DataCats.com instead
                           of updating an existing environment
-  -c --child=NAME       Pick a child environment to operate on [default: primary]
+  -c --child=NAME         Pick a child environment to operate on [default: primary]
 
 ENVIRONMENT may be an environment name or a path to a environment directory.
 Default: '.'
@@ -44,9 +44,7 @@ the environment name.
         if not profile.create(environment, target_name, stdout):
             return 1
 
-    if not profile.deploy(environment, target_name, stdout):
-        return 1
-
+    profile.deploy(environment, target_name, stdout)
     print "Deployed source to http://{0}.datacats.io".format(target_name)
 
     if opts['--create']:

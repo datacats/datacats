@@ -57,33 +57,39 @@ def create_environment(environment_dir, port, ckan_version, create_skin, child_n
         print "target name that is at least 5 characters long"
         print
 
-    # There are a lot of steps we can/must skip if we're making a child only
-    making_full_environment = not environment.data_exists()
+    try:
+        # There are a lot of steps we can/must skip if we're making a child only
+        making_full_environment = not environment.data_exists()
 
-    write('Creating environment "{0}/{1}"'.format(environment.name, environment.child_name))
-    steps = [
-        lambda: environment.create_directories(making_full_environment),
-        environment.create_bash_profile,] + ([environment.create_virtualenv,
-        environment.save,
-        environment.create_source,
-        environment.create_ckan_ini,] if making_full_environment else []
-        ) + [environment.save_child, environment.start_postgres_and_solr,
-        environment.fix_storage_permissions,
-        lambda: environment.update_ckan_ini(skin=create_skin),
-        environment.fix_project_permissions,
-        ]
+        write('Creating environment "{0}/{1}"'.format(environment.name, environment.child_name))
+        steps = [
+            lambda: environment.create_directories(making_full_environment),
+            environment.create_bash_profile,] + ([environment.create_virtualenv,
+            environment.save,
+            environment.create_source,
+            environment.create_ckan_ini,] if making_full_environment else []
+            ) + [environment.save_child, environment.start_postgres_and_solr,
+            environment.fix_storage_permissions,
+            lambda: environment.update_ckan_ini(skin=create_skin),
+            environment.fix_project_permissions,
+            ]
 
-    if create_skin and making_full_environment:
-        steps.append(environment.create_install_template_skin)
+        if create_skin and making_full_environment:
+            steps.append(environment.create_install_template_skin)
 
-    steps.append(environment.ckan_db_init)
+        steps.append(environment.ckan_db_init)
 
-    for fn in steps:
-        fn()
-        write('.')
-    write('\n')
-
-    return finish_init(environment, start_web, create_sysadmin)
+        for fn in steps:
+            fn()
+            write('.')
+        write('\n')
+        return finish_init(environment, start_web, create_sysadmin)
+    except:
+        # Make sure that it doesn't get printed right after the dots
+        # by printing a newline
+        # i.e. Creating environment 'hello'.....ERROR MESSAGE
+        print
+        raise
 
 
 def init(opts):
@@ -114,30 +120,34 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         print e
         return 1
 
-    if child_name in environment.children:
-        raise DatacatsError('Child environment {0} already exists.'
-                            .format(child_name))
-    # There are a couple of steps we can/must skip if we're making a child only
-    making_full_environment = not environment.data_exists()
+    try:
+        if environment.children and child_name in environment.children:
+            raise DatacatsError('Child environment {0} already exists.'
+                                .format(child_name))
+        # There are a couple of steps we can/must skip if we're making a child only
+        making_full_environment = not environment.data_exists()
 
-    write('Creating environment {0}/{1} '
-          'from existing environment directory "{0}"'
-          .format(environment.name, environment.child_name))
-    steps = [
-        lambda: environment.create_directories(create_project_dir=False)] + ([
-         environment.save,
-         environment.create_virtualenv
-         ] if making_full_environment else []) + [
-         environment.save_child,
-         environment.start_postgres_and_solr,
-         environment.fix_storage_permissions,
-         environment.fix_project_permissions,
-        ]
+        write('Creating environment {0}/{1} '
+              'from existing environment directory "{0}"'
+              .format(environment.name, environment.child_name))
+        steps = [
+            lambda: environment.create_directories(create_project_dir=False)] + ([
+             environment.save,
+             environment.create_virtualenv
+             ] if making_full_environment else []) + [
+             environment.save_child,
+             environment.start_postgres_and_solr,
+             environment.fix_storage_permissions,
+             environment.fix_project_permissions,
+            ]
 
-    for fn in steps:
-        fn()
-        write('.')
-    write('\n')
+        for fn in steps:
+            fn()
+            write('.')
+        write('\n')
+    except:
+        print
+        raise
 
     return finish_init(environment, start_web, create_sysadmin)
 
