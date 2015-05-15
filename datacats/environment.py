@@ -43,14 +43,14 @@ class Environment(object):
     """
     def __init__(self, name, target, datadir, ckan_version=None, port=None,
                 deploy_target=None, site_url=None, always_prod=False,
-                extension_dir='ckan'):
+                extension_dir='ckan', address=None):
         self.name = name
         self.target = target
         self.datadir = datadir
         self.extension_dir = extension_dir
         self.ckan_version = ckan_version
         self.port = int(port if port else self._choose_port())
-        self.host = None
+        self.address = address
         self.deploy_target = deploy_target
         self.site_url = site_url
         self.always_prod = always_prod
@@ -65,7 +65,7 @@ class Environment(object):
         cp.set('datacats', 'name', self.name)
         cp.set('datacats', 'ckan_version', self.ckan_version)
         cp.set('datacats', 'port', str(self.port))
-        cp.set('datacats', 'host', self.host)
+        cp.set('datacats', 'address', self.address)
 
         if self.deploy_target:
             cp.add_section('deploy')
@@ -200,6 +200,10 @@ class Environment(object):
         datadir = expanduser('~/.datacats/' + name)
         ckan_version = cp.get('datacats', 'ckan_version')
         try:
+            address = cp.get('datacats', 'address')
+        except:
+            port = None
+        try:
             port = cp.getint('datacats', 'port')
         except NoOptionError:
             port = None
@@ -232,7 +236,8 @@ class Environment(object):
             passwords[n.upper()] = cp.get('passwords', n)
 
         environment = cls(name, wd, datadir, ckan_version, port, deploy_target,
-        site_url=site_url, always_prod=always_prod, extension_dir=extension_dir)
+        site_url=site_url, always_prod=always_prod, address=address,
+        extension_dir=extension_dir)
         if passwords:
             environment.passwords = passwords
         else:
@@ -492,7 +497,7 @@ class Environment(object):
         Start the apache server or paster serve
 
         :param production: True for apache, False for paster serve + debug on
-        :param host: On Linux, the host to serve from (can be 0.0.0.0 for listening on all hosts)
+        :param address: On Linux, the address to serve from (can be 0.0.0.0 for listening on all addresses)
         """
         port = self.port
         command = None
@@ -502,7 +507,7 @@ class Environment(object):
             command = ['/scripts/web.sh']
 
         if address != '127.0.0.1' and is_boot2docker():
-            raise DatacatsError('Cannot specify host on boot2docker.')
+            raise DatacatsError('Cannot specify address on boot2docker.')
 
         # XXX nasty hack, remove this once we have a lessc command
         # for users (not just for building our preload image)
@@ -627,7 +632,6 @@ class Environment(object):
         """
         Stop and remove the web container
         """
-        self.host = None
         remove_container('datacats_web_' + self.name, force=True)
 
     def _current_web_port(self):
@@ -664,10 +668,10 @@ class Environment(object):
         Return the url of the web server or None if not running
         """
         port = self._current_web_port()
-        host = self.host
-        if port is None or host is None:
+        address = self.address
+        if port is None or address is None:
             return None
-        return 'http://{0}:{1}/'.format(host if host else docker_host(), port)
+        return 'http://{0}:{1}/'.format(address if address else docker_host(), port)
 
     def create_admin_set_password(self, password):
         """
