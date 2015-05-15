@@ -224,6 +224,16 @@ def run_container(name, image, command=None, environment=None,
         raise
     return c
 
+def image_exists(name):
+    """
+    Queries Docker about if a particular image has been downloaded.
+
+    :param name: The name of the image to check for.
+    """
+    # This returns a list of container dicts matching (exactly)
+    # the name `name`.
+    return bool(_docker.images(name=name))
+
 def remove_container(name, force=False):
     """
     Wrapper for docker remove_container
