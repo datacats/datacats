@@ -44,13 +44,10 @@ part of this path will be used as the environment name.
         )
 
 def create_environment(environment_dir, port, ckan_version, create_skin,
-        start_web, create_sysadmin, address):
-    try:
-        # FIXME: only 2.3 preload supported at the moment
-        environment = Environment.new(environment_dir, '2.3', port)
-    except DatacatsError as e:
-        print e
-        return 1
+        start_web, create_sysadmin):
+
+    # FIXME: only 2.3 preload supported at the moment
+    environment = Environment.new(environment_dir, '2.3', port)
 
     try:
         if not valid_deploy_name(environment.name):
@@ -110,16 +107,11 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     start_web = not opts['--image-only']
     create_sysadmin = not opts['--no-sysadmin']
     environment_dir = abspath(environment_dir or '.')
-    address = opts['--address']
 
-    try:
-        environment = Environment.load(environment_dir)
-        if port:
-            environment.port = int(port)
-        environment.address = address
-    except DatacatsError as e:
-        print e
-        return 1
+    environment = Environment.load(environment_dir)
+    environment.address = address
+    if port:
+        environment.port = int(port)
 
     try:
         write('Creating from existing environment directory "{0}"'.format(

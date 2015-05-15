@@ -106,22 +106,18 @@ class UserProfile(object):
 
     def create(self, project, target_name, stream_output=None):
         """
-        Return True if project was created and now belongs to this user
+        Sends "create project" command to the remote server
         """
-        try:
-            web_command(
-                command=[
-                    "ssh", _project_user_host(project), "create", target_name,
-                    ],
-                ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
-                    SSH_CONFIG: '/etc/ssh/ssh_config',
-                    self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
-                stream_output=stream_output,
-                clean_up=True,
-                )
-            return True
-        except WebCommandError:
-            return False
+        web_command(
+            command=[
+                "ssh", _project_user_host(project), "create", target_name,
+                ],
+            ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
+                SSH_CONFIG: '/etc/ssh/ssh_config',
+                self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
+            stream_output=stream_output,
+            clean_up=True,
+            )
 
     def admin_password(self, project, target_name, password):
         """
@@ -166,7 +162,7 @@ class UserProfile(object):
             raise DatacatsError(
                 "Unable to deploy `{0}` to remote server for some reason:\n"
                 " datacats was not able to copy data to the remote server"
-                , format_args=(target_name,),parent_exception=e
+                , format_args=(target_name,), parent_exception=e
                 )
 
         try:
