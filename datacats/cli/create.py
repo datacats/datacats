@@ -20,7 +20,7 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bn] [-i] [--address=IP] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
+  datacats create [-bni] [--address=IP] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
@@ -95,7 +95,7 @@ def init(opts):
     """Initialize a purged environment or copied environment directory
 
 Usage:
-  datacats init [-n] [-i] [--address=IP] [ENVIRONMENT_DIR [PORT]]
+  datacats init [-ni] [--address=IP] [ENVIRONMENT_DIR [PORT]]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
