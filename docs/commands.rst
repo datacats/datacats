@@ -64,3 +64,7 @@ start
 stop
 ----
 .. program-output:: datacats help stop
+
+less
+----
+.. program-output:: datacats help less
