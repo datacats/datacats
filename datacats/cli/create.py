@@ -52,36 +52,43 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
         print e
         return 1
 
-    if not valid_deploy_name(environment.name):
-        print "WARNING: When deploying you will need to choose a"
-        print "target name that is at least 5 characters long"
+    try:
+        if not valid_deploy_name(environment.name):
+            print "WARNING: When deploying you will need to choose a"
+            print "target name that is at least 5 characters long"
+            print
+
+        write('Creating environment "{0}"'.format(environment.name))
+        steps = [
+            environment.create_directories,
+            environment.create_bash_profile,
+            environment.save,
+            environment.create_virtualenv,
+            environment.create_source,
+            environment.start_postgres_and_solr,
+            environment.fix_storage_permissions,
+            environment.create_ckan_ini,
+            lambda: environment.update_ckan_ini(skin=create_skin),
+            environment.fix_project_permissions,
+            ]
+
+        if create_skin:
+            steps.append(environment.create_install_template_skin)
+
+        steps.append(environment.ckan_db_init)
+
+        for fn in steps:
+            fn()
+            write('.')
+        write('\n')
+
+        return finish_init(environment, start_web, create_sysadmin, address)
+    except:
+        # Make sure that it doesn't get printed right after the dots
+        # by printing a newline
+        # i.e. Creating environment 'hello'.....ERROR MESSAGE
         print
-
-    write('Creating environment "{0}"'.format(environment.name))
-    steps = [
-        environment.create_directories,
-        environment.create_bash_profile,
-        environment.save,
-        environment.create_virtualenv,
-        environment.create_source,
-        environment.start_postgres_and_solr,
-        environment.fix_storage_permissions,
-        environment.create_ckan_ini,
-        lambda: environment.update_ckan_ini(skin=create_skin),
-        environment.fix_project_permissions,
-        ]
-
-    if create_skin:
-        steps.append(environment.create_install_template_skin)
-
-    steps.append(environment.ckan_db_init)
-
-    for fn in steps:
-        fn()
-        write('.')
-    write('\n')
-
-    return finish_init(environment, start_web, create_sysadmin, address)
+        raise
 
 
 def init(opts):
@@ -112,21 +119,25 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         print e
         return 1
 
-    write('Creating from existing environment directory "{0}"'.format(
-        environment.name))
-    steps = [
-        lambda: environment.create_directories(create_project_dir=False),
-        environment.save,
-        environment.create_virtualenv,
-        environment.start_postgres_and_solr,
-        environment.fix_storage_permissions,
-        environment.fix_project_permissions,
-        ]
+    try:
+        write('Creating from existing environment directory "{0}"'.format(
+            environment.name))
+        steps = [
+            lambda: environment.create_directories(create_project_dir=False),
+            environment.save,
+            environment.create_virtualenv,
+            environment.start_postgres_and_solr,
+            environment.fix_storage_permissions,
+            environment.fix_project_permissions,
+            ]
 
-    for fn in steps:
-        fn()
-        write('.')
-    write('\n')
+        for fn in steps:
+            fn()
+            write('.')
+        write('\n')
+    except:
+        print
+        raise
 
     return finish_init(environment, start_web, create_sysadmin, address)
 

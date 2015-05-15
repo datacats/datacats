@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+0.9.3
+-----
+
+- fix for ConnectionError on OSX for some users
+
 0.9.2
 -----
 
