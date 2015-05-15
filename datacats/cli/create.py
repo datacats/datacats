@@ -44,7 +44,7 @@ part of this path will be used as the environment name.
         )
 
 def create_environment(environment_dir, port, ckan_version, create_skin,
-        start_web, create_sysadmin):
+        start_web, create_sysadmin, address):
 
     # FIXME: only 2.3 preload supported at the moment
     environment = Environment.new(environment_dir, '2.3', port)
