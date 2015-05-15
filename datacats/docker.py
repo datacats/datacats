@@ -246,7 +246,7 @@ def image_exists(name):
     """
     # This returns a list of container dicts matching (exactly)
     # the name `name`.
-    return bool(_docker.images(name=name))
+    return bool(_get_docker().images(name=name))
 
 
 def remove_container(name, force=False):
