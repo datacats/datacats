@@ -94,12 +94,11 @@ class WebCommandError(Exception):
         self.logs = logs
 
     def __str__(self):
-        return '~' * 10 + \
+        return \
             ('\nSSH command to remote server failed\n'
              '    Command: {0}\n'
              '    Docker Error Log:\n'
-             '    {1}\n').format(self.command, self.logs, self.container_id) + \
-            '~' * 10
+             '    {1}\n').format(self.command, self.logs, self.container_id)
 
 
 class PortAllocatedError(Exception):

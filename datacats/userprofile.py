@@ -12,7 +12,7 @@ from getpass import getuser
 
 from datacats.docker import web_command, WebCommandError
 from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG
-from datacats.environment import DatacatsError
+from datacats.error import DatacatsError
 
 
 DATACATS_USER_HOST = 'datacats@command.datacats.com'
@@ -102,8 +102,7 @@ class UserProfile(object):
                 "If the problem persists, please contact the developer team."
                 ).format(public_key=self.read_public_key())
 
-            user_error_message += "\n\nTechnical Details:\n" + e.__str__()
-            raise DatacatsError(user_error_message)
+            raise DatacatsError(user_error_message, parent_exception=e)
 
     def create(self, project, target_name, stream_output=None):
         """
@@ -163,6 +162,14 @@ class UserProfile(object):
                 stream_output=stream_output,
                 clean_up=True,
                 )
+        except WebCommandError as e:
+            raise DatacatsError(
+                "Unable to deploy `{0}` to remote server for some reason:\n"
+                " datacats was not able to copy data to the remote server"
+                , format_args=(target_name,),parent_exception=e
+                )
+
+        try:
             web_command(
                 command=[
                     "ssh", _project_user_host(project), "install", target_name,
@@ -174,8 +181,13 @@ class UserProfile(object):
                 clean_up=True,
                 )
             return True
-        except WebCommandError:
-            return False
+        except WebCommandError as e:
+            raise DatacatsError(
+                "Unable to deploy `{0}` to remote server for some reason:\n"
+                "datacats copied data to the server but failed to register\n"
+                "(or `install`) the new catalog"
+                , format_args=(target_name,),parent_exception=e
+                )
 
 
 def _project_user_host(project):
