@@ -45,13 +45,14 @@ class Environment(object):
 
     def __init__(self, name, target, datadir, ckan_version=None, port=None,
                  deploy_target=None, site_url=None, always_prod=False,
-                 extension_dir='ckan'):
+                 extension_dir='ckan', address=None):
         self.name = name
         self.target = target
         self.datadir = datadir
         self.extension_dir = extension_dir
         self.ckan_version = ckan_version
         self.port = int(port if port else self._choose_port())
+        self.address = address
         self.deploy_target = deploy_target
         self.site_url = site_url
         self.always_prod = always_prod
@@ -66,6 +67,7 @@ class Environment(object):
         cp.set('datacats', 'name', self.name)
         cp.set('datacats', 'ckan_version', self.ckan_version)
         cp.set('datacats', 'port', str(self.port))
+        cp.set('datacats', 'address', self.address or '127.0.0.1')
 
         if self.deploy_target:
             cp.add_section('deploy')
@@ -101,7 +103,7 @@ class Environment(object):
             pdir.write(self.target)
 
     @classmethod
-    def new(cls, path, ckan_version, port=None):
+    def new(cls, path, ckan_version, port=None, address=None):
         """
         Return a Environment object with settings for a new project.
         No directories or containers are created by this call.
@@ -200,6 +202,10 @@ class Environment(object):
         datadir = expanduser('~/.datacats/' + name)
         ckan_version = cp.get('datacats', 'ckan_version')
         try:
+            address = cp.get('datacats', 'address')
+        except:
+            port = None
+        try:
             port = cp.getint('datacats', 'port')
         except NoOptionError:
             port = None
@@ -232,7 +238,8 @@ class Environment(object):
             passwords[n.upper()] = cp.get('passwords', n)
 
         environment = cls(name, wd, datadir, ckan_version, port, deploy_target,
-                          site_url=site_url, always_prod=always_prod, extension_dir=extension_dir)
+                          site_url=site_url, always_prod=always_prod, address=address,
+                          extension_dir=extension_dir)
         if passwords:
             environment.passwords = passwords
         else:
@@ -486,11 +493,12 @@ class Environment(object):
             'DATASTORE_RW_PASSWORD': generate_db_password(),
             }
 
-    def start_web(self, production=False):
+    def start_web(self, production=False, address='127.0.0.1'):
         """
         Start the apache server or paster serve
 
         :param production: True for apache, False for paster serve + debug on
+        :param address: On Linux, the address to serve from (can be 0.0.0.0 for listening on all addresses)
         """
         port = self.port
         command = None
@@ -498,6 +506,9 @@ class Environment(object):
         production = production or self.always_prod
         if not production:
             command = ['/scripts/web.sh']
+
+        if address != '127.0.0.1' and is_boot2docker():
+            raise DatacatsError('Cannot specify address on boot2docker.')
 
         # XXX nasty hack, remove this once we have a lessc command
         # for users (not just for building our preload image)
@@ -510,7 +521,9 @@ class Environment(object):
         while True:
             self._create_run_ini(port, production)
             try:
-                self._run_web_container(port, command)
+                self._run_web_container(port, command, address)
+                if not is_boot2docker():
+                    self.address = address
             except PortAllocatedError:
                 port = self._next_port(port)
                 continue
@@ -554,9 +567,9 @@ class Environment(object):
         with open(self.datadir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command):
+    def _run_web_container(self, port, command, address='127.0.0.1'):
         """
-        Start web comtainer on port with command
+        Start web container on port with command
         """
         if is_boot2docker():
             ro = {}
@@ -579,7 +592,7 @@ class Environment(object):
             volumes_from=volumes_from,
             command=command,
             port_bindings={
-                5000: port if is_boot2docker() else ('127.0.0.1', port)},
+                5000: port if is_boot2docker() else (address, port)},
             )
 
     def wait_for_web_available(self):
@@ -656,9 +669,10 @@ class Environment(object):
         Return the url of the web server or None if not running
         """
         port = self._current_web_port()
+        address = self.address or '127.0.0.1'
         if port is None:
             return None
-        return 'http://{0}:{1}/'.format(docker_host(), port)
+        return 'http://{0}:{1}/'.format(address if address else docker_host(), port)
 
     def create_admin_set_password(self, password):
         """

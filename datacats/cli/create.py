@@ -20,9 +20,10 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bin] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
+  datacats create [-bni] [--address=IP] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
 
 Options:
+  --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
   --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION, defaults to
                           latest development release
   -b --bare               Bare CKAN site with no example extension
@@ -39,10 +40,11 @@ part of this path will be used as the environment name.
         start_web=not opts['--image-only'],
         create_sysadmin=not opts['--no-sysadmin'],
         ckan_version=opts['--ckan'],
+        address=opts['--address']
         )
 
 def create_environment(environment_dir, port, ckan_version, create_skin,
-        start_web, create_sysadmin):
+        start_web, create_sysadmin, address):
     try:
         # FIXME: only 2.3 preload supported at the moment
         environment = Environment.new(environment_dir, '2.3', port)
@@ -80,7 +82,7 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
             write('.')
         write('\n')
 
-        return finish_init(environment, start_web, create_sysadmin)
+        return finish_init(environment, start_web, create_sysadmin, address)
     except:
         # Make sure that it doesn't get printed right after the dots
         # by printing a newline
@@ -93,9 +95,10 @@ def init(opts):
     """Initialize a purged environment or copied environment directory
 
 Usage:
-  datacats init [-in] [ENVIRONMENT_DIR [PORT]]
+  datacats init [-ni] [--address=IP] [ENVIRONMENT_DIR [PORT]]
 
 Options:
+  --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
 
@@ -103,13 +106,17 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
     environment_dir = opts['ENVIRONMENT_DIR']
     port = opts['PORT']
+    address = opts['--address']
     start_web = not opts['--image-only']
     create_sysadmin = not opts['--no-sysadmin']
     environment_dir = abspath(environment_dir or '.')
+    address = opts['--address']
+
     try:
         environment = Environment.load(environment_dir)
         if port:
             environment.port = int(port)
+        environment.address = address
     except DatacatsError as e:
         print e
         return 1
@@ -134,10 +141,10 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         print
         raise
 
-    return finish_init(environment, start_web, create_sysadmin)
+    return finish_init(environment, start_web, create_sysadmin, address)
 
 
-def finish_init(environment, start_web, create_sysadmin):
+def finish_init(environment, start_web, create_sysadmin, address):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """
@@ -148,7 +155,7 @@ def finish_init(environment, start_web, create_sysadmin):
     write('\n')
 
     if start_web:
-        environment.start_web()
+        environment.start_web(address=address)
         write('Starting web server at {0} ...\n'.format(
             environment.web_address()))
 

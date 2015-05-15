@@ -33,10 +33,11 @@ def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
-  datacats start [-bp] [ENVIRONMENT [PORT]]
-  datacats start -r [-b] [ENVIRONMENT]
+  datacats start [-bp] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats start -r [-b] [--address=IP] [ENVIRONMENT]
 
 Options:
+  --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
@@ -50,15 +51,15 @@ Default: '.'
         print 'Already running at {0}'.format(address)
         return
     reload_(environment, opts)
-
 def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
-  datacats reload [-bp] [ENVIRONMENT [PORT]]
-  datacats reload -r [-b] [ENVIRONMENT]
+  datacats reload [-bp] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats reload -r [-b] [--address=IP] [ENVIRONMENT]
 
 Options:
+  --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
@@ -68,18 +69,24 @@ Default: '.'
 """
     environment.require_data()
     environment.stop_web()
-    if opts['PORT']:
-        environment.port = int(opts['PORT'])
+    if opts['PORT'] or opts['--address'] != '127.0.0.1':
+        if opts['PORT']:
+            environment.port = int(opts['PORT'])
+        if opts['--address'] != '127.0.0.1':
+            environment.address = opts['--address']
         environment.save()
     if 'postgres' not in environment.containers_running():
         environment.stop_postgres_and_solr()
         environment.start_postgres_and_solr()
 
-    environment.start_web(opts['--production'])
+    environment.start_web(
+                          production=opts['--production'],
+                          address=opts['--address'])
     write('Starting web server at {0} ...'.format(environment.web_address()))
     if opts['--background']:
         write('\n')
         return
+
     try:
         environment.wait_for_web_available()
     finally:
