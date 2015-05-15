@@ -4,6 +4,7 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
+
 """datacats command line interface
 
 Usage:
@@ -68,62 +69,67 @@ def main():
     and runs the corresponding command
     """
     try:
-      command_fn, opts = _parse_arguments(sys.argv[1:])
-      # purge handles loading differently
-      if command_fn != purge.purge and 'ENVIRONMENT' in opts:
-          environment = Environment.load(opts['ENVIRONMENT'] or '.')
-          return command_fn(environment, opts)
-      return command_fn(opts)
+        command_fn, opts = _parse_arguments(sys.argv[1:])
+        # purge handles loading differently
+        if command_fn != purge.purge and 'ENVIRONMENT' in opts:
+            environment = Environment.load(opts['ENVIRONMENT'] or '.')
+            return command_fn(environment, opts)
+        return command_fn(opts)
     except DatacatsError as e:
         print e
         sys.exit(1)
 
 
 def _parse_arguments(args):
-  help_ = False # flag for only showing the help message
+    help_ = False  # flag for only showing the help message
 
-  # Find subcommand without docopt so that subcommand options may appear anywhere
-  for i, a in enumerate(args):
-      if a.startswith('-'):
-          continue
-      if a == 'help':
-          help_ = True
-          continue
-      if a not in COMMANDS:
-        raise DatacatsError("\'{0}\' command is not recognized. \n \
-          See \'datacats help\' for the list of available commands".format(a))
-      command_fn = COMMANDS[a]
-      break
-  else:
-    return _intro_message, {}
+    # Find subcommand without docopt so that subcommand options may appear
+    # anywhere
+    for i, a in enumerate(args):
+        if a.startswith('-'):
+            continue
+        if a == 'help':
+            help_ = True
+            continue
+        if a not in COMMANDS:
+            raise DatacatsError(
+                "\'{0}\' command is not recognized. \n"
+                "See \'datacats help\' for the list of"
+                " available commands".format(a)
+            )
+        command_fn = COMMANDS[a]
+        break
+    else:
+        return _intro_message, {}
 
-  # shell, paster are special: options might belong to the command being
-  # executed
-  if command_fn == shell.shell:
-      # assume commands don't start with '-' and that those options
-      # are intended for datacats
-      for j, a in enumerate(args[i + 2:], i + 2):
-          if not a.startswith('-'):
-              # -- makes docopt parse the rest as positional args
-              args = args[:j] + ['--'] + args[j:]
-              break
+    # shell, paster are special: options might belong to the command being
+    # executed
+    if command_fn == shell.shell:
+        # assume commands don't start with '-' and that those options
+        # are intended for datacats
+        for j, a in enumerate(args[i + 2:], i + 2):
+            if not a.startswith('-'):
+                # -- makes docopt parse the rest as positional args
+                args = args[:j] + ['--'] + args[j:]
+                break
 
-  if command_fn == shell.paster:
-      args = args[:i + 1] + ['--'] + args[i + 1:]
+    if command_fn == shell.paster:
+        args = args[:i + 1] + ['--'] + args[i + 1:]
 
-  if help_:
-      args.insert(1, '--help')
+    if help_:
+        args.insert(1, '--help')
 
-  opts = docopt(command_fn.__doc__, args)
-  _option_not_yet_implemented(opts, '--ckan')
-  _option_not_yet_implemented(opts, '--remote')
-  return command_fn, opts
+    opts = docopt(command_fn.__doc__, args)
+    _option_not_yet_implemented(opts, '--ckan')
+    _option_not_yet_implemented(opts, '--remote')
+    return command_fn, opts
 
 
 def _option_not_yet_implemented(opts, name):
     if name not in opts or not opts[name]:
         return
-    raise DatacatsError("\'{0}\' option is not implemented yet. \n".format(name))
+    raise DatacatsError(
+        "\'{0}\' option is not implemented yet. \n".format(name))
 
 
 def _intro_message(opts):
