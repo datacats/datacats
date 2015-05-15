@@ -55,11 +55,11 @@ def _get_docker():
             # with the PATH.
             with open(devnull, 'w') as devnull_f:
                 status = subprocess.check_output(
-                                                ['boot2docker', 'status'],
-                                                # Don't show boot2docker message
-                                                # to the user... it's ugly!
-                                                stderr=devnull_f
-                                                ).strip()
+                    ['boot2docker', 'status'],
+                    # Don't show boot2docker message
+                    # to the user... it's ugly!
+                    stderr=devnull_f
+                    ).strip()
             if status == 'poweroff':
                 raise DatacatsError('boot2docker is not powered on.'
                                     ' Please run "boot2docker up".')
@@ -290,6 +290,7 @@ def container_logs(name, tail, follow, timestamps):
             stdout=True,
             stderr=True,
             stream=True
+            )
 
     return _docker.logs(
         name,
@@ -314,16 +315,17 @@ def data_only_container(name, volumes):
     We'd like to avoid these, but postgres + boot2docker make
     it difficult, see issue #5
     """
-    info=inspect_container(name)
+    info = inspect_container(name)
     if info:
         return
-    c=_get_docker().create_container(
+    c = _get_docker().create_container(
         name=name,
         image='datacats/postgres',  # any image will do
         command='true',
         volumes=volumes,
         detach=True)
     return c
+
 
 def remove_image(image, force=False, noprune=False):
     _get_docker().remove_image(image, force=force, noprune=noprune)
