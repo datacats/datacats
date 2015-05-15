@@ -705,9 +705,9 @@ class Environment(object):
         to be used as a default when the user hasn't selected one.
         """
         # instead of random let's base it on the name chosen (and the childname)
-            return 5000 + unpack('Q',
-                                 sha((self.name + self.child_name)
-                                 .decode('ascii')).digest()[:8])[0] % 1000
+        return 5000 + unpack('Q',
+                             sha((self.name + self.child_name)
+                             .decode('ascii')).digest()[:8])[0] % 1000
 
     def _next_port(self, port):
         """
