@@ -92,8 +92,8 @@ class UserProfile(object):
             user_error_message = (
                 "Your ssh key "
                 "(which is an equivalent of your password so"
-                " that datacats.io could recognize you)"
-                "does not seem to be recognized by the datacats.io server.\n \n"
+                " that datacats.io could recognize you) "
+                "does not seem to be recognized by the datacats.io server. \n \n"
                 "Most likely it is because you need to go to"
                 " www.datacats.com/account/key"
                 " and add the following public key: \n \n {public_key} \n \n"
@@ -102,7 +102,7 @@ class UserProfile(object):
                 "If the problem persists, please contact the developer team."
                 ).format(public_key=self.read_public_key())
 
-            user_error_message += "\n[" + e.__str__() + "]"
+            user_error_message += "\n\nTechnical Details:\n" + e.__str__()
             raise DatacatsError(user_error_message)
 
     def create(self, project, target_name, stream_output=None):
