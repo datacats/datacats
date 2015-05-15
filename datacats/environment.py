@@ -26,21 +26,12 @@ from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE)
 from datacats.network import wait_for_service_available, ServiceTimeout
+from datacats.error import DatacatsError
 
 WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
 DB_INIT_RETRY_DELAY = 2
 DOCKER_EXE = 'docker'
-
-
-class DatacatsError(Exception):
-    def __init__(self, message, format_args=()):
-        self.message = message
-        self.format_args = format_args
-        super(DatacatsError, self).__init__(message, format_args)
-
-    def __str__(self):
-        return self.message.format(*self.format_args)
 
 
 class Environment(object):

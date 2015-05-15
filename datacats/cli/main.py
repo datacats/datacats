@@ -37,31 +37,6 @@ import sys
 from docopt import docopt
 import pkg_resources
 
-# Before we pull in the Datacats proper, we should check if boot2docker is up, if applicable.
-# This is because checking the version in docker.py makes the program hang waiting for the daemon.
-# Unfortunately, the way we detect boot2docker is tied to talking to the Docker daemon,
-# which may or may not be up (importing it causes a hang). So, we check if a boot2docker
-# command succeeds.
-import subprocess
-try:
-    # Use an absolute path to avoid any funny business
-    # with the PATH.
-    status = subprocess.check_output(['/usr/local/bin/boot2docker', 'status']).strip()
-    if status == 'poweroff':
-        print 'boot2docker is currently not powered on.'
-        print
-        print 'If your boot2docker VM has been damaged,',
-        print 'or if this is your first time using ',
-        print 'boot2docker, please run "datacats init".'
-        print
-        print 'If you have used boot2docker before,',
-        print 'then run "boot2docker up".'
-        sys.exit(1)
-except OSError:
-    # We're on Linux, or boot2docker isn't installed.
-    pass
-
-
 from datacats.cli import create, manage, install, pull, purge, shell, deploy
 from datacats.environment import Environment, DatacatsError
 
