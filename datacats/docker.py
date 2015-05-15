@@ -60,17 +60,14 @@ def _get_docker():
                                                 stderr=devnull_f
                                                 ).strip()
             if status == 'poweroff':
-                # The extra newline at the start makes it look prettier during
-                # "datacats create" and related commands which use the .....
-                raise DatacatsError('''
-boot2docker is not powered on. Please run "boot2docker up".''')
+                raise DatacatsError('boot2docker is not powered on.'
+                                    ' Please run "boot2docker up".')
         except OSError:
             # We're on Linux, or boot2docker isn't installed.
             pass
         except subprocess.CalledProcessError:
-            raise DatacatsError('''
-You have not created your boot2docker VM. Please run "boot2docker create" to do
-so.''')
+            raise DatacatsError('You have not created your boot2docker VM. '
+                                'Please run "boot2docker create" to do so.')
 
         # Create the Docker client
         version_client = Client(version=MINIMUM_API_VERSION, **_docker_kwargs)
