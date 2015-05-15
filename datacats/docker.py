@@ -212,7 +212,7 @@ def inspect_container(name):
     :returns: container info dict or None if not found
     """
     try:
-        return _docker.inspect_container(name)
+        return _get_docker().inspect_container(name)
     except APIError as e:
         return None
 
