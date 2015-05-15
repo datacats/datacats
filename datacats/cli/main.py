@@ -4,7 +4,6 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
-
 """datacats command line interface
 
 Usage:
@@ -92,11 +91,8 @@ def _parse_arguments(args):
             help_ = True
             continue
         if a not in COMMANDS:
-            raise DatacatsError(
-                "\'{0}\' command is not recognized. \n"
-                "See \'datacats help\' for the list of"
-                " available commands".format(a)
-            )
+            raise DatacatsError("\'{0}\' command is not recognized. \n \
+          See \'datacats help\' for the list of available commands".format(a))
         command_fn = COMMANDS[a]
         break
     else:

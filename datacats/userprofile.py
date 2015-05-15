@@ -70,7 +70,7 @@ class UserProfile(object):
                          getuser(), gethostname()),
                      "-f", "/output/id_rsa"],
             rw={self.profiledir: '/output'},
-        )
+            )
 
     def test_ssh_key(self, project):
         """
@@ -86,7 +86,7 @@ class UserProfile(object):
                     SSH_CONFIG: '/etc/ssh/ssh_config',
                     self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
                 clean_up=True
-            )
+                )
             return True
         except WebCommandError as e:
             user_error_message = (
@@ -100,7 +100,7 @@ class UserProfile(object):
                 "to your profile so that datacat's server could recognize you."
                 " So maybe try that?\n"
                 "If the problem persists, please contact the developer team."
-            ).format(public_key=self.read_public_key())
+                ).format(public_key=self.read_public_key())
 
             user_error_message += "\n[" + e.__str__() + "]"
             raise DatacatsError(user_error_message)
@@ -113,13 +113,13 @@ class UserProfile(object):
             web_command(
                 command=[
                     "ssh", _project_user_host(project), "create", target_name,
-                ],
+                    ],
                 ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
                     SSH_CONFIG: '/etc/ssh/ssh_config',
                     self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
                 stream_output=stream_output,
                 clean_up=True,
-            )
+                )
             return True
         except WebCommandError:
             return False
@@ -133,12 +133,12 @@ class UserProfile(object):
                 command=[
                     "ssh", _project_user_host(project),
                     "admin_password", target_name, password,
-                ],
+                    ],
                 ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
                     SSH_CONFIG: '/etc/ssh/ssh_config',
                     self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
                 clean_up=True,
-            )
+                )
             return True
         except WebCommandError:
             return False
@@ -162,17 +162,17 @@ class UserProfile(object):
                     self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
                 stream_output=stream_output,
                 clean_up=True,
-            )
+                )
             web_command(
                 command=[
                     "ssh", _project_user_host(project), "install", target_name,
-                ],
+                    ],
                 ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
                     SSH_CONFIG: '/etc/ssh/ssh_config',
                     self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
                 stream_output=stream_output,
                 clean_up=True,
-            )
+                )
             return True
         except WebCommandError:
             return False
