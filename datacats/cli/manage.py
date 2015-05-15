@@ -69,8 +69,11 @@ Default: '.'
 """
     environment.require_data()
     environment.stop_web()
-    if opts['PORT']:
-        environment.port = int(opts['PORT'])
+    if opts['PORT'] or opts['--address'] != '127.0.0.1':
+        if opts['PORT']:
+            environment.port = int(opts['PORT'])
+        if opts['--address'] != '127.0.0.1':
+            environment.address = opts['--address']
         environment.save()
     if 'postgres' not in environment.containers_running():
         environment.stop_postgres_and_solr()
