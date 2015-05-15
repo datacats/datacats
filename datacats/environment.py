@@ -16,16 +16,16 @@ from random import SystemRandom
 from sha import sha
 from struct import unpack
 from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
-    NoOptionError, NoSectionError)
+                          NoOptionError, NoSectionError)
 
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
-    inspect_container, is_boot2docker, data_only_container, docker_host,
-    PortAllocatedError, container_logs, remove_image, WebCommandError,
-    image_exists)
+                             inspect_container, is_boot2docker, data_only_container, docker_host,
+                             PortAllocatedError, container_logs, remove_image, WebCommandError,
+                             image_exists)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
-    RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE)
+                              RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.error import DatacatsError
 
@@ -36,14 +36,16 @@ DOCKER_EXE = 'docker'
 
 
 class Environment(object):
+
     """
     DataCats environment settings object
 
     Create with Environment.new(path) or Environment.load(path)
     """
+
     def __init__(self, name, target, datadir, ckan_version=None, port=None,
-                deploy_target=None, site_url=None, always_prod=False,
-                extension_dir='ckan'):
+                 deploy_target=None, site_url=None, always_prod=False,
+                 extension_dir='ckan'):
         self.name = name
         self.target = target
         self.datadir = datadir
@@ -115,11 +117,11 @@ class Environment(object):
 
         if not valid_name(name):
             raise DatacatsError('Please choose an environment name starting'
-                ' with a letter and including only lowercase letters'
-                ' and digits')
+                                ' with a letter and including only lowercase letters'
+                                ' and digits')
         if not isdir(workdir):
             raise DatacatsError('Parent directory for environment'
-                ' does not exist')
+                                ' does not exist')
 
         require_images()
 
@@ -128,7 +130,7 @@ class Environment(object):
 
         if isdir(datadir):
             raise DatacatsError('Environment data directory {0} already exists',
-                (datadir,))
+                                (datadir,))
         if isdir(target):
             raise DatacatsError('Environment directory already exists')
 
@@ -230,7 +232,7 @@ class Environment(object):
             passwords[n.upper()] = cp.get('passwords', n)
 
         environment = cls(name, wd, datadir, ckan_version, port, deploy_target,
-        site_url=site_url, always_prod=always_prod, extension_dir=extension_dir)
+                          site_url=site_url, always_prod=always_prod, extension_dir=extension_dir)
         if passwords:
             environment.passwords = passwords
         else:
@@ -267,10 +269,10 @@ class Environment(object):
         """
         if not self.data_exists():
             raise DatacatsError('Environment datadir missing. '
-                'Try "datacats init".')
+                                'Try "datacats init".')
         if not self.data_complete():
             raise DatacatsError('Environment datadir damaged. '
-                'Try "datacats purge" followed by "datacats init".')
+                                'Try "datacats purge" followed by "datacats init".')
 
     def create_directories(self, create_project_dir=True):
         """
@@ -308,7 +310,7 @@ class Environment(object):
         """
         if is_boot2docker():
             data_only_container('datacats_venv_' + self.name,
-                ['/usr/lib/ckan'])
+                                ['/usr/lib/ckan'])
             img_id = web_command(
                 '/bin/mv /usr/lib/ckan/ /usr/lib/ckan_original',
                 image=self._preload_image(),
@@ -361,7 +363,7 @@ class Environment(object):
         # work on its data volume. see issue #5
         if is_boot2docker():
             data_only_container('datacats_pgdata_' + self.name,
-                ['/var/lib/postgresql/data'])
+                                ['/var/lib/postgresql/data'])
             rw = {}
             volumes_from = 'datacats_pgdata_' + self.name
         else:
@@ -406,7 +408,7 @@ class Environment(object):
         """
         self.run_command(
             command='/usr/lib/ckan/bin/paster make-config'
-                ' ckan /project/development.ini',
+            ' ckan /project/development.ini',
             rw_project=True,
             )
 
@@ -440,7 +442,6 @@ class Environment(object):
         ckan_extension_template(self.name, self.target)
         self.install_package_develop('ckanext-' + self.name + 'theme')
 
-
     def fix_project_permissions(self):
         """
         Reset owner of project files to the host user so they can edit,
@@ -448,7 +449,7 @@ class Environment(object):
         """
         self.run_command(
             command='/bin/chown -R --reference=/project'
-                ' /usr/lib/ckan /project',
+            ' /usr/lib/ckan /project',
             rw_venv=True,
             rw_project=True,
             )
@@ -516,7 +517,7 @@ class Environment(object):
             break
 
     def _create_run_ini(self, port, production, output='development.ini',
-            source='development.ini', override_site_url=True):
+                        source='development.ini', override_site_url=True):
         """
         Create run/development.ini in datadir with debug and site_url overridden
         and with correct db passwords inserted
@@ -538,14 +539,14 @@ class Environment(object):
             cp.set('app:main', 'ckan.site_url', site_url)
 
         cp.set('app:main', 'sqlalchemy.url',
-            'postgresql://ckan:{0}@db:5432/ckan'
-                .format(self.passwords['CKAN_PASSWORD']))
+               'postgresql://ckan:{0}@db:5432/ckan'
+               .format(self.passwords['CKAN_PASSWORD']))
         cp.set('app:main', 'ckan.datastore.read_url',
-            'postgresql://ckan_datastore_readonly:{0}@db:5432/ckan_datastore'
-                .format(self.passwords['DATASTORE_RO_PASSWORD']))
+               'postgresql://ckan_datastore_readonly:{0}@db:5432/ckan_datastore'
+               .format(self.passwords['DATASTORE_RO_PASSWORD']))
         cp.set('app:main', 'ckan.datastore.write_url',
-            'postgresql://ckan_datastore_readwrite:{0}@db:5432/ckan_datastore'
-                .format(self.passwords['DATASTORE_RW_PASSWORD']))
+               'postgresql://ckan_datastore_readwrite:{0}@db:5432/ckan_datastore'
+               .format(self.passwords['DATASTORE_RW_PASSWORD']))
         cp.set('app:main', 'solr_url', 'http://solr:8080/solr')
 
         if not isdir(self.datadir + '/run'):
@@ -574,7 +575,7 @@ class Environment(object):
                     '/project/development.ini',
                 WEB: '/scripts/web.sh'}, **ro),
             links={'datacats_solr_' + self.name: 'solr',
-                'datacats_postgres_' + self.name: 'db'},
+                   'datacats_postgres_' + self.name: 'db'},
             volumes_from=volumes_from,
             command=command,
             port_bindings={
@@ -592,10 +593,10 @@ class Environment(object):
                     self.web_address(),
                     WEB_START_TIMEOUT_SECONDS):
                 raise DatacatsError('Failed to start web container.'
-                    ' Run "datacats logs" to check the output.')
+                                    ' Run "datacats logs" to check the output.')
         except ServiceTimeout:
             raise DatacatsError('Timeout waiting for web container to start.'
-                ' Run "datacats logs" to check the output.')
+                                ' Run "datacats logs" to check the output.')
 
     def _choose_port(self):
         """
@@ -604,7 +605,7 @@ class Environment(object):
         """
         # instead of random let's base it on the name chosen
         return 5000 + unpack('Q',
-            sha(self.name.decode('ascii')).digest()[:8])[0] % 1000
+                             sha(self.name.decode('ascii')).digest()[:8])[0] % 1000
 
     def _next_port(self, port):
         """
@@ -672,8 +673,8 @@ class Environment(object):
                 out)
         self.run_command(
             command=['/bin/bash', '-c', '/usr/lib/ckan/bin/ckanapi '
-                'action user_create -i -c /project/development.ini '
-                '< /input/admin.json'],
+                     'action user_create -i -c /project/development.ini '
+                     '< /input/admin.json'],
             db_links=True,
             ro={self.datadir + '/run/admin.json': '/input/admin.json'},
             )
@@ -702,7 +703,7 @@ class Environment(object):
 
         self._create_run_ini(self.port, production=False, output='run.ini')
         self._create_run_ini(self.port, production=True, output='test.ini',
-            source='ckan/test-core.ini', override_site_url=False)
+                             source='ckan/test-core.ini', override_site_url=False)
 
         script = SHELL
         if paster:
@@ -714,7 +715,7 @@ class Environment(object):
         proxy_settings = self._proxy_settings()
         if proxy_settings:
             venv_volumes += ['-v',
-                self.datadir + '/run/proxy-environment:/etc/environment:ro']
+                             self.datadir + '/run/proxy-environment:/etc/environment:ro']
 
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
@@ -729,7 +730,8 @@ class Environment(object):
             '-v', script + ':/scripts/shell.sh:ro',
             '-v', PASTER_CD + ':/scripts/paster_cd.sh:ro',
             '-v', self.datadir + '/run/run.ini:/project/development.ini:ro',
-            '-v', self.datadir + '/run/test.ini:/project/ckan/test-core.ini:ro',
+            '-v', self.datadir +
+                '/run/test.ini:/project/ckan/test-core.ini:ro',
             '--link', 'datacats_solr_' + self.name + ':solr',
             '--link', 'datacats_postgres_' + self.name + ':db',
             '--hostname', self.name,
@@ -773,7 +775,7 @@ class Environment(object):
             )
 
     def user_run_script(self, script, args, db_links=False, rw_venv=False,
-            rw_project=False, rw=None, ro=None):
+                        rw_project=False, rw=None, ro=None):
         return self.run_command(
             command=['/scripts/run_as_user.sh', '/scripts/run.sh'] + args,
             db_links=db_links,
@@ -787,12 +789,12 @@ class Environment(object):
             )
 
     def run_command(self, command, db_links=False, rw_venv=False,
-            rw_project=False, rw=None, ro=None, clean_up=False):
+                    rw_project=False, rw=None, ro=None, clean_up=False):
 
         rw = {} if rw is None else dict(rw)
         ro = {} if ro is None else dict(ro)
 
-	ro.update(self._proxy_settings())
+        ro.update(self._proxy_settings())
 
         if is_boot2docker():
             volumes_from = 'datacats_venv_' + self.name
@@ -815,11 +817,10 @@ class Environment(object):
 
         try:
             return web_command(command=command, ro=ro, rw=rw, links=links,
-                    volumes_from=volumes_from, clean_up=clean_up)
+                               volumes_from=volumes_from, clean_up=clean_up)
         except WebCommandError as e:
             print 'Failed to run command %s. Logs are as follows:\n%s' % (e.command, e.logs)
             raise
-
 
     def purge_data(self):
         """
@@ -834,7 +835,7 @@ class Environment(object):
 
         web_command(
             command=['/scripts/purge.sh']
-                + ['/project/data/' + d for d in datadirs],
+            + ['/project/data/' + d for d in datadirs],
             ro={PURGE: '/scripts/purge.sh'},
             rw={self.datadir: '/project/data'},
             )
@@ -872,7 +873,8 @@ class Environment(object):
             no_proxy = environ.get('NO_PROXY', '')
         no_proxy = no_proxy + ',solr,db'
 
-        out = ['PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"\n']
+        out = [
+            'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"\n']
         if https_proxy is not None:
             out.append('https_proxy=' + posix_quote(https_proxy) + '\n')
             out.append('HTTPS_PROXY=' + posix_quote(https_proxy) + '\n')
@@ -897,14 +899,17 @@ def generate_db_password():
     chars = uppercase + lowercase + digits
     return ''.join(SystemRandom().choice(chars) for x in xrange(16))
 
+
 def require_images():
     """
     Raises a DatacatsError if the images required to use Datacats don't exist.
     """
     if (not image_exists('datacats/web') or
-       not image_exists('datacats/solr') or
-       not image_exists('datacats/postgres')):
-        raise DatacatsError('You do not have the needed Docker images. Please run "datacats pull"')
+            not image_exists('datacats/solr') or
+            not image_exists('datacats/postgres')):
+        raise DatacatsError(
+            'You do not have the needed Docker images. Please run "datacats pull"')
+
 
 def posix_quote(s):
     return "\\'".join("'" + p + "'" for p in s.split("'"))
