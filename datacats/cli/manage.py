@@ -37,10 +37,10 @@ Usage:
   datacats start -r [-b] [--address=IP] [ENVIRONMENT]
 
 Options:
+  --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
-  --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -59,10 +59,10 @@ Usage:
   datacats reload -r [-b] [--address=IP] [ENVIRONMENT]
 
 Options:
+  --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
-  --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
