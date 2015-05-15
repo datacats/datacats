@@ -65,7 +65,7 @@ class Environment(object):
         cp.set('datacats', 'name', self.name)
         cp.set('datacats', 'ckan_version', self.ckan_version)
         cp.set('datacats', 'port', str(self.port))
-        cp.set('datacats', 'address', self.address)
+        cp.set('datacats', 'address', self.address or '127.0.0.1')
 
         if self.deploy_target:
             cp.add_section('deploy')
@@ -101,7 +101,7 @@ class Environment(object):
             pdir.write(self.target)
 
     @classmethod
-    def new(cls, path, ckan_version, port=None):
+    def new(cls, path, ckan_version, port=None, address=None):
         """
         Return a Environment object with settings for a new project.
         No directories or containers are created by this call.
@@ -668,8 +668,8 @@ class Environment(object):
         Return the url of the web server or None if not running
         """
         port = self._current_web_port()
-        address = self.address
-        if port is None or address is None:
+        address = self.address or '127.0.0.1'
+        if port is None:
             return None
         return 'http://{0}:{1}/'.format(address if address else docker_host(), port)
 

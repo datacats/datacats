@@ -106,6 +106,7 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
     environment_dir = opts['ENVIRONMENT_DIR']
     port = opts['PORT']
+    address = opts['--address']
     start_web = not opts['--image-only']
     create_sysadmin = not opts['--no-sysadmin']
     environment_dir = abspath(environment_dir or '.')
@@ -115,6 +116,7 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         environment = Environment.load(environment_dir)
         if port:
             environment.port = int(port)
+        environment.address = address
     except DatacatsError as e:
         print e
         return 1
