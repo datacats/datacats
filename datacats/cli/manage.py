@@ -76,7 +76,9 @@ Default: '.'
         environment.stop_postgres_and_solr()
         environment.start_postgres_and_solr()
 
-    environment.start_web(opts['--address'], opts['--production'])
+    environment.start_web(
+                          production=opts['--production'],
+                          address=opts['--address'])
     write('Starting web server at {0} ...'.format(environment.web_address()))
     if opts['--background']:
         write('\n')

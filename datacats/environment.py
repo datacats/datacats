@@ -489,7 +489,7 @@ class Environment(object):
             'DATASTORE_RW_PASSWORD': generate_db_password(),
             }
 
-    def start_web(self, host='127.0.0.1', production=False):
+    def start_web(self, production=False, address='127.0.0.1'):
         """
         Start the apache server or paster serve
 
@@ -503,7 +503,7 @@ class Environment(object):
         if not production:
             command = ['/scripts/web.sh']
 
-        if host != '127.0.0.1' and is_boot2docker():
+        if address != '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify host on boot2docker.')
 
         # XXX nasty hack, remove this once we have a lessc command
@@ -517,7 +517,7 @@ class Environment(object):
         while True:
             self._create_run_ini(port, production)
             try:
-                self._run_web_container(port, command, host)
+                self._run_web_container(port, command, address)
             except PortAllocatedError:
                 port = self._next_port(port)
                 continue
@@ -561,7 +561,7 @@ class Environment(object):
         with open(self.datadir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command, host='127.0.0.1'):
+    def _run_web_container(self, port, command, address='127.0.0.1'):
         """
         Start web container on port with command
         """
@@ -586,7 +586,7 @@ class Environment(object):
             volumes_from=volumes_from,
             command=command,
             port_bindings={
-                5000: port if is_boot2docker() else (host, port)},
+                5000: port if is_boot2docker() else (address, port)},
             )
 
     def wait_for_web_available(self):

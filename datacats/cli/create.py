@@ -20,7 +20,7 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bin] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
+  datacats create [-bn] [-i|--address=IP] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
 
 Options:
   --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION, defaults to
@@ -28,6 +28,7 @@ Options:
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
+  --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
@@ -39,10 +40,11 @@ part of this path will be used as the environment name.
         start_web=not opts['--image-only'],
         create_sysadmin=not opts['--no-sysadmin'],
         ckan_version=opts['--ckan'],
+        address=opts['--address']
         )
 
 def create_environment(environment_dir, port, ckan_version, create_skin,
-        start_web, create_sysadmin):
+        start_web, create_sysadmin, address):
     try:
         # FIXME: only 2.3 preload supported at the moment
         environment = Environment.new(environment_dir, '2.3', port)
@@ -79,18 +81,19 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
         write('.')
     write('\n')
 
-    return finish_init(environment, start_web, create_sysadmin)
+    return finish_init(environment, start_web, create_sysadmin, address)
 
 
 def init(opts):
     """Initialize a purged environment or copied environment directory
 
 Usage:
-  datacats init [-in] [ENVIRONMENT_DIR [PORT]]
+  datacats init [-n] [-i|--address=IP] [ENVIRONMENT_DIR [PORT]]
 
 Options:
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
+  --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
@@ -98,8 +101,9 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     port = opts['PORT']
     start_web = not opts['--image-only']
     create_sysadmin = not opts['--no-sysadmin']
-
     environment_dir = abspath(environment_dir or '.')
+    address = opts['--address']
+
     try:
         environment = Environment.load(environment_dir)
         if port:
@@ -124,10 +128,10 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         write('.')
     write('\n')
 
-    return finish_init(environment, start_web, create_sysadmin)
+    return finish_init(environment, start_web, create_sysadmin, address)
 
 
-def finish_init(environment, start_web, create_sysadmin):
+def finish_init(environment, start_web, create_sysadmin, address):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """
@@ -138,7 +142,7 @@ def finish_init(environment, start_web, create_sysadmin):
     write('\n')
 
     if start_web:
-        environment.start_web()
+        environment.start_web(address=address)
         write('Starting web server at {0} ...\n'.format(
             environment.web_address()))
 
