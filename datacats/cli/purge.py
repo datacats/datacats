@@ -13,10 +13,11 @@ def purge(opts):
     """Purge environment database and uploaded files
 
 Usage:
-  datacats purge [--delete-environment] [ENVIRONMENT]
+  datacats purge [-y] [--delete-environment] [ENVIRONMENT]
 
 Options:
   --delete-environment   Delete environment directory as well as its data
+  -y --yes               Respond yes to all prompts (i.e. force)
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -25,6 +26,15 @@ Default: '.'
         environment = Environment.load(opts['ENVIRONMENT'])
     except DatacatsError as e:
         environment = Environment.load(opts['ENVIRONMENT'], data_only=True)
+
+    if not opts['--yes']:
+        inp = None
+        # Nothing (default, n), y and n are our valid inputs
+        while inp is None or inp.lower()[:1] not in ['y', 'n', '']:
+            inp = raw_input('datacats purge will delete all stored data. Are you sure? [n] (y/n): ')
+
+        if inp.lower()[:1] == 'n' or not inp:
+            raise DatacatsError('Aborting purge by user request.')
 
     environment.stop_web()
     environment.stop_postgres_and_solr()

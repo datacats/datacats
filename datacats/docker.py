@@ -6,11 +6,17 @@
 
 from __future__ import absolute_import
 
-from os import environ
+from os import environ, devnull
 import json
+import subprocess
 from urlparse import urlparse
 from functools import cmp_to_key
 from warnings import warn
+
+# XXX our fixes on top of fixes to work with docker-py and docker
+# incompatibilities are approaching the level of superstition.
+# let's hope docker calms down a bit so we can clean this out
+# in the future.
 
 from docker import Client
 try:
@@ -21,6 +27,9 @@ except ImportError:
     from docker.client import DEFAULT_DOCKER_API_VERSION
 from docker.utils import kwargs_from_env, compare_version, create_host_config
 from docker.errors import APIError
+from requests import ConnectionError
+
+from datacats.error import DatacatsError
 
 MINIMUM_API_VERSION = '1.16'
 
@@ -30,12 +39,50 @@ def get_api_version(*versions):
         return -1 * compare_version(a, b)
     return min(versions, key=cmp_to_key(cmp))
 
-_docker_kwargs = kwargs_from_env()
-_version_client = Client(version=MINIMUM_API_VERSION, **_docker_kwargs)
-_version = get_api_version(DEFAULT_DOCKER_API_VERSION,
-    _version_client.version()['ApiVersion'])
+# Lazy instantiation of _docker
+_docker = None
 
-_docker = Client(version=_version, **_docker_kwargs)
+_docker_kwargs = kwargs_from_env()
+
+
+def _get_docker():
+    global _docker
+    if not _docker:
+        # First, check if boot2docker is powered on.
+        try:
+            # Use an absolute path to avoid any funny business
+            # with the PATH.
+            with open(devnull, 'w') as devnull_f:
+                status = subprocess.check_output(
+                                                ['boot2docker', 'status'],
+                                                # Don't show boot2docker message
+                                                # to the user... it's ugly!
+                                                stderr=devnull_f
+                                                ).strip()
+            if status == 'poweroff':
+                raise DatacatsError('boot2docker is not powered on.'
+                                    ' Please run "boot2docker up".')
+        except OSError:
+            # We're on Linux, or boot2docker isn't installed.
+            pass
+        except subprocess.CalledProcessError:
+            raise DatacatsError('You have not created your boot2docker VM. '
+                                'Please run "boot2docker create" to do so.')
+
+        # Create the Docker client
+        version_client = Client(version=MINIMUM_API_VERSION, **_docker_kwargs)
+        try:
+            api_version = version_client.version()['ApiVersion']
+        except ConnectionError:
+            # workaround for connection issue when old version specified
+            # on some clients
+            version_client = Client(**_docker_kwargs)
+            api_version = _version_client.version()['ApiVersion']
+
+        version = get_api_version(DEFAULT_DOCKER_API_VERSION, api_version)
+        _docker = Client(version=version, **_docker_kwargs)
+
+    return _docker
 
 class WebCommandError(Exception):
     def __init__(self, command, container_id, logs):
@@ -55,7 +102,7 @@ _boot2docker = None
 def is_boot2docker():
     global _boot2docker
     if _boot2docker is None:
-        _boot2docker = 'Boot2Docker' in _docker.info()['OperatingSystem']
+        _boot2docker = 'Boot2Docker' in _get_docker().info()['OperatingSystem']
     return _boot2docker
 
 def docker_host():
@@ -106,30 +153,30 @@ def web_command(command, ro=None, rw=None, links=None,
     :returns: image id if commit=True
     """
     binds = ro_rw_to_binds(ro, rw)
-    c = _docker.create_container(
+    c = _get_docker().create_container(
         image=image,
         command=command,
         volumes=binds_to_volumes(binds),
         detach=False,
         host_config=create_host_config(binds=binds))
-    _docker.start(
+    _get_docker().start(
         container=c['Id'],
         links=links,
         binds=binds,
         volumes_from=volumes_from)
     if stream_output:
-        for output in _docker.attach(
+        for output in _get_docker().attach(
                 c['Id'], stdout=True, stderr=True, stream=True):
             stream_output.write(output)
-    if _docker.wait(c['Id']):
+    if _get_docker().wait(c['Id']):
         # Before the (potential) cleanup, grab the logs!
-        logs = _docker.logs(c['Id'])
+        logs = _get_docker().logs(c['Id'])
 
         if clean_up:
             remove_container(c['Id'])
         raise WebCommandError(command, c['Id'][:12], logs)
     if commit:
-        rval = _docker.commit(c['Id'])
+        rval = _get_docker().commit(c['Id'])
     if not remove_container(c['Id']):
         # circle ci doesn't let us remove containers, quiet the warnings
         if not environ.get('CIRCLECI', False):
@@ -149,7 +196,7 @@ def run_container(name, image, command=None, environment=None,
     requested port.
     """
     binds = ro_rw_to_binds(ro, rw)
-    c = _docker.create_container(
+    c = _get_docker().create_container(
         name=name,
         image=image,
         command=command,
@@ -161,7 +208,7 @@ def run_container(name, image, command=None, environment=None,
         ports=list(port_bindings) if port_bindings else None,
         host_config=create_host_config(binds=binds))
     try:
-        _docker.start(
+        _get_docker().start(
             container=c['Id'],
             links=links,
             binds=binds,
@@ -170,12 +217,22 @@ def run_container(name, image, command=None, environment=None,
     except APIError as e:
         if 'address already in use' in e.explanation:
             try:
-                _docker.remove_container(name, force=True)
+                _get_docker().remove_container(name, force=True)
             except APIError:
                 pass
             raise PortAllocatedError()
         raise
     return c
+
+def image_exists(name):
+    """
+    Queries Docker about if a particular image has been downloaded.
+
+    :param name: The name of the image to check for.
+    """
+    # This returns a list of container dicts matching (exactly)
+    # the name `name`.
+    return bool(_get_docker().images(name=name))
 
 def remove_container(name, force=False):
     """
@@ -186,11 +243,11 @@ def remove_container(name, force=False):
 
     try:
         if not force:
-            _docker.stop(name)
+            _get_docker().stop(name)
     except APIError as e:
         pass
     try:
-        _docker.remove_container(name, force=True)
+        _get_docker().remove_container(name, force=True)
         return True
     except APIError as e:
         return False
@@ -202,7 +259,7 @@ def inspect_container(name):
     :returns: container info dict or None if not found
     """
     try:
-        return _docker.inspect_container(name)
+        return _get_docker().inspect_container(name)
     except APIError as e:
         return None
 
@@ -211,13 +268,13 @@ def container_logs(name, tail, follow, timestamps):
     Wrapper for docker logs, attach commands.
     """
     if follow:
-        return _docker.attach(
+        return _get_docker().attach(
             name,
             stdout=True,
             stderr=True,
             stream=True
             )
-    return _docker.logs(
+    return _get_docker().logs(
         name,
         stdout=True,
         stderr=True,
@@ -229,7 +286,7 @@ def pull_stream(image):
     """
     Return generator of pull status objects
     """
-    return (json.loads(s) for s in _docker.pull(image, stream=True))
+    return (json.loads(s) for s in _get_docker().pull(image, stream=True))
 
 def data_only_container(name, volumes):
     """
@@ -241,7 +298,7 @@ def data_only_container(name, volumes):
     info = inspect_container(name)
     if info:
         return
-    c = _docker.create_container(
+    c = _get_docker().create_container(
         name=name,
         image='datacats/postgres', # any image will do
         command='true',
@@ -249,4 +306,5 @@ def data_only_container(name, volumes):
         detach=True)
     return c
 
-remove_image = _docker.remove_image
+def remove_image(image, force=False, noprune=False):
+    _get_docker().remove_image(image, force=force, noprune=noprune)

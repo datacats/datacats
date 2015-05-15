@@ -60,15 +60,30 @@ COMMANDS = {
     'less': less.less
 }
 
-def option_not_yet_implemented(opts, name):
-    if name not in opts or not opts[name]:
-        return
-    print "Option {0} is not yet implemented.".format(name)
-    sys.exit(1)
 
 def main():
-    args = sys.argv[1:]
-    help_ = False
+    """
+    The main entry point for datacats cli tool
+
+    (as defined in setup.py's entry_points)
+    It parses the cli arguments for corresponding options
+    and runs the corresponding command
+    """
+    try:
+        command_fn, opts = _parse_arguments(sys.argv[1:])
+        # purge handles loading differently
+        if command_fn != purge.purge and 'ENVIRONMENT' in opts:
+            environment = Environment.load(opts['ENVIRONMENT'] or '.')
+            return command_fn(environment, opts)
+        return command_fn(opts)
+    except DatacatsError as e:
+        print e
+        sys.exit(1)
+
+
+def _parse_arguments(args):
+    help_ = False  # flag for only showing the help message
+
     # Find subcommand without docopt so that subcommand options may appear
     # anywhere
     for i, a in enumerate(args):
@@ -77,15 +92,13 @@ def main():
         if a == 'help':
             help_ = True
             continue
-        command_fn = COMMANDS.get(a)
+        if a not in COMMANDS:
+            raise DatacatsError("\'{0}\' command is not recognized. \n \
+          See \'datacats help\' for the list of available commands".format(a))
+        command_fn = COMMANDS[a]
         break
     else:
-        if help_:
-            args = ['--help']
-        return docopt(__doc__, args,
-            version=pkg_resources.require("datacats")[0].version)
-    if not command_fn:
-        return docopt(__doc__, ['--help'])
+        return _intro_message, {}
 
     # shell, paster are special: options might belong to the command being
     # executed
@@ -104,17 +117,18 @@ def main():
     if help_:
         args.insert(1, '--help')
 
-    try:
-        opts = docopt(command_fn.__doc__, args)
+    opts = docopt(command_fn.__doc__, args)
+    _option_not_yet_implemented(opts, '--ckan')
+    _option_not_yet_implemented(opts, '--remote')
+    return command_fn, opts
 
-        option_not_yet_implemented(opts, '--ckan')
-        option_not_yet_implemented(opts, '--remote')
 
-        # purge handles loading differently
-        if command_fn != purge.purge and 'ENVIRONMENT' in opts:
-            environment = Environment.load(opts['ENVIRONMENT'] or '.')
-            return command_fn(environment, opts)
-        return command_fn(opts)
-    except DatacatsError as e:
-        print e
-        return 1
+def _option_not_yet_implemented(opts, name):
+    if name not in opts or not opts[name]:
+        return
+    raise DatacatsError(
+        "\'{0}\' option is not implemented yet. \n".format(name))
+
+
+def _intro_message(opts):
+    return docopt(__doc__, ['--help'])

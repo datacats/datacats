@@ -17,6 +17,6 @@ test:
     - datacats create site2 -n
     - "[ -d site2/ckanext-site2theme ]"
     - '[ "$(echo `datacats list`)" == "site1 site2" ]'
-    - datacats purge site1
+    - datacats purge -y site1
     - '[ "$(echo `datacats list`)" == "site2" ]'
     - datacats init site1 -n

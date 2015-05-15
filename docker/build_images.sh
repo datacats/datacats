@@ -8,7 +8,7 @@
 
 set -e
 
-HERE="$(dirname $(readlink -f $0))"
+HERE="$(cd "$(dirname "$(dirname "$0")")" && pwd)"
 
 docker build -t datacats/solr solr/
 docker build -t datacats/postgres postgres/
