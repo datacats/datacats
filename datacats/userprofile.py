@@ -12,13 +12,18 @@ from getpass import getuser
 
 from datacats.docker import web_command, WebCommandError
 from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG
+from datacats.environment import DatacatsError
+
 
 DATACATS_USER_HOST = 'datacats@command.datacats.com'
 
+
 class UserProfile(object):
+
     """
     DataCats user profile settings object
     """
+
     def __init__(self):
         self.profiledir = expanduser('~/.datacats/user-profile')
         config = self.profiledir + '/config'
@@ -30,6 +35,13 @@ class UserProfile(object):
         else:
             self.ssh_private_key = None
             self.ssh_public_key = None
+
+    def read_public_key(self):
+        """
+        Read public key from file and reuturn as a string
+        """
+        with open(self.ssh_public_key) as pub_key:
+            return pub_key.read()
 
     def save(self):
         """
@@ -54,8 +66,9 @@ class UserProfile(object):
         """
         web_command(
             command=["ssh-keygen", "-q", "-t", "rsa", "-N", "", "-C",
-                "datacats generated {0}@{1}".format(getuser(), gethostname()),
-                "-f", "/output/id_rsa"],
+                     "datacats generated {0}@{1}".format(
+                         getuser(), gethostname()),
+                     "-f", "/output/id_rsa"],
             rw={self.profiledir: '/output'},
             )
 
@@ -66,8 +79,8 @@ class UserProfile(object):
         try:
             web_command(
                 command=["ssh",
-                    _project_user_host(project),
-                    'test'],
+                         _project_user_host(project),
+                         'test'],
                 ro={
                     KNOWN_HOSTS: '/root/.ssh/known_hosts',
                     SSH_CONFIG: '/etc/ssh/ssh_config',
@@ -75,8 +88,22 @@ class UserProfile(object):
                 clean_up=True
                 )
             return True
-        except WebCommandError:
-            return False
+        except WebCommandError as e:
+            user_error_message = (
+                "Your ssh key "
+                "(which is an equivalent of your password so"
+                " that datacats.io could recognize you)"
+                "does not seem to be recognized by the datacats.io server.\n \n"
+                "Most likely it is because you need to go to"
+                " www.datacats.com/account/key"
+                " and add the following public key: \n \n {public_key} \n \n"
+                "to your profile so that datacat's server could recognize you."
+                " So maybe try that?\n"
+                "If the problem persists, please contact the developer team."
+                ).format(public_key=self.read_public_key())
+
+            user_error_message += "\n[" + e.__str__() + "]"
+            raise DatacatsError(user_error_message)
 
     def create(self, project, target_name, stream_output=None):
         """
@@ -116,7 +143,6 @@ class UserProfile(object):
         except WebCommandError:
             return False
 
-
     def deploy(self, project, target_name, stream_output=None):
         """
         Return True if deployment was successful
@@ -151,8 +177,8 @@ class UserProfile(object):
         except WebCommandError:
             return False
 
+
 def _project_user_host(project):
     if project.deploy_target is None:
         return DATACATS_USER_HOST
     return project.deploy_target
-
