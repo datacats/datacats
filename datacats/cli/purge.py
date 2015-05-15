@@ -30,10 +30,10 @@ Default: '.'
     if not opts['--yes']:
         inp = None
         # Nothing (default, n), y and n are our valid inputs
-        while inp not in ['y', 'n', '']:
+        while inp is None or inp.lower()[:1] not in ['y', 'n', '']:
             inp = raw_input('datacats purge will delete all stored data. Are you sure? [n] (y/n): ')
 
-        if inp == 'n' or not inp:
+        if inp.lower()[:1] == 'n' or not inp:
             raise DatacatsError('Aborting purge by user request.')
 
     environment.stop_web()
