@@ -9,10 +9,11 @@
 from setuptools import setup
 import sys
 
-install_requires=[
+install_requires = [
     'setuptools',
     'docopt',
     'docker-py>=1.1.0',
+    'clint',  # to output colored text to terminal
     'requests>=2.5.2',  # help with docker-py requirement
     'lockfile'
 ]
@@ -36,9 +37,8 @@ setup(
     include_package_data=True,
     test_suite='datacats.tests',
     zip_safe=False,
-    entry_points = """
+    entry_points="""
         [console_scripts]
         datacats=datacats.cli.main:main
         """,
     )
-

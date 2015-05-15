@@ -33,6 +33,7 @@ from datacats.error import DatacatsError
 
 MINIMUM_API_VERSION = '1.16'
 
+
 def get_api_version(*versions):
     # compare_version is backwards
     def cmp(a, b):
@@ -54,11 +55,11 @@ def _get_docker():
             # with the PATH.
             with open(devnull, 'w') as devnull_f:
                 status = subprocess.check_output(
-                                                ['boot2docker', 'status'],
-                                                # Don't show boot2docker message
-                                                # to the user... it's ugly!
-                                                stderr=devnull_f
-                                                ).strip()
+                    ['boot2docker', 'status'],
+                    # Don't show boot2docker message
+                    # to the user... it's ugly!
+                    stderr=devnull_f
+                    ).strip()
             if status == 'poweroff':
                 raise DatacatsError('boot2docker is not powered on.'
                                     ' Please run "boot2docker up".')
@@ -84,26 +85,35 @@ def _get_docker():
 
     return _docker
 
+
 class WebCommandError(Exception):
+
     def __init__(self, command, container_id, logs):
         self.command = command
         self.container_id = container_id
         self.logs = logs
 
     def __str__(self):
-        return ('Command failed: {0}\n  View output:'
-            ' docker logs {1}\n  Remove stopped container:'
-            ' docker rm {1}'.format(self.command, self.container_id))
+        return '~' * 10 + \
+            ('\nSSH command to remote server failed\n'
+             '    Command: {0}\n'
+             '    Docker Error Log:\n'
+             '    {1}\n').format(self.command, self.logs, self.container_id) + \
+            '~' * 10
+
 
 class PortAllocatedError(Exception):
     pass
 
 _boot2docker = None
+
+
 def is_boot2docker():
     global _boot2docker
     if _boot2docker is None:
         _boot2docker = 'Boot2Docker' in _get_docker().info()['OperatingSystem']
     return _boot2docker
+
 
 def docker_host():
     url = _docker_kwargs.get('base_url')
@@ -127,6 +137,7 @@ def ro_rw_to_binds(ro, rw):
             out[localdir] = {'bind': binddir, 'ro': False}
     return out
 
+
 def binds_to_volumes(volumes):
     """
     Return the target 'bind' dirs of volumnes from a volumes dict
@@ -134,9 +145,10 @@ def binds_to_volumes(volumes):
     """
     return [v['bind'] for v in volumes.itervalues()]
 
+
 def web_command(command, ro=None, rw=None, links=None,
-        image='datacats/web', volumes_from=None, commit=False,
-        clean_up=False, stream_output=None):
+                image='datacats/web', volumes_from=None, commit=False,
+                clean_up=False, stream_output=None):
     """
     Run a single command in a web image optionally preloaded with the ckan
     source and virtual envrionment.
@@ -185,9 +197,10 @@ def web_command(command, ro=None, rw=None, links=None,
     if commit:
         return rval['Id']
 
+
 def run_container(name, image, command=None, environment=None,
-        ro=None, rw=None, links=None, detach=True, volumes_from=None,
-        port_bindings=None):
+                  ro=None, rw=None, links=None, detach=True, volumes_from=None,
+                  port_bindings=None):
     """
     Wrapper for docker create_container, start calls
 
@@ -238,6 +251,8 @@ def image_exists(name):
     # the name `name`.
     return bool(_get_docker().images(name=name))
 
+
+
 def remove_container(name, force=False):
     """
     Wrapper for docker remove_container
@@ -256,6 +271,7 @@ def remove_container(name, force=False):
     except APIError as e:
         return False
 
+
 def inspect_container(name):
     """
     Wrapper for docker inspect_container
@@ -266,6 +282,7 @@ def inspect_container(name):
         return _get_docker().inspect_container(name)
     except APIError as e:
         return None
+
 
 def container_logs(name, tail, follow, timestamps):
     """
@@ -278,19 +295,22 @@ def container_logs(name, tail, follow, timestamps):
             stderr=True,
             stream=True
             )
-    return _get_docker().logs(
+
+    return _docker.logs(
         name,
         stdout=True,
         stderr=True,
         tail=tail,
         timestamps=timestamps,
-        )
+    )
+
 
 def pull_stream(image):
     """
     Return generator of pull status objects
     """
     return (json.loads(s) for s in _get_docker().pull(image, stream=True))
+
 
 def data_only_container(name, volumes):
     """
@@ -304,11 +324,12 @@ def data_only_container(name, volumes):
         return
     c = _get_docker().create_container(
         name=name,
-        image='datacats/postgres', # any image will do
+        image='datacats/postgres',  # any image will do
         command='true',
         volumes=volumes,
         detach=True)
     return c
+
 
 def remove_image(image, force=False, noprune=False):
     _get_docker().remove_image(image, force=force, noprune=noprune)
