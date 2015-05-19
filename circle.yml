@@ -6,6 +6,7 @@ dependencies:
     - datacats pull
 test:
   override:
+    - pip install -r requirements_test.txt 
     - python setup.py test
     - datacats create site1 -bn
     - "[ ! -d site1/ckanext-site1theme ]"
