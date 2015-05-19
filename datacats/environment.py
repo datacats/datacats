@@ -751,6 +751,16 @@ class Environment(object):
         except TypeError:
             return None
 
+    def fully_running(self):
+        """
+        Returns true iff the environment is fully up and functioning.
+        Returns False otherwise.
+        """
+        running = self.containers_running()
+        return ('postgres' in running and
+                'solr' in running and
+                'web' in running)
+
     def containers_running(self):
         """
         Return a list including 0 or more of ['web', 'postgres', 'solr']
@@ -773,7 +783,7 @@ class Environment(object):
         address = self.address or '127.0.0.1'
         if port is None:
             return None
-        return 'http://{0}:{1}/'.format(address if address else docker_host(), port)
+        return 'http://{0}:{1}/'.format(address if address and not is_boot2docker() else docker_host(), port)
 
     def create_admin_set_password(self, password):
         """

@@ -48,10 +48,11 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.require_data()
-    address = environment.web_address()
-    if address is not None:
-        print 'Already running at {0}'.format(address)
+
+    if environment.fully_running():
+        print 'Already running at {0}'.format(environment.web_address())
         return
+
     reload_(environment, opts)
 def reload_(environment, opts):
     """Reload environment source and configuration
