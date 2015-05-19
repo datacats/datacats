@@ -25,7 +25,7 @@ from datacats.docker import (web_command, run_container, remove_container,
                              image_exists)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
-    RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE, 
+    RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
     COMPILE_LESS)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.error import DatacatsError
@@ -884,9 +884,9 @@ class Environment(object):
 
     def compile_less(self):
         c = run_container(
-                name='datacats_' + self.name + '_lessc', image='datacats/lessc',
-                rw={self.target: '/project/target'},
-                ro={COMPILE_LESS: '/project/compile_less.sh'})
+            name='datacats_' + self.name + '_lessc', image='datacats/lessc',
+            rw={self.target: '/project/target'},
+            ro={COMPILE_LESS: '/project/compile_less.sh'})
         remove_container(c)
 
     def _proxy_settings(self):
