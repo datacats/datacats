@@ -8,6 +8,7 @@ from os import makedirs
 from os.path import dirname
 from shutil import copyfile
 
+
 def ckan_extension_template(name, target):
     """
     Create ckanext-(name) in target directory.
@@ -116,10 +117,12 @@ PROMOTED_SNIPPET = '''{% set intro = g.site_intro_text %}
 
   {% block home_image %}
     <section class="featured media-overlay hidden-phone">
-      <h2 class="media-heading">{% block home_image_caption %}{{ _("Feature datasets here") }}{% endblock %}</h2>
+      <h2 class="media-heading">{% block home_image_caption %}{{ _("Feature \
+datasets here") }}{% endblock %}</h2>
       {% block home_image_content %}
         <a class="media-image" href="#">
-          <img src="{{ h.url_for_static('/datacats/chart.png') }}" alt="Example chart" width="420" height="220" />
+          <img src="{{ h.url_for_static('/datacats/chart.png') }}" \
+alt="Example chart" width="420" height="220" />
         </a>
       {% endblock %}
     </section>
@@ -135,7 +138,9 @@ FOOTER_HTML = '''{% ckan_extends %}
     .ckan-footer-logo {margin: 2px 0 0 120px}
     .datacats-footer-logo {margin: -43px 0 0 0}
   </style>
-  <p>{% trans %}<strong>Powered by</strong> <a class="hide-text ckan-footer-logo" href="http://ckan.org">CKAN</a>{% endtrans %}
-  <img class="datacats-footer-logo" src="{{ h.url_for_static('/datacats/datacats-footer.png') }}"/></p>
+  <p>{% trans %}<strong>Powered by</strong> <a class="hide-text ckan-footer-logo"\
+href="http://ckan.org">CKAN</a>{% endtrans %}
+  <img class="datacats-footer-logo" src="{{ \
+h.url_for_static('/datacats/datacats-footer.png') }}"/></p>
 {% endblock %}
 '''

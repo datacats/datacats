@@ -6,6 +6,7 @@
 
 from datacats.environment import Environment
 
+
 def shell(environment, opts):
     """Run a command or interactive shell within this environment
 

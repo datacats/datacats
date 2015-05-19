@@ -9,9 +9,11 @@ from os.path import expanduser
 import webbrowser
 import sys
 
+
 def write(s):
     sys.stdout.write(s)
     sys.stdout.flush()
+
 
 def stop(environment, opts):
     """Stop serving environment and remove all its containers
@@ -27,6 +29,7 @@ Default: '.'
 """
     environment.stop_web()
     environment.stop_postgres_and_solr()
+
 
 def start(environment, opts):
     """Create containers and start serving environment
@@ -51,6 +54,8 @@ Default: '.'
         return
 
     reload_(environment, opts)
+
+
 def reload_(environment, opts):
     """Reload environment source and configuration
 
@@ -80,8 +85,8 @@ Default: '.'
         environment.start_postgres_and_solr()
 
     environment.start_web(
-                          production=opts['--production'],
-                          address=opts['--address'])
+        production=opts['--production'],
+        address=opts['--address'])
     write('Starting web server at {0} ...'.format(environment.web_address()))
     if opts['--background']:
         write('\n')
@@ -91,6 +96,7 @@ Default: '.'
         environment.wait_for_web_available()
     finally:
         write('\n')
+
 
 def info(environment, opts):
     """Display information about environment and running containers
@@ -126,6 +132,7 @@ Default: '.'
         return
     print '    Available at: ' + addr
 
+
 def list_(opts):
     """List all environments for this user
 
@@ -136,6 +143,7 @@ Usage:
         if p == 'user-profile':
             continue
         print p
+
 
 def logs(environment, opts):
     """Display or follow container logs
@@ -173,6 +181,7 @@ Default: '.'
             write(message)
     except KeyboardInterrupt:
         print
+
 
 def open_(environment, opts):
     """Open web browser window to this environment

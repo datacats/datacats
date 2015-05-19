@@ -16,6 +16,7 @@ IMAGES = [
     'datacats/solr',
     ]
 
+
 def pull(opts):
     """Download or update required datacats docker images
 
@@ -23,7 +24,7 @@ Usage:
   datacats pull
 """
     for i in IMAGES:
-        sys.stdout.write('Pulling image '+ i)
+        sys.stdout.write('Pulling image ' + i)
         sys.stdout.flush()
         for s in pull_stream(i):
             if 'status' not in s:

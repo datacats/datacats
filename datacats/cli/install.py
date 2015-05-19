@@ -10,9 +10,11 @@ from os.path import isdir, exists
 
 from datacats.cli import manage
 
+
 def write(s):
     sys.stdout.write(s)
     sys.stdout.flush()
+
 
 def install(environment, opts):
     """Install or reinstall Python packages within this environment
@@ -35,6 +37,7 @@ Default: '.'
             '--production': False,
             'PORT': None,
             '--background': False})
+
 
 def install_all(environment, clean):
     srcdirs = set()

@@ -248,7 +248,6 @@ def image_exists(name):
     return bool(_get_docker().images(name=name))
 
 
-
 def remove_container(name, force=False):
     """
     Wrapper for docker remove_container

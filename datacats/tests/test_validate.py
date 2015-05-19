@@ -8,6 +8,7 @@ from unittest import TestCase
 
 from datacats.validate import valid_name, valid_deploy_name
 
+
 class TestValidate(TestCase):
     def test_good_name(self):
         self.assertTrue(valid_name('copper'))
