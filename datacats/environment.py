@@ -48,7 +48,7 @@ class Environment(object):
 
     def __init__(self, name, target, datadir, child_name, ckan_version=None,
                  port=None, deploy_target=None, site_url=None,
-                 always_prod=False, extension_dir='ckan'):
+                 always_prod=False, extension_dir='ckan', address=None):
         self.name = name
         self.target = target
         self.datadir = datadir
@@ -58,6 +58,7 @@ class Environment(object):
         self.child_name = child_name
         self.childdir = join(datadir, 'children', child_name)
         self.port = int(port if port else self._choose_port())
+        self.address = address
         self.deploy_target = deploy_target
         self.site_url = site_url
         self.always_prod = always_prod
@@ -95,6 +96,7 @@ class Environment(object):
 
         cp.add_section(section_name)
         cp.set(section_name, 'port', str(self.port))
+        cp.set(section_name, 'address', self.address or '127.0.0.1')
 
         if self.site_url:
             cp.set(section_name, 'site_url', self.site_url)
@@ -149,7 +151,7 @@ class Environment(object):
             pdir.write(self.target)
 
     @classmethod
-    def new(cls, path, ckan_version, child_name, port=None):
+    def new(cls, path, ckan_version, child_name, port=None, address=None):
         """
         Return a Environment object with settings for a new project.
         No directories or containers are created by this call.
@@ -279,6 +281,10 @@ class Environment(object):
         except (NoOptionError, NoSectionError):
             port = None
         try:
+            address = cp.get(child_section, 'address')
+        except (NoOptionError, NoSectionError):
+            address = None
+        try:
             site_url = cp.get(child_section, 'site_url')
         except (NoOptionError, NoSectionError):
             site_url = None
@@ -307,8 +313,8 @@ class Environment(object):
             passwords[n.upper()] = cp.get('passwords', n)
 
         environment = cls(name, wd, datadir, child_name, ckan_version, port, deploy_target,
-                          site_url=site_url, always_prod=always_prod, extension_dir=extension_dir)
-
+                          site_url=site_url, always_prod=always_prod, address=address,
+                          extension_dir=extension_dir)
         if passwords:
             environment.passwords = passwords
         else:
@@ -581,11 +587,12 @@ class Environment(object):
             'BEAKER_SESSION_SECRET': generate_password(),
             }
 
-    def start_web(self, production=False):
+    def start_web(self, production=False, address='127.0.0.1'):
         """
         Start the apache server or paster serve
 
         :param production: True for apache, False for paster serve + debug on
+        :param address: On Linux, the address to serve from (can be 0.0.0.0 for listening on all addresses)
         """
         port = self.port
         command = None
@@ -593,6 +600,9 @@ class Environment(object):
         production = production or self.always_prod
         if not production:
             command = ['/scripts/web.sh']
+
+        if address != '127.0.0.1' and is_boot2docker():
+            raise DatacatsError('Cannot specify address on boot2docker.')
 
         # XXX nasty hack, remove this once we have a lessc command
         # for users (not just for building our preload image)
@@ -605,7 +615,9 @@ class Environment(object):
         while True:
             self._create_run_ini(port, production)
             try:
-                self._run_web_container(port, command)
+                self._run_web_container(port, command, address)
+                if not is_boot2docker():
+                    self.address = address
             except PortAllocatedError:
                 port = self._next_port(port)
                 continue
@@ -650,9 +662,9 @@ class Environment(object):
         with open(self.childdir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command):
+    def _run_web_container(self, port, command, address='127.0.0.1'):
         """
-        Start web comtainer on port with command
+        Start web container on port with command
         """
         if is_boot2docker():
             ro = {}
@@ -675,7 +687,7 @@ class Environment(object):
                 volumes_from=volumes_from,
                 command=command,
                 port_bindings={
-                    5000: port if is_boot2docker() else ('127.0.0.1', port)},
+                    5000: port if is_boot2docker() else (address, port)},
                 )
         except APIError as e:
             if '409' in str(e):
@@ -758,9 +770,10 @@ class Environment(object):
         Return the url of the web server or None if not running
         """
         port = self._current_web_port()
+        address = self.address or '127.0.0.1'
         if port is None:
             return None
-        return 'http://{0}:{1}/'.format(docker_host(), port)
+        return 'http://{0}:{1}/'.format(address if address else docker_host(), port)
 
     def create_admin_set_password(self, password):
         """

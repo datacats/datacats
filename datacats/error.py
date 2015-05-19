@@ -3,8 +3,13 @@ from clint.textui import colored
 
 class DatacatsError(Exception):
 
-    def __init__(self, message, format_args=()):
+    def __init__(self, message, format_args=(), parent_exception=None):
         self.message = message
+        if parent_exception:
+            self.message  += '\n\n' + '~' * 30 + \
+                "\nTechnical Details:\n" + \
+                parent_exception.__str__() + \
+                '~' * 30  + '\n'
         self.format_args = format_args
         super(DatacatsError, self).__init__(message, format_args)
 

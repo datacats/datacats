@@ -6,3 +6,7 @@ dist/
 datacats.egg-info/
 docker/src/*
 docs/_build
+
+
+# Ignore debug shell scripts for developers
+debug_*.sh
