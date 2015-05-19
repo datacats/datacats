@@ -248,7 +248,6 @@ def image_exists(name):
     return bool(_get_docker().images(name=name))
 
 
-
 def remove_container(name, force=False):
     """
     Wrapper for docker remove_container
@@ -259,12 +258,12 @@ def remove_container(name, force=False):
     try:
         if not force:
             _get_docker().stop(name)
-    except APIError as e:
+    except APIError:
         pass
     try:
         _get_docker().remove_container(name, force=True)
         return True
-    except APIError as e:
+    except APIError:
         return False
 
 
@@ -276,7 +275,7 @@ def inspect_container(name):
     """
     try:
         return _get_docker().inspect_container(name)
-    except APIError as e:
+    except APIError:
         return None
 
 

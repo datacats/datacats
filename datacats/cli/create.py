@@ -5,16 +5,18 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 import sys
-from os.path import exists, abspath
+from os.path import abspath
 from getpass import getpass
 
-from datacats.environment import Environment, DatacatsError
+from datacats.environment import Environment
 from datacats.cli.install import install
 from datacats.validate import valid_deploy_name
+
 
 def write(s):
     sys.stdout.write(s)
     sys.stdout.flush()
+
 
 def create(opts):
     """Create a new environment
@@ -42,6 +44,7 @@ part of this path will be used as the environment name.
         ckan_version=opts['--ckan'],
         address=opts['--address']
         )
+
 
 def create_environment(environment_dir, port, ckan_version, create_skin,
         start_web, create_sysadmin, address):

@@ -9,11 +9,13 @@ import re
 NAME_RE = r'[a-z][a-z0-9]*$'
 DATACATS_NAME_RE = r'[a-z][a-z0-9]{4,}$'
 
+
 def valid_name(n):
     """
     Return True for environment names that may be used locally
     """
     return bool(re.match(NAME_RE, n))
+
 
 def valid_deploy_name(n):
     """
