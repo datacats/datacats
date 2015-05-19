@@ -95,8 +95,8 @@ def _parse_arguments(args):
             help_ = True
             continue
         if a not in COMMANDS:
-            raise DatacatsError("\'{0}\' command is not recognized. \n \
-          See \'datacats help\' for the list of available commands".format(a))
+            raise DatacatsError("\'{0}\' command is not recognized. \n"
+              "See \'datacats help\' for the list of available commands".format(a))
         command_fn = COMMANDS[a]
         break
     else:
