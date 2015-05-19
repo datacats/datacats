@@ -46,9 +46,12 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.require_data()
-    address = environment.web_address()
-    if address is not None:
-        print 'Already running at {0}'.format(address)
+    containers_running = environment.containers_running()
+    # Check all three of our vital services
+    if ('postgres' in containers_running and
+       'web' in containers_running and
+       'solr' in containers_running):
+        print 'Already running at {0}'.format(environment.web_address())
         return
     reload_(environment, opts)
 def reload_(environment, opts):
