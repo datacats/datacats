@@ -77,7 +77,11 @@ def main():
             return command_fn(environment, opts)
         return command_fn(opts)
     except DatacatsError as e:
-        print e
+        if sys.stdout.isatty():
+            # error message to have colors if stdout goes to shell
+            e.pretty_print()
+        else:
+            print e
         sys.exit(1)
 
 

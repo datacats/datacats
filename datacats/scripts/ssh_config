@@ -1,2 +1,2 @@
-Host command.datacats.com
+Host *
     CheckHostIP no
