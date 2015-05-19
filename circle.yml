@@ -7,7 +7,6 @@ dependencies:
     - pip install -r requirements_test.txt
 test:
   override:
-    - python setup.py test
     - datacats create site1 -bn
     - "[ ! -d site1/ckanext-site1theme ]"
     - '[ "$(echo `datacats list`)" == "site1" ]'
@@ -21,3 +20,5 @@ test:
     - datacats purge -y site1
     - '[ "$(echo `datacats list`)" == "site2" ]'
     - datacats init site1 -n
+  post:
+      - python setup.py test
