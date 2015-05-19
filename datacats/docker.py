@@ -68,7 +68,7 @@ def _get_docker():
             pass
         except subprocess.CalledProcessError:
             raise DatacatsError('You have not created your boot2docker VM. '
-                                'Please run "boot2docker create" to do so.')
+                                'Please run "boot2docker init" to do so.')
 
         # Create the Docker client
         version_client = Client(version=MINIMUM_API_VERSION, **_docker_kwargs)
