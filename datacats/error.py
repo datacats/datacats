@@ -21,7 +21,7 @@ class DatacatsError(Exception):
         Print the error message to stdout with colors and borders
         """
         print colored.blue("-" * 40)
-        print colored.red("DataCats: problem was encountered:")
+        print colored.red("datacats: problem was encountered:")
         for line in self.message.format(*self.format_args).split('\n'):
             print "  ", line
         print colored.blue("-" * 40)
