@@ -48,9 +48,7 @@ Default: '.'
     environment.require_data()
     containers_running = environment.containers_running()
     # Check all three of our vital services
-    if ('postgres' in containers_running and
-       'web' in containers_running and
-       'solr' in containers_running):
+    if environment.fully_running():
         print 'Already running at {0}'.format(environment.web_address())
         return
     reload_(environment, opts)

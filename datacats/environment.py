@@ -650,6 +650,12 @@ class Environment(object):
         except TypeError:
             return None
 
+    def fully_running(self):
+        running = self.containers_running()
+        return ('postgres' in running and
+                'solr' in running and
+                'web' in running)
+
     def containers_running(self):
         """
         Return a list including 0 or more of ['web', 'postgres', 'solr']
