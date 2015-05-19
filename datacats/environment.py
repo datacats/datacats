@@ -672,7 +672,7 @@ class Environment(object):
         address = self.address or '127.0.0.1'
         if port is None:
             return None
-        return 'http://{0}:{1}/'.format(address if address else docker_host(), port)
+        return 'http://{0}:{1}/'.format(address if address and not is_boot2docker() else docker_host(), port)
 
     def create_admin_set_password(self, password):
         """
