@@ -4,10 +4,10 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
-from os.path import isdir
 from shutil import rmtree
 
 from datacats.environment import Environment, DatacatsError
+
 
 def purge(opts):
     """Purge environment database and uploaded files
@@ -24,7 +24,7 @@ Default: '.'
 """
     try:
         environment = Environment.load(opts['ENVIRONMENT'])
-    except DatacatsError as e:
+    except DatacatsError:
         environment = Environment.load(opts['ENVIRONMENT'], data_only=True)
 
     if not opts['--yes']:
