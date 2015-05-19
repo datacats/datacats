@@ -651,6 +651,10 @@ class Environment(object):
             return None
 
     def fully_running(self):
+        """
+        Returns true iff the environment is fully up and functioning.
+        Returns False otherwise.
+        """
         running = self.containers_running()
         return ('postgres' in running and
                 'solr' in running and
