@@ -4,7 +4,6 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
-from ConfigParser import SafeConfigParser
 from os import listdir
 from os.path import expanduser
 import webbrowser

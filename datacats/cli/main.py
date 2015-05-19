@@ -32,10 +32,8 @@ See 'datacats help COMMAND' for information about options and
 arguments available to each command.
 """
 
-import json
 import sys
 from docopt import docopt
-import pkg_resources
 
 from datacats.cli import create, manage, install, pull, purge, shell, deploy
 from datacats.environment import Environment, DatacatsError

@@ -5,7 +5,7 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from os.path import abspath, split as path_split, expanduser, isdir, exists
-from os import makedirs, getcwd, remove, environ
+from os import makedirs, remove, environ
 import sys
 import subprocess
 import shutil

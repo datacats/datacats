@@ -22,8 +22,6 @@ def pull(opts):
 Usage:
   datacats pull
 """
-
-    sameline = False
     for i in IMAGES:
         sys.stdout.write('Pulling image '+ i)
         sys.stdout.flush()

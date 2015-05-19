@@ -5,10 +5,10 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 import sys
-from os.path import exists, abspath
+from os.path import abspath
 from getpass import getpass
 
-from datacats.environment import Environment, DatacatsError
+from datacats.environment import Environment
 from datacats.cli.install import install
 from datacats.validate import valid_deploy_name
 

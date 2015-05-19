@@ -26,7 +26,7 @@ def get_working_profile(environment):
         # we have got ourselves a working profile
         return profile
 
-    new_key = _create_profile(profile)
+    _create_profile(profile)
 
 
 def _create_profile(profile):
