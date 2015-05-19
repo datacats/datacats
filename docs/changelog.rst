@@ -1,6 +1,22 @@
 Change Log
 ==========
 
+0.10.0
+------
+
+- create/start/reload --address=IP: choose the IP address to bind
+  for serving ckan. allows use of datacats to serve public sites directly
+  (linux only)
+- shell --detach: run commands in the background
+- purge: prompt user to confirm deletion unless -y specified
+- better error reporting on failures during setup
+- better error reporting when boot2docker isn't running
+- better error reporting when deploy command fails
+- fix docker build scripts to run on OSX
+- fix reload incorrectly reporting already running when some containers
+  have stopped
+
+
 0.9.3
 -----
 
