@@ -46,11 +46,12 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.require_data()
-    containers_running = environment.containers_running()
+
     # Check all three of our vital services
     if environment.fully_running():
         print 'Already running at {0}'.format(environment.web_address())
         return
+
     reload_(environment, opts)
 def reload_(environment, opts):
     """Reload environment source and configuration
