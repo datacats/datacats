@@ -47,7 +47,6 @@ Default: '.'
 """
     environment.require_data()
 
-    # Check all three of our vital services
     if environment.fully_running():
         print 'Already running at {0}'.format(environment.web_address())
         return
