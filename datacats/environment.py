@@ -271,7 +271,7 @@ class Environment(object):
                                 'If you interrupted a migration, you should'
                                 ' attempt manual recovery or contact us by'
                                 ' filing an issue at http://github.com/datacats/'
-                                ' datacats.\nAs a last resort, you could delete'
+                                'datacats.\nAs a last resort, you could delete'
                                 ' all your stored data and create a new environment'
                                 ' by running "datacats purge" followed by'
                                 ' "datacats init".')

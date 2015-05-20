@@ -16,31 +16,27 @@ from datacats.scripts import MIGRATE
 from datacats.password import generate_password
 
 
-def needs_format_conversion(datadir):
-    """
-    Returns True if `datadir` requires conversion to the child env format.
-    """
-    return (isdir(datadir) and isdir(path_join(datadir, 'run')) and
-            exists(path_join(datadir, 'passwords.ini')) and
-            exists(path_join(datadir, 'search')) and
-            exists(path_join(datadir, 'solr')) and
-            exists(path_join(datadir, 'project-dir')))
+CURRENT_FORMAT_VERSION = 2
 
+def _get_current_format(datadir):
+    if not exists(path_join(datadir, '.version')):
+        # Format v1 didn't have a .version file.
+        return 1
+    
+    with open(path_join(datadir, '.version')) as version_file:
+        return int(version_file.read())
 
-def convert_environment(datadir):
+def needs_format_conversion(datadir, version=CURRENT_FORMAT_VERSION):
+    """
+    Returns True if `datadir` requires conversion to format version specified by `version`
+
+    :param datadir: The datadir to convert.
+    :param version: The version to convert TO.
+    """
+    return version != _get_current_format(datadir)
+
+def _one_to_two(datadir):
     new_child_name = 'primary'
-    inp = None
-
-    while inp != 'y' and inp != 'n':
-        inp = raw_input('You are using a file in the old DataCats format. '
-                        'Would you like to convert it (y/n) [n]: ')
-
-    if inp == 'n':
-        sys.exit(1)
-
-    lockfile = LockFile(path_join(datadir, '.migration_lock'))
-    lockfile.acquire()
-
     # Get around a quirk in path_split where a / at the end will make the
     # dirname (split[0]) the entire path
     datadir = datadir[:-1] if datadir[-1] == '/' else datadir
@@ -116,4 +112,32 @@ def convert_environment(datadir):
     with open(config_loc, 'w') as config:
         cp.write(config)
 
-    lockfile.release()
+migrations = {
+    (1,2): _one_to_two
+    }
+
+def convert_environment(datadir, version, always_yes):
+    """
+    Converts an environment TO the version specified by `version`.
+    :param datadir: The datadir to convert.
+    :param version: The version to convert TO.
+    :param always_yes: True if the user shouldn't be prompted about the migration.
+    """
+    inp = None
+
+    if not always_yes:
+        while inp != 'y' and inp != 'n':
+            inp = raw_input('This migration will change the format of your datadir.'
+                            ' Are you sure? (y/n) [n]: ')
+
+        if inp == 'n':
+            sys.exit(1)
+
+    lockfile = LockFile(path_join(datadir, '.migration_lock'))
+    lockfile.acquire()
+
+    try:
+        # Call the appropriate conversion function
+        migrations[(_get_current_format(datadir), version)](datadir)
+    finally:
+        lockfile.release()
