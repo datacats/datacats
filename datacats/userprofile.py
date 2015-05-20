@@ -87,9 +87,10 @@ class UserProfile(object):
                     self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
                 clean_up=True
                 )
-            return True
+
         except WebCommandError as e:
-            user_error_message = (
+
+            user_unrecognized_error_message = (
                 "Your ssh key "
                 "(which is an equivalent of your password so"
                 " that datacats.io could recognize you) "
@@ -102,6 +103,18 @@ class UserProfile(object):
                 "If the problem persists, please contact the developer team."
                 ).format(public_key=self.read_public_key())
 
+            network_unreachable_error_message = (
+                "Unable to connect to the hosting server: {0} \n"
+                "Some of the reasons for that may be: \n"
+                "  1) the internet connection is down,\n"
+                "  2) the server is not up or functioning properly,\n"
+                "  3) there is a firewall block for the datacats application\n"
+                " or something of this sort."
+                ).format(_project_user_host(project))
+
+            user_error_message = network_unreachable_error_message \
+                if "Network is unreachable" in e.logs \
+                else user_unrecognized_error_message
             raise DatacatsError(user_error_message, parent_exception=e)
 
     def create(self, project, target_name, stream_output=None):

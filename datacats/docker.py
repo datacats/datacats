@@ -98,7 +98,7 @@ class WebCommandError(Exception):
             ('\nSSH command to remote server failed\n'
              '    Command: {0}\n'
              '    Docker Error Log:\n'
-             '    {1}\n').format(self.command, self.logs, self.container_id)
+             '    {1}\n').format(" ".join(self.command), self.logs, self.container_id)
 
 
 class PortAllocatedError(Exception):
