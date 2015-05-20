@@ -22,11 +22,11 @@ def get_working_profile(environment):
         exists(profile.ssh_public_key):
         profile.test_ssh_key(environment)
         # we sucessfully loaded the ssh key and tested it by connecting to the server,
-        #so all is good at this point and
+        # so all is good at this point and
         # we have got ourselves a working profile
         return profile
 
-    new_key = _create_profile(profile)
+    _create_profile(profile)
 
 
 def _create_profile(profile):
@@ -40,8 +40,9 @@ def _create_profile(profile):
     profile.ssh_public_key = profile.profiledir + '/id_rsa.pub'
     profile.save()
     profile.generate_ssh_key()
-    user_error_message = ("Your profile does not seem to have an ssh key (which is an equivalent of your password so that datacats.io could recognize you)."
-        "So we generated a new ssh key for you. Please go to www.datacats.com/account/key and add the following public key:"
+    user_error_message = ("Your profile does not seem to have an ssh key (which "
+        "is an equivalent of your password so that datacats.io could recognize you)."
+        "So we generated a new ssh key for you. Please go to www.datacats.com/account/key"
+        " and add the following public key:"
         " \n \n {public_key} \n \n to your profile.").format(public_key=profile.read_public_key())
     raise DatacatsError(user_error_message)
-

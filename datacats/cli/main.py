@@ -27,18 +27,20 @@ The datacats commands available are:
   shell       Run a command or interactive shell within this environment
   start       Create containers and start serving environment
   stop        Stop serving environment and remove all its containers
+<<<<<<< HEAD
   migrate     Migrates an environment to the newest datadir format
+=======
+  less        Recompile less files in an environment
+>>>>>>> master
 
 See 'datacats help COMMAND' for information about options and
 arguments available to each command.
 """
 
-import json
 import sys
 from docopt import docopt
-import pkg_resources
 
-from datacats.cli import create, manage, install, pull, purge, shell, deploy, migrate
+from datacats.cli import create, manage, install, pull, purge, shell, deploy, migrate, less
 from datacats.environment import Environment, DatacatsError
 
 COMMANDS = {
@@ -58,6 +60,7 @@ COMMANDS = {
     'start': manage.start,
     'stop': manage.stop,
     'migrate': migrate.migrate,
+    'less': less.less,
 }
 
 
@@ -75,7 +78,7 @@ def main():
         if command_fn != purge.purge and 'ENVIRONMENT' in opts:
             environment = Environment.load(
             opts['ENVIRONMENT'] or '.',
-            opts['--child'] if '--child' in opts else None)
+            opts['--child'] if '--child' in opts else 'primary')
             return command_fn(environment, opts)
         return command_fn(opts)
     except DatacatsError as e:
@@ -99,8 +102,8 @@ def _parse_arguments(args):
             help_ = True
             continue
         if a not in COMMANDS:
-            raise DatacatsError("\'{0}\' command is not recognized. \n \
-          See \'datacats help\' for the list of available commands".format(a))
+            raise DatacatsError("\'{0}\' command is not recognized. \n"
+              "See \'datacats help\' for the list of available commands".format(a))
         command_fn = COMMANDS[a]
         break
     else:

@@ -161,8 +161,8 @@ class UserProfile(object):
         except WebCommandError as e:
             raise DatacatsError(
                 "Unable to deploy `{0}` to remote server for some reason:\n"
-                " datacats was not able to copy data to the remote server"
-                , format_args=(target_name,), parent_exception=e
+                " datacats was not able to copy data to the remote server",
+                format_args=(target_name,), parent_exception=e
                 )
 
         try:
@@ -181,8 +181,9 @@ class UserProfile(object):
             raise DatacatsError(
                 "Unable to deploy `{0}` to remote server for some reason:\n"
                 "datacats copied data to the server but failed to register\n"
-                "(or `install`) the new catalog"
-                , format_args=(target_name,),parent_exception=e
+                "(or `install`) the new catalog",
+                format_args=(target_name,),
+                parent_exception=e
                 )
 
 

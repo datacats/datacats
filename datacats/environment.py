@@ -5,7 +5,7 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from os.path import abspath, split as path_split, expanduser, isdir, exists, join
-from os import makedirs, getcwd, remove, environ, listdir
+from os import makedirs, remove, environ, listdir
 import sys
 import subprocess
 import shutil
@@ -26,7 +26,8 @@ from datacats.docker import (web_command, run_container, remove_container,
                              image_exists)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
-                              RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE)
+    RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
+    COMPILE_LESS)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.migrate import needs_format_conversion
 from datacats.password import generate_password
@@ -214,7 +215,7 @@ class Environment(object):
         """
         if environment_name is None:
             environment_name = '.'
-        if not valid_name(child_name):
+        if child_name != None and not valid_name(child_name):
             raise DatacatsError('{} is not a valid child name.'.format(child_name))
 
         require_images()
@@ -592,7 +593,8 @@ class Environment(object):
         Start the apache server or paster serve
 
         :param production: True for apache, False for paster serve + debug on
-        :param address: On Linux, the address to serve from (can be 0.0.0.0 for listening on all addresses)
+        :param address: On Linux, the address to serve from (can be 0.0.0.0 for
+                        listening on all addresses)
         """
         port = self.port
         command = None
@@ -783,7 +785,9 @@ class Environment(object):
         address = self.address or '127.0.0.1'
         if port is None:
             return None
-        return 'http://{0}:{1}/'.format(address if address and not is_boot2docker() else docker_host(), port)
+        return 'http://{0}:{1}/'.format(
+            address if address and not is_boot2docker() else docker_host(),
+            port)
 
     def create_admin_set_password(self, password):
         """
@@ -999,6 +1003,13 @@ class Environment(object):
             follow,
             timestamps)
 
+    def compile_less(self):
+        c = run_container(
+            name='datacats_' + self.name + '_lessc', image='datacats/lessc',
+            rw={self.target: '/project/target'},
+            ro={COMPILE_LESS: '/project/compile_less.sh'})
+        remove_container(c)
+
     def _proxy_settings(self):
         """
         Create/replace ~/.datacats/run/proxy-environment and return
@@ -1019,7 +1030,8 @@ class Environment(object):
         no_proxy = no_proxy + ',solr,db'
 
         out = [
-            'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"\n']
+            'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:'
+            '/bin:/usr/games:/usr/local/games"\n']
         if https_proxy is not None:
             out.append('https_proxy=' + posix_quote(https_proxy) + '\n')
             out.append('HTTPS_PROXY=' + posix_quote(https_proxy) + '\n')
