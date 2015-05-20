@@ -33,7 +33,7 @@ def needs_format_conversion(datadir, version=CURRENT_FORMAT_VERSION):
     :param datadir: The datadir to convert.
     :param version: The version to convert TO.
     """
-    return version != _get_current_format(datadir)
+    return isdir(datadir) and version != _get_current_format(datadir)
 
 def _one_to_two(datadir):
     new_child_name = 'primary'
