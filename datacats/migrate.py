@@ -3,10 +3,9 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
-from os import makedirs, remove
+from os import makedirs
 from os.path import isdir, exists, join as path_join, split as path_split
 from ConfigParser import SafeConfigParser
-import shutil
 import sys
 
 from lockfile import LockFile
@@ -62,20 +61,20 @@ def convert_environment(datadir):
     if exists(backup_loc):
         # Remove any old backups
         web_command(
-                command=['/scripts/purge.sh'] +
-                        ['/project/.datacats/' + split[1] + '.bak'],
-                ro={PURGE: '/scripts/purge.sh'},
-                rw={split[0]: '/project/.datacats'},
-                clean_up=True)
+            command=['/scripts/purge.sh'] +
+                    ['/project/.datacats/' + split[1] + '.bak'],
+            ro={PURGE: '/scripts/purge.sh'},
+            rw={split[0]: '/project/.datacats'},
+            clean_up=True)
 
     # Make a backup of the current version
     web_command(
-            command=['/scripts/migrate_backup.sh',
-                     '/project/.datacats/' + env_name,
-                     '/project/.datacats/' + backup_name],
-            ro={MIGRATE_BACKUP: '/scripts/migrate_backup.sh'},
-            rw={split[0]: '/project/.datacats'},
-            clean_up=True)
+        command=['/scripts/migrate_backup.sh',
+                 '/project/.datacats/' + env_name,
+                 '/project/.datacats/' + backup_name],
+        ro={MIGRATE_BACKUP: '/scripts/migrate_backup.sh'},
+        rw={split[0]: '/project/.datacats'},
+        clean_up=True)
 
     # Begin the actual conversion
     to_move = (['files', 'passwords.ini', 'run', 'solr', 'search'] +
@@ -86,14 +85,14 @@ def convert_environment(datadir):
 
     print 'Doing conversion...'
     web_command(
-            command=['/scripts/migrate.sh',
-                     '/project/data',
-                     '/project/data/children/' + new_child_name] +
-            to_move,
-            ro={MIGRATE: '/scripts/migrate.sh'},
-            rw={datadir: '/project/data'},
-            clean_up=True
-            )
+        command=['/scripts/migrate.sh',
+                 '/project/data',
+                 '/project/data/children/' + new_child_name] +
+        to_move,
+        ro={MIGRATE: '/scripts/migrate.sh'},
+        rw={datadir: '/project/data'},
+        clean_up=True
+        )
 
     if is_boot2docker():
         # Stick the child name in the file
@@ -135,7 +134,6 @@ def convert_environment(datadir):
         dev_ini_loc = path_join(pd.read(), 'development.ini')
     dev_ini_cp = SafeConfigParser()
     dev_ini_cp.read(dev_ini_loc)
-    secret = dev_ini_cp.get('app:main', 'beaker.session.secret')
 
     cp.set('passwords', 'beaker_session_secret', generate_password())
 

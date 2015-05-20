@@ -77,8 +77,8 @@ def main():
         # purge handles loading differently
         if command_fn != purge.purge and 'ENVIRONMENT' in opts:
             environment = Environment.load(
-            opts['ENVIRONMENT'] or '.',
-            opts['--child'] if '--child' in opts else 'primary')
+                opts['ENVIRONMENT'] or '.',
+                opts['--child'] if '--child' in opts else 'primary')
             return command_fn(environment, opts)
         return command_fn(opts)
     except DatacatsError as e:
@@ -130,6 +130,7 @@ def _parse_arguments(args):
     _option_not_yet_implemented(opts, '--ckan')
     _option_not_yet_implemented(opts, '--remote')
     return command_fn, opts
+
 
 def _option_not_yet_implemented(opts, name):
     if name not in opts or not opts[name]:

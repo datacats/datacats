@@ -11,6 +11,7 @@ from getpass import getpass
 from datacats.environment import Environment
 from datacats.cli.install import install
 from datacats.validate import valid_deploy_name
+from datacats.error import DatacatsError
 
 
 def write(s):
@@ -47,6 +48,7 @@ part of this path will be used as the environment name.
         address=opts['--address']
         )
 
+
 def create_environment(environment_dir, port, ckan_version, create_skin, child_name,
         start_web, create_sysadmin, address):
     try:
@@ -68,10 +70,10 @@ def create_environment(environment_dir, port, ckan_version, create_skin, child_n
         write('Creating environment "{0}/{1}"'.format(environment.name, environment.child_name))
         steps = [
             lambda: environment.create_directories(making_full_environment),
-            environment.create_bash_profile,] + ([environment.create_virtualenv,
+            environment.create_bash_profile] + ([environment.create_virtualenv,
             environment.save,
             environment.create_source,
-            environment.create_ckan_ini,] if making_full_environment else []
+            environment.create_ckan_ini] if making_full_environment else []
             ) + [environment.save_child, environment.start_postgres_and_solr,
             environment.fix_storage_permissions,
             lambda: environment.update_ckan_ini(skin=create_skin),
@@ -140,10 +142,10 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
              environment.save,
              environment.create_virtualenv
              ] if making_full_environment else []) + [
-             environment.save_child,
-             environment.start_postgres_and_solr,
-             environment.fix_storage_permissions,
-             environment.fix_project_permissions,
+                 environment.save_child,
+                 environment.start_postgres_and_solr,
+                 environment.fix_storage_permissions,
+                 environment.fix_project_permissions,
             ]
 
         for fn in steps:

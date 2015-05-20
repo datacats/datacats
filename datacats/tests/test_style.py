@@ -3,7 +3,7 @@ import pep8
 from pyflakes import api as pyflakes_api, reporter
 
 
-IGNORE_PEP8 = ('E123', 'W503', 'E128', 'E125')
+IGNORE_PEP8 = ('E131', 'E123', 'W503', 'E128', 'E125', 'E124', 'E121')
 
 
 class TestStyle(unittest.TestCase):
