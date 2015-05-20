@@ -384,7 +384,8 @@ class Environment(object):
         # venv isn't child-specific, the rest are.
         makedirs(self.childdir + '/search')
         if not is_boot2docker():
-            makedirs(self.datadir + '/venv')
+            if not isdir(self.datadir + '/venv'):
+                makedirs(self.datadir + '/venv')
             makedirs(self.childdir + '/data')
         makedirs(self.childdir + '/files')
         makedirs(self.childdir + '/run')
