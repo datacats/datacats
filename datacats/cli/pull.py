@@ -14,6 +14,9 @@ IMAGES = [
     'datacats/web:preload-2.3',
     'datacats/postgres',
     'datacats/solr',
+    ]
+
+DEVEL_IMAGES = [
     'datacats/lessc',
     ]
 
@@ -22,9 +25,16 @@ def pull(opts):
     """Download or update required datacats docker images
 
 Usage:
-  datacats pull
+  datacats pull [-d]
+
+Options:
+  -d --devel         Pull extra "development" images. These
+                     will, by default, be pulled when needed,
+                     but you can use this to make sure you
+                     have all the images you need if going
+                     offline.
 """
-    for i in IMAGES:
+    for i in IMAGES + (DEVEL_IMAGES if opts['--devel'] else []):
         sys.stdout.write('Pulling image ' + i)
         sys.stdout.flush()
         for s in pull_stream(i):
