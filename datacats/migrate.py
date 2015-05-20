@@ -12,7 +12,7 @@ from lockfile import LockFile
 
 from datacats.docker import (is_boot2docker, remove_container,
                              rename_container, web_command)
-from datacats.scripts import PURGE, MIGRATE_BACKUP, MIGRATE
+from datacats.scripts import MIGRATE
 from datacats.password import generate_password
 
 
@@ -53,29 +53,7 @@ def convert_environment(datadir):
     remove_container('datacats_solr_' + env_name)
     remove_container('datacats_postgres_' + env_name)
 
-    backup_name = split[1] + '.bak'
-    backup_loc = path_join(split[0], backup_name)
-
-    print 'Making a backup at {}...'.format(backup_loc)
-
-    if exists(backup_loc):
-        # Remove any old backups
-        web_command(
-            command=['/scripts/purge.sh'] +
-                    ['/project/.datacats/' + split[1] + '.bak'],
-            ro={PURGE: '/scripts/purge.sh'},
-            rw={split[0]: '/project/.datacats'},
-            clean_up=True)
-
-    # Make a backup of the current version
-    web_command(
-        command=['/scripts/migrate_backup.sh',
-                 '/project/.datacats/' + env_name,
-                 '/project/.datacats/' + backup_name],
-        ro={MIGRATE_BACKUP: '/scripts/migrate_backup.sh'},
-        rw={split[0]: '/project/.datacats'},
-        clean_up=True)
-
+    print 'Doing conversion...'
     # Begin the actual conversion
     to_move = (['files', 'passwords.ini', 'run', 'solr', 'search'] +
                (['postgres', 'data'] if not is_boot2docker() else []))
@@ -83,7 +61,6 @@ def convert_environment(datadir):
     child_path = path_join(datadir, 'children', new_child_name)
     makedirs(child_path)
 
-    print 'Doing conversion...'
     web_command(
         command=['/scripts/migrate.sh',
                  '/project/data',
@@ -95,7 +72,6 @@ def convert_environment(datadir):
         )
 
     if is_boot2docker():
-        # Stick the child name in the file
         rename_container('datacats_pgdata_' + env_name,
                          'datacats_pgdata_' + env_name + '_' + new_child_name)
 
