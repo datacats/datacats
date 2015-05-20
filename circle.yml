@@ -21,5 +21,7 @@ test:
     - '[ "$(echo `datacats list`)" == "site2" ]'
     - datacats init site1 -n
     - datacats install site1
+    - datacats init site1 -c two -n
+    - datacats start -c two site1
   post:
       - python setup.py test
