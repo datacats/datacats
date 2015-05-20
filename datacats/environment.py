@@ -268,9 +268,13 @@ class Environment(object):
 
         if lockfile.is_locked():
             raise DatacatsError('Migration in progress, cannot continue.\n'
-                                'If you interrupted a migration, your best'
-                                ' course of action would be to do '
-                                ' "datacats purge".')
+                                'If you interrupted a migration, you should'
+                                ' attempt manual recovery or contact us by'
+                                ' filing an issue at http://github.com/datacats/'
+                                ' datacats.\nAs a last resort, you could delete'
+                                ' all your stored data and create a new environment'
+                                ' by running "datacats purge" followed by'
+                                ' "datacats init".')
 
         if needs_format_conversion(datadir):
             raise DatacatsError('This environment uses an old format. You must'
