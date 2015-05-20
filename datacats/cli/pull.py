@@ -43,12 +43,13 @@ def pull_image(image_name):
     sys.stdout.write('Pulling image ' + image_name)
     sys.stdout.flush()
     for s in pull_stream(image_name):
-        if 'error' in s:
-            # Line to make the error appear after the ...
-            print
-            raise DatacatsError(s['error'])
-        else:
-            print json.dumps(s)
+        if 'status' not in s:
+            if 'error' in s:
+                # Line to make the error appear after the ...
+                print
+                raise DatacatsError(s['error'])
+            else:
+                print json.dumps(s)
         sys.stdout.write('.')
         sys.stdout.flush()
     sys.stdout.write('\n')
