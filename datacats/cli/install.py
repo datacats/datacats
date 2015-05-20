@@ -20,10 +20,11 @@ def install(environment, opts):
     """Install or reinstall Python packages within this environment
 
 Usage:
-  datacats install [-c] [ENVIRONMENT]
+  datacats install [-c] [--address=IP] [ENVIRONMENT]
 
 Options:
-  -c --clean         Reinstall packages into a clean virtualenv
+  -c --clean            Reinstall packages into a clean virtualenv
+  --address=IP          The address to bind to when reloading after install [default: 127.0.0.1]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -36,7 +37,8 @@ Default: '.'
         manage.reload_(environment, {
             '--production': False,
             'PORT': None,
-            '--background': False})
+            '--background': False,
+            '--address': opts['--address']})
 
 
 def install_all(environment, clean):
