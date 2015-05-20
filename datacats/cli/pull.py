@@ -8,6 +8,7 @@ import sys
 import json
 
 from datacats.docker import pull_stream
+from datacats.error import DatacatsError
 
 IMAGES = [
     'datacats/web',
@@ -29,7 +30,12 @@ Usage:
         sys.stdout.flush()
         for s in pull_stream(i):
             if 'status' not in s:
-                print json.dumps(s, indent=2)
+                if 'error' in s:
+                    # Line to make the error appear after the ...
+                    print
+                    raise DatacatsError(s['error'])
+                else:
+                    print json.dumps(s)
                 continue
             sys.stdout.write('.')
             sys.stdout.flush()
