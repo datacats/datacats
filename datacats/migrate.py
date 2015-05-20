@@ -29,9 +29,6 @@ def needs_format_conversion(datadir):
 
 
 def convert_environment(datadir):
-    lockfile = LockFile(path_join(datadir, '.migration_lock'))
-    lockfile.acquire()
-
     new_child_name = 'primary'
     inp = None
 
@@ -41,6 +38,9 @@ def convert_environment(datadir):
 
     if inp == 'n':
         sys.exit(1)
+
+    lockfile = LockFile(path_join(datadir, '.migration_lock'))
+    lockfile.acquire()
 
     # Get around a quirk in path_split where a / at the end will make the
     # dirname (split[0]) the entire path
