@@ -30,6 +30,10 @@ from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.error import DatacatsError
 
+from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG
+from datacats.userprofile import UserProfile
+from datacats.cli.profile import _create_profile
+
 WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
 DB_INIT_RETRY_DELAY = 2
@@ -58,6 +62,13 @@ class Environment(object):
         self.deploy_target = deploy_target
         self.site_url = site_url
         self.always_prod = always_prod
+        self.profile = UserProfile()
+        if not (self.profile.ssh_private_key is None) and \
+            exists(self.profile.ssh_private_key) and \
+            exists(self.profile.ssh_public_key):
+            self.profile.test_ssh_key(self)
+            return
+        _create_profile(self.profile)
 
     def save(self):
         """

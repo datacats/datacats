@@ -6,27 +6,12 @@
 
 from os.path import exists
 
-from datacats.userprofile import UserProfile
+
 from datacats.environment import DatacatsError
 
 
 def get_working_profile(environment):
-    """
-    Return a complete UserProfile with ssh keys configured either
-    by loading an existing profile or setting one up with the
-    user interactively.
-    """
-    profile = UserProfile()
-    if not (profile.ssh_private_key is None) and \
-        exists(profile.ssh_private_key) and \
-        exists(profile.ssh_public_key):
-        profile.test_ssh_key(environment)
-        # we sucessfully loaded the ssh key and tested it by connecting to the server,
-        # so all is good at this point and
-        # we have got ourselves a working profile
-        return profile
-
-    _create_profile(profile)
+    return environment.profile
 
 
 def _create_profile(profile):
