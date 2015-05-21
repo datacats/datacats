@@ -1,6 +1,8 @@
 from os.path import expanduser, split
 from os import getcwd
+
 from datacats.migrate import convert_environment, needs_format_conversion
+from datacats.error import DatacatsError
 
 
 def migrate(opts):

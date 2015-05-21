@@ -18,13 +18,15 @@ from datacats.password import generate_password
 
 CURRENT_FORMAT_VERSION = 2
 
+
 def _get_current_format(datadir):
     if not exists(path_join(datadir, '.version')):
         # Format v1 didn't have a .version file.
         return 1
-    
+
     with open(path_join(datadir, '.version')) as version_file:
         return int(version_file.read())
+
 
 def needs_format_conversion(datadir, version=CURRENT_FORMAT_VERSION):
     """
@@ -34,6 +36,7 @@ def needs_format_conversion(datadir, version=CURRENT_FORMAT_VERSION):
     :param version: The version to convert TO.
     """
     return isdir(datadir) and version != _get_current_format(datadir)
+
 
 def _one_to_two(datadir):
     new_child_name = 'primary'
@@ -112,9 +115,11 @@ def _one_to_two(datadir):
     with open(config_loc, 'w') as config:
         cp.write(config)
 
+
 migrations = {
-    (1,2): _one_to_two
+    (1, 2): _one_to_two
     }
+
 
 def convert_environment(datadir, version, always_yes):
     """
