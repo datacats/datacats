@@ -59,6 +59,12 @@ COMMANDS = {
 }
 
 
+command_uses_ssh = lambda x: x in [
+    deploy.deploy,
+    install.install
+]
+
+
 def main():
     """
     The main entry point for datacats cli tool
@@ -71,7 +77,8 @@ def main():
         command_fn, opts = _parse_arguments(sys.argv[1:])
         # purge handles loading differently
         if command_fn != purge.purge and 'ENVIRONMENT' in opts:
-            environment = Environment.load(opts['ENVIRONMENT'] or '.')
+            environment = Environment.load(
+                opts['ENVIRONMENT'] or '.', test_ssh=command_uses_ssh(command_fn))
             return command_fn(environment, opts)
         return command_fn(opts)
     except DatacatsError as e:

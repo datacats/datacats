@@ -62,13 +62,6 @@ class Environment(object):
         self.deploy_target = deploy_target
         self.site_url = site_url
         self.always_prod = always_prod
-        self.profile = UserProfile()
-        if not (self.profile.ssh_private_key is None) and \
-            exists(self.profile.ssh_private_key) and \
-            exists(self.profile.ssh_public_key):
-            self.profile.test_ssh_key(self)
-            return
-        _create_profile(self.profile)
 
     def save(self):
         """
@@ -154,7 +147,7 @@ class Environment(object):
         return environment
 
     @classmethod
-    def load(cls, environment_name=None, data_only=False):
+    def load(cls, environment_name=None, data_only=False, test_ssh=False):
         """
         Return an Environment object based on an existing project.
 
@@ -253,6 +246,16 @@ class Environment(object):
         environment = cls(name, wd, datadir, ckan_version, port, deploy_target,
                           site_url=site_url, always_prod=always_prod, address=address,
                           extension_dir=extension_dir)
+
+        environment.profile = UserProfile()
+        if test_ssh:
+            if not (environment.profile.ssh_private_key is None) and \
+                exists(environment.profile.ssh_private_key) and \
+                exists(environment.profile.ssh_public_key):
+                environment.profile.test_ssh_key(environment)
+            else:
+                _create_profile(environment.profile)
+
         if passwords:
             environment.passwords = passwords
         else:
