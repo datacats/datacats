@@ -25,7 +25,7 @@ test:
     - datacats start -c two site1
     - datacats migrate -y -r 1 site1
     - '[ -e ~/.datacats/site1/postgres ]'
-    - datacats migrate -y -r 2 site2
+    - datacats migrate -y -r 2 site1
     - '[ -e ~/.datacats/site1/children/primary/postgres ]'
   post:
       - python setup.py test
