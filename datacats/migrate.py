@@ -4,6 +4,7 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from os import makedirs
+import os
 from os.path import isdir, exists, join as path_join, split as path_split
 from ConfigParser import SafeConfigParser
 import sys
@@ -11,9 +12,11 @@ import sys
 from lockfile import LockFile
 
 from datacats.docker import (is_boot2docker, remove_container,
-                             rename_container, web_command)
+                             rename_container, web_command,
+                             inspect_container)
 from datacats.scripts import MIGRATE
 from datacats.password import generate_password
+from datacats.error import DatacatsError
 
 
 CURRENT_FORMAT_VERSION = 2
@@ -38,12 +41,24 @@ def needs_format_conversion(datadir, version=CURRENT_FORMAT_VERSION):
     return isdir(datadir) and version != _get_current_format(datadir)
 
 
-def _one_to_two(datadir):
-    new_child_name = 'primary'
+def _split_path(path):
+    """
+    A wrapper around the normal split function that ignores any trailing /.
+
+    :return: A tuple of the form (dirname, last) where last is the last element
+             in the path.
+    """
     # Get around a quirk in path_split where a / at the end will make the
     # dirname (split[0]) the entire path
-    datadir = datadir[:-1] if datadir[-1] == '/' else datadir
-    split = path_split(datadir)
+    path = path[:-1] if path[-1] == '/' else path
+    split = path_split(path)
+    return split
+
+
+def _one_to_two(datadir):
+    new_child_name = 'primary'
+
+    split = _split_path(datadir)
 
     print 'Making sure that containers are stopped...'
     env_name = split[1]
@@ -58,7 +73,8 @@ def _one_to_two(datadir):
                (['postgres', 'data'] if not is_boot2docker() else []))
     # Make a primary child
     child_path = path_join(datadir, 'children', new_child_name)
-    makedirs(child_path)
+    if not exists(child_path):
+        makedirs(child_path)
 
     web_command(
         command=['/scripts/migrate.sh',
@@ -73,10 +89,6 @@ def _one_to_two(datadir):
     if is_boot2docker():
         rename_container('datacats_pgdata_' + env_name,
                          'datacats_pgdata_' + env_name + '_' + new_child_name)
-
-    with open(path_join(datadir, '.version'), 'w') as f:
-        # Version 2
-        f.write('2')
 
     # Lastly, grab the project directory and update the ini file
     with open(path_join(datadir, 'project-dir')) as pd:
@@ -103,21 +115,72 @@ def _one_to_two(datadir):
     config_loc = path_join(child_path, 'passwords.ini')
     cp.read([config_loc])
 
-    # Grab the secret from config
-    # Find the project-dir
-    with open(datadir + '/project-dir') as pd:
-        dev_ini_loc = path_join(pd.read(), 'development.ini')
-    dev_ini_cp = SafeConfigParser()
-    dev_ini_cp.read(dev_ini_loc)
-
+    # Generate a new secret
     cp.set('passwords', 'beaker_session_secret', generate_password())
 
     with open(config_loc, 'w') as config:
         cp.write(config)
 
+    with open(path_join(datadir, '.version'), 'w') as f:
+        f.write('2')
+
+
+def _two_to_one(datadir):
+    _, env_name = _split_path(datadir)
+
+    print 'Making sure that containers are stopped...'
+    # New-style names
+    remove_container('datacats_web_{}_primary'.format(env_name))
+    remove_container('datacats_postgres_{}_primary'.format(env_name))
+    remove_container('datacats_solr_{}_primary'.format(env_name))
+
+    print 'Doing conversion...'
+
+    if exists(path_join(datadir, '.version')):
+        os.remove(path_join(datadir, '.version'))
+
+    to_move = (['files', 'passwords.ini', 'run', 'solr', 'search'] +
+               (['postgres', 'data'] if not is_boot2docker() else []))
+
+    web_command(
+        command=['/scripts/migrate.sh',
+                 '/project/data/children/primary',
+                 '/project/data'] + to_move,
+        ro={MIGRATE: '/scripts/migrate.sh'},
+        rw={datadir: '/project/data'}
+    )
+
+    pgdata_name = 'datacats_pgdata_{}_primary'.format(env_name)
+    if is_boot2docker() and inspect_container(pgdata_name):
+        rename_container(pgdata_name, 'datacats_pgdata_{}'.format(env_name))
+
+    print 'Doing cleanup...'
+    with open(path_join(datadir, 'project-dir')) as pd:
+        datacats_env_location = path_join(pd.read(), '.datacats-environment')
+
+    cp = SafeConfigParser()
+    cp.read(datacats_env_location)
+
+    # We need to move the port OUT of child_primary section and INTO datacats
+    cp.set('datacats', 'port', cp.get('child_primary', 'port'))
+    cp.remove_section('child_primary')
+
+    with open(datacats_env_location, 'w') as config:
+        cp.write(config)
+
+    cp = SafeConfigParser()
+    cp.read(path_join(datadir, 'passwords.ini'))
+
+    # This isn't needed in this version
+    cp.remove_option('passwords', 'beaker_session_secret')
+
+    with open(path_join(datadir, 'passwords.ini'), 'w') as config:
+        cp.write(config)
+
 
 migrations = {
-    (1, 2): _one_to_two
+    (1, 2): _one_to_two,
+    (2, 1): _two_to_one
     }
 
 
@@ -129,6 +192,10 @@ def convert_environment(datadir, version, always_yes):
     :param always_yes: True if the user shouldn't be prompted about the migration.
     """
     inp = None
+
+    if version > CURRENT_FORMAT_VERSION:
+        raise DatacatsError('Cannot migrate to a version higher than the '
+                            'current one.')
 
     if not always_yes:
         while inp != 'y' and inp != 'n':
@@ -142,7 +209,13 @@ def convert_environment(datadir, version, always_yes):
     lockfile.acquire()
 
     try:
+        old_version = _get_current_format(datadir)
+
+        # FIXME: If we wanted to, we could find a set of conversions which
+        # would bring us up to the one we want if there's no direct path.
+        # This isn't necessary with just two formats, but it may be useful
+        # at 3.
         # Call the appropriate conversion function
-        migrations[(_get_current_format(datadir), version)](datadir)
+        migrations[(old_version, version)](datadir)
     finally:
         lockfile.release()
