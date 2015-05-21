@@ -15,9 +15,6 @@ from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG
 from datacats.error import DatacatsError
 
 
-DATACATS_USER_HOST = 'datacats@command.datacats.com'
-
-
 class UserProfile(object):
 
     """
@@ -79,7 +76,7 @@ class UserProfile(object):
         try:
             web_command(
                 command=["ssh",
-                         _project_user_host(project),
+                         project.deploy_target,
                          'test'],
                 ro={
                     KNOWN_HOSTS: '/root/.ssh/known_hosts',
@@ -110,7 +107,7 @@ class UserProfile(object):
                 "  2) the server is not up or functioning properly,\n"
                 "  3) there is a firewall block for the datacats application\n"
                 " or something of this sort."
-                ).format(_project_user_host(project))
+                ).format(project.deploy_target)
 
             user_error_message = network_unreachable_error_message \
                 if "Network is unreachable" in e.logs \
@@ -123,7 +120,7 @@ class UserProfile(object):
         """
         web_command(
             command=[
-                "ssh", _project_user_host(project), "create", target_name,
+                "ssh", project.deploy_target, "create", target_name,
                 ],
             ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
                 SSH_CONFIG: '/etc/ssh/ssh_config',
@@ -139,7 +136,7 @@ class UserProfile(object):
         try:
             web_command(
                 command=[
-                    "ssh", _project_user_host(project),
+                    "ssh", project.deploy_target,
                     "admin_password", target_name, password,
                     ],
                 ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
@@ -163,7 +160,7 @@ class UserProfile(object):
                     "--exclude=.datacats-environment",
                     "--exclude=.git",
                     "/project/.",
-                    _project_user_host(project) + ':' + target_name],
+                    project.deploy_target + ':' + target_name],
                 ro={project.target: '/project',
                     KNOWN_HOSTS: '/root/.ssh/known_hosts',
                     SSH_CONFIG: '/etc/ssh/ssh_config',
@@ -181,7 +178,7 @@ class UserProfile(object):
         try:
             web_command(
                 command=[
-                    "ssh", _project_user_host(project), "install", target_name,
+                    "ssh", project.deploy_target, "install", target_name,
                     ],
                 ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
                     SSH_CONFIG: '/etc/ssh/ssh_config',
@@ -198,9 +195,3 @@ class UserProfile(object):
                 format_args=(target_name,),
                 parent_exception=e
                 )
-
-
-def _project_user_host(project):
-    if project.deploy_target is None:
-        return DATACATS_USER_HOST
-    return project.deploy_target

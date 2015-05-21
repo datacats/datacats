@@ -34,6 +34,7 @@ WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
 DB_INIT_RETRY_DELAY = 2
 DOCKER_EXE = 'docker'
+DEFAULT_REMOTE_SERVER_TARGET = 'datacats@command.datacats.com'
 
 
 class Environment(object):
@@ -221,7 +222,7 @@ class Environment(object):
         try:
             deploy_target = cp.get('deploy', 'target', None)
         except NoSectionError:
-            deploy_target = None
+            deploy_target = DEFAULT_REMOTE_SERVER_TARGET
 
         passwords = {}
         try:
