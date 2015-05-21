@@ -901,6 +901,16 @@ class Environment(object):
             ro={COMPILE_LESS: '/project/compile_less.sh'})
         remove_container(c)
 
+    def remote_command_binds(self, include_project_dir=False):
+        binds = {
+            self.profile.profiledir + '/id_rsa': '/root/.ssh/id_rsa',
+            KNOWN_HOSTS: '/root/.ssh/known_hosts',
+            SSH_CONFIG: '/etc/ssh/ssh_config'
+            }
+        if include_project_dir:
+            binds[self.target] = '/project'
+        return binds
+
     def _proxy_settings(self):
         """
         Create/replace ~/.datacats/run/proxy-environment and return

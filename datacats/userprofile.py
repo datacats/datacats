@@ -11,7 +11,6 @@ from socket import gethostname
 from getpass import getuser
 
 from datacats.docker import web_command, WebCommandError
-from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG
 from datacats.error import DatacatsError
 
 
@@ -78,10 +77,7 @@ class UserProfile(object):
                 command=["ssh",
                          project.deploy_target,
                          'test'],
-                ro={
-                    KNOWN_HOSTS: '/root/.ssh/known_hosts',
-                    SSH_CONFIG: '/etc/ssh/ssh_config',
-                    self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
+                ro=project.remote_command_binds(),
                 clean_up=True
                 )
 
@@ -122,9 +118,7 @@ class UserProfile(object):
             command=[
                 "ssh", project.deploy_target, "create", target_name,
                 ],
-            ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
-                SSH_CONFIG: '/etc/ssh/ssh_config',
-                self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
+            ro=project.remote_command_binds(),
             stream_output=stream_output,
             clean_up=True,
             )
@@ -139,9 +133,7 @@ class UserProfile(object):
                     "ssh", project.deploy_target,
                     "admin_password", target_name, password,
                     ],
-                ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
-                    SSH_CONFIG: '/etc/ssh/ssh_config',
-                    self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
+                ro=project.remote_command_binds(),
                 clean_up=True,
                 )
             return True
@@ -161,10 +153,7 @@ class UserProfile(object):
                     "--exclude=.git",
                     "/project/.",
                     project.deploy_target + ':' + target_name],
-                ro={project.target: '/project',
-                    KNOWN_HOSTS: '/root/.ssh/known_hosts',
-                    SSH_CONFIG: '/etc/ssh/ssh_config',
-                    self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
+                ro=project.remote_command_binds(include_project_dir=True),
                 stream_output=stream_output,
                 clean_up=True,
                 )
@@ -180,9 +169,7 @@ class UserProfile(object):
                 command=[
                     "ssh", project.deploy_target, "install", target_name,
                     ],
-                ro={KNOWN_HOSTS: '/root/.ssh/known_hosts',
-                    SSH_CONFIG: '/etc/ssh/ssh_config',
-                    self.profiledir + '/id_rsa': '/root/.ssh/id_rsa'},
+                ro=project.remote_command_binds(),
                 stream_output=stream_output,
                 clean_up=True,
                 )
