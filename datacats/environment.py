@@ -317,7 +317,7 @@ class Environment(object):
         Populate venv directory from preloaded image
         """
         if is_boot2docker():
-            data_only_container('datacats_venv_' + self.name,
+            data_only_container(self._get_container_name('venv'),
                                 ['/usr/lib/ckan'])
             img_id = web_command(
                 '/bin/mv /usr/lib/ckan/ /usr/lib/ckan_original',
@@ -326,7 +326,7 @@ class Environment(object):
                 )
             web_command(
                 command='/bin/cp -a /usr/lib/ckan_original/. /usr/lib/ckan/.',
-                volumes_from='datacats_venv_' + self.name,
+                volumes_from=self._get_container_name('venv'),
                 image=img_id,
                 )
             remove_image(img_id)
@@ -370,10 +370,10 @@ class Environment(object):
         # complicated because postgres needs hard links to
         # work on its data volume. see issue #5
         if is_boot2docker():
-            data_only_container('datacats_pgdata_' + self.name,
+            data_only_container(self._get_container_name('pgdata'),
                                 ['/var/lib/postgresql/data'])
             rw = {}
-            volumes_from = 'datacats_pgdata_' + self.name
+            volumes_from = self._get_container_name('pgdata')
         else:
             rw = {self.datadir + '/postgres': '/var/lib/postgresql/data'}
             volumes_from = None
@@ -384,13 +384,13 @@ class Environment(object):
         if 'postgres' not in running or 'solr' not in running:
             self.stop_postgres_and_solr()
             run_container(
-                name='datacats_postgres_' + self.name,
+                name=self._get_container_name('postgres'),
                 image='datacats/postgres',
                 environment=self.passwords,
                 rw=rw,
                 volumes_from=volumes_from)
             run_container(
-                name='datacats_solr_' + self.name,
+                name=self._get_container_name('solr'),
                 image='datacats/solr',
                 rw={self.datadir + '/solr': '/var/lib/solr'},
                 ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
@@ -399,8 +399,8 @@ class Environment(object):
         """
         stop and remove postgres and solr containers
         """
-        remove_container('datacats_postgres_' + self.name)
-        remove_container('datacats_solr_' + self.name)
+        remove_container(self._get_container_name('postgres'))
+        remove_container(self._get_container_name('solr'))
 
     def fix_storage_permissions(self):
         """
@@ -575,13 +575,13 @@ class Environment(object):
         """
         if is_boot2docker():
             ro = {}
-            volumes_from = 'datacats_venv_' + self.name
+            volumes_from = self._get_container_name('venv')
         else:
             ro = {self.datadir + '/venv': '/usr/lib/ckan'}
             volumes_from = None
 
         run_container(
-            name='datacats_web_' + self.name,
+            name=self._get_container_name('web'),
             image='datacats/web',
             rw={self.datadir + '/files': '/var/www/storage'},
             ro=dict({
@@ -589,8 +589,8 @@ class Environment(object):
                 self.datadir + '/run/development.ini':
                     '/project/development.ini',
                 WEB: '/scripts/web.sh'}, **ro),
-            links={'datacats_solr_' + self.name: 'solr',
-                   'datacats_postgres_' + self.name: 'db'},
+            links={self._get_container_name('solr'): 'solr',
+                   self._get_container_name('postgres'): 'db'},
             volumes_from=volumes_from,
             command=command,
             port_bindings={
@@ -604,7 +604,7 @@ class Environment(object):
         """
         try:
             if not wait_for_service_available(
-                    'datacats_web_' + self.name,
+                    self._get_container_name('web'),
                     self.web_address(),
                     WEB_START_TIMEOUT_SECONDS):
                 raise DatacatsError('Failed to start web container.'
@@ -635,14 +635,14 @@ class Environment(object):
         """
         Stop and remove the web container
         """
-        remove_container('datacats_web_' + self.name, force=True)
+        remove_container(self._get_container_name('web'), force=True)
 
     def _current_web_port(self):
         """
         return just the port number for the web container, or None if
         not running
         """
-        info = inspect_container('datacats_web_' + self.name)
+        info = inspect_container(self._get_container_name('web'))
         if info is None:
             return None
         try:
@@ -669,7 +669,7 @@ class Environment(object):
         """
         running = []
         for n in ['web', 'postgres', 'solr']:
-            info = inspect_container('datacats_' + n + '_' + self.name)
+            info = inspect_container(self._get_container_name(n))
             if info and not info['State']['Running']:
                 running.append(n + '(halted)')
             elif info:
@@ -725,7 +725,7 @@ class Environment(object):
         background = environ.get('CIRCLECI', False) or detach
 
         if is_boot2docker():
-            venv_volumes = ['--volumes-from', 'datacats_venv_' + self.name]
+            venv_volumes = ['--volumes-from', self._get_container_name('venv')]
         else:
             venv_volumes = ['-v', self.datadir + '/venv:/usr/lib/ckan:rw']
 
@@ -760,8 +760,8 @@ class Environment(object):
             '-v', self.datadir + '/run/run.ini:/project/development.ini:ro',
             '-v', self.datadir +
                 '/run/test.ini:/project/ckan/test-core.ini:ro',
-            '--link', 'datacats_solr_' + self.name + ':solr',
-            '--link', 'datacats_postgres_' + self.name + ':db',
+            '--link', self._get_container_name('solr') + ':solr',
+            '--link', self._get_container_name('postgres') + ':db',
             '--hostname', self.name,
             'datacats/web', '/scripts/shell.sh'] + command)
 
@@ -825,7 +825,7 @@ class Environment(object):
         ro.update(self._proxy_settings())
 
         if is_boot2docker():
-            volumes_from = 'datacats_venv_' + self.name
+            volumes_from = self._get_container_name('venv')
         else:
             volumes_from = None
             venvmount = rw if rw_venv else ro
@@ -836,8 +836,8 @@ class Environment(object):
         if db_links:
             self._create_run_ini(self.port, production=False, output='run.ini')
             links = {
-                'datacats_solr_' + self.name: 'solr',
-                'datacats_postgres_' + self.name: 'db',
+                self._get_container_name('solr'): 'solr',
+                self._get_container_name('postgres'): 'db',
                 }
             ro[self.datadir + '/run/run.ini'] = '/project/development.ini'
         else:
@@ -856,8 +856,8 @@ class Environment(object):
         """
         datadirs = ['files', 'solr']
         if is_boot2docker():
-            remove_container('datacats_pgdata_' + self.name)
-            remove_container('datacats_venv_' + self.name)
+            remove_container(self._get_container_name('pgdata'))
+            remove_container(self._get_container_name('venv'))
         else:
             datadirs += ['postgres', 'venv']
 
@@ -877,14 +877,14 @@ class Environment(object):
         :param timestamps: True to include timestamps
         """
         return container_logs(
-            'datacats_' + container + '_' + self.name,
+            self._get_container_name(container),
             tail,
             follow,
             timestamps)
 
     def compile_less(self):
         c = run_container(
-            name='datacats_' + self.name + '_lessc', image='datacats/lessc',
+            name=self._get_container_name('lessc'), image='datacats/lessc',
             rw={self.target: '/project/target'},
             ro={COMPILE_LESS: '/project/compile_less.sh'})
         remove_container(c)
@@ -925,6 +925,23 @@ class Environment(object):
             f.write("".join(out))
 
         return {self.datadir + '/run/proxy-environment': '/etc/environment'}
+
+    def _get_container_name(self, container_type):
+        """
+        Gets the full name of a container of the type specified.
+        Currently the supported types are:
+            - 'venv'
+            - 'postgres'
+            - 'solr'
+            - 'web'
+            - 'pgdata'
+            - 'lessc'
+        The name will be formatted appropriately with any prefixes and postfixes
+        needed.
+
+        :param container_type: The type of container name to generate (see above).
+        """
+        return 'datacats_{}_{}'.format(container_type, self.name)
 
 
 def generate_db_password():
