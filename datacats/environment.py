@@ -251,6 +251,15 @@ class Environment(object):
 
         return environment
 
+    def volumes_exist(self):
+        # We don't use data only containers on non-boot2docker
+        if not is_boot2docker():
+            return True
+
+        # Inspect returns None if the container doesn't exist.
+        return (inspect_container('datacats_pgdata_' + self.name) and
+                inspect_container('datacats_venv_' + self.name))
+
     def data_exists(self):
         """
         Return True if the datadir for this environment exists
@@ -273,7 +282,7 @@ class Environment(object):
 
     def require_data(self):
         """
-        raise a DatacatsError if the datadir is missing or damaged
+        raise a DatacatsError if the datadir or volumes are missing or damaged
         """
         if not self.data_exists():
             raise DatacatsError('Environment datadir missing. '
@@ -281,6 +290,9 @@ class Environment(object):
         if not self.data_complete():
             raise DatacatsError('Environment datadir damaged. '
                                 'Try "datacats purge" followed by "datacats init".')
+        if not self.volumes_exist():
+            raise DatacatsError('Volumes damaged. '
+                                'Try "datacats purge" followed by "datacats init"')
 
     def create_directories(self, create_project_dir=True):
         """
