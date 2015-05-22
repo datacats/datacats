@@ -15,7 +15,7 @@ Usage:
 
 Options:
   -d --detach       Run the resulting container in the background
-  -c --child=NAME   Specify a child to run the shell on [default: primary]
+  -s --site=NAME   Specify a site to run the shell on [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -35,7 +35,7 @@ Usage:
   datacats paster [-d] [-c NAME] [COMMAND...]
 
 Options:
-  -c --child=NAME   Specify a child to run this paster command on [default: primary]
+  -s --site=NAME   Specify a site to run this paster command on [default: primary]
   -d --detach       Run the resulting container in the background
 
 You must be inside a datacats environment to run this. The paster command will

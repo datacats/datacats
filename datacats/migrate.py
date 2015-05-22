@@ -56,7 +56,7 @@ def _split_path(path):
 
 
 def _one_to_two(datadir):
-    new_child_name = 'primary'
+    new_site_name = 'primary'
 
     split = _split_path(datadir)
 
@@ -71,15 +71,15 @@ def _one_to_two(datadir):
     # Begin the actual conversion
     to_move = (['files', 'passwords.ini', 'run', 'solr', 'search'] +
                (['postgres', 'data'] if not is_boot2docker() else []))
-    # Make a primary child
-    child_path = path_join(datadir, 'children', new_child_name)
-    if not exists(child_path):
-        makedirs(child_path)
+    # Make a primary site
+    site_path = path_join(datadir, 'sites', new_site_name)
+    if not exists(site_path):
+        makedirs(site_path)
 
     web_command(
         command=['/scripts/migrate.sh',
                  '/project/data',
-                 '/project/data/children/' + new_child_name] +
+                 '/project/data/sites/' + new_site_name] +
         to_move,
         ro={MIGRATE: '/scripts/migrate.sh'},
         rw={datadir: '/project/data'},
@@ -88,7 +88,7 @@ def _one_to_two(datadir):
 
     if is_boot2docker():
         rename_container('datacats_pgdata_' + env_name,
-                         'datacats_pgdata_' + env_name + '_' + new_child_name)
+                         'datacats_pgdata_' + env_name + '_' + new_site_name)
 
     # Lastly, grab the project directory and update the ini file
     with open(path_join(datadir, 'project-dir')) as pd:
@@ -98,8 +98,8 @@ def _one_to_two(datadir):
     config_loc = path_join(project, '.datacats-environment')
     cp.read([config_loc])
 
-    new_section = 'child_' + new_child_name
-    cp.add_section('child_' + new_child_name)
+    new_section = 'site_' + new_site_name
+    cp.add_section(new_section)
 
     # Ports need to be moved into the new section
     port = cp.get('datacats', 'port')
@@ -110,9 +110,9 @@ def _one_to_two(datadir):
     with open(config_loc, 'w') as config:
         cp.write(config)
 
-    # Make a session secret for it (make it per-child)
+    # Make a session secret for it (make it per-site)
     cp = SafeConfigParser()
-    config_loc = path_join(child_path, 'passwords.ini')
+    config_loc = path_join(site_path, 'passwords.ini')
     cp.read([config_loc])
 
     # Generate a new secret
@@ -144,7 +144,7 @@ def _two_to_one(datadir):
 
     web_command(
         command=['/scripts/migrate.sh',
-                 '/project/data/children/primary',
+                 '/project/data/sites/primary',
                  '/project/data'] + to_move,
         ro={MIGRATE: '/scripts/migrate.sh'},
         rw={datadir: '/project/data'}
@@ -161,9 +161,9 @@ def _two_to_one(datadir):
     cp = SafeConfigParser()
     cp.read(datacats_env_location)
 
-    # We need to move the port OUT of child_primary section and INTO datacats
-    cp.set('datacats', 'port', cp.get('child_primary', 'port'))
-    cp.remove_section('child_primary')
+    # We need to move the port OUT of site_primary section and INTO datacats
+    cp.set('datacats', 'port', cp.get('site_primary', 'port'))
+    cp.remove_section('site_primary')
 
     with open(datacats_env_location, 'w') as config:
         cp.write(config)

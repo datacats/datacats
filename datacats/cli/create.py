@@ -32,7 +32,7 @@ Options:
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
-  -c --child=NAME         Pick a child environment to create [default: primary]
+  -s --site=NAME          Pick a site to create [default: primary]
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
@@ -43,17 +43,17 @@ part of this path will be used as the environment name.
         create_skin=not opts['--bare'],
         start_web=not opts['--image-only'],
         create_sysadmin=not opts['--no-sysadmin'],
-        child_name=opts['--child'],
+        site_name=opts['--site'],
         ckan_version=opts['--ckan'],
         address=opts['--address']
         )
 
 
-def create_environment(environment_dir, port, ckan_version, create_skin, child_name,
+def create_environment(environment_dir, port, ckan_version, create_skin, site_name,
         start_web, create_sysadmin, address):
     try:
         # FIXME: only 2.3 preload supported at the moment
-        environment = Environment.new(environment_dir, '2.3', child_name, port)
+        environment = Environment.new(environment_dir, '2.3', site_name, port)
     except DatacatsError as e:
         print e
         return 1
@@ -64,17 +64,17 @@ def create_environment(environment_dir, port, ckan_version, create_skin, child_n
         print
 
     try:
-        # There are a lot of steps we can/must skip if we're making a child only
+        # There are a lot of steps we can/must skip if we're making a sub-site only
         making_full_environment = not environment.data_exists()
 
-        write('Creating environment "{0}/{1}"'.format(environment.name, environment.child_name))
+        write('Creating environment "{0}/{1}"'.format(environment.name, environment.site_name))
         steps = [
             lambda: environment.create_directories(making_full_environment),
             environment.create_bash_profile] + ([environment.create_virtualenv,
             environment.save,
             environment.create_source,
             environment.create_ckan_ini] if making_full_environment else []
-            ) + [environment.save_child, environment.start_postgres_and_solr,
+            ) + [environment.save_site, environment.start_postgres_and_solr,
             environment.fix_storage_permissions,
             lambda: environment.update_ckan_ini(skin=create_skin),
             environment.fix_project_permissions,
@@ -109,7 +109,7 @@ Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
-  -c --child=NAME         Pick a child environment to initialize [default: primary]
+  -s --site=NAME         Pick a site to initialize [default: primary]
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
@@ -118,31 +118,31 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     address = opts['--address']
     start_web = not opts['--image-only']
     create_sysadmin = not opts['--no-sysadmin']
-    child_name = opts['--child']
+    site_name = opts['--site']
 
     environment_dir = abspath(environment_dir or '.')
 
-    environment = Environment.load(environment_dir, child_name)
+    environment = Environment.load(environment_dir, site_name)
     environment.address = address
     if port:
         environment.port = int(port)
 
     try:
-        if environment.children and child_name in environment.children:
-            raise DatacatsError('Child environment {0} already exists.'
-                                .format(child_name))
-        # There are a couple of steps we can/must skip if we're making a child only
+        if environment.sites and site_name in environment.sites:
+            raise DatacatsError('Site named {0} already exists.'
+                                .format(site_name))
+        # There are a couple of steps we can/must skip if we're making a sub-site only
         making_full_environment = not environment.data_exists()
 
         write('Creating environment {0}/{1} '
               'from existing environment directory "{0}"'
-              .format(environment.name, environment.child_name))
+              .format(environment.name, environment.site_name))
         steps = [
             lambda: environment.create_directories(create_project_dir=False)] + ([
              environment.save,
              environment.create_virtualenv
              ] if making_full_environment else []) + [
-                 environment.save_child,
+                 environment.save_site,
                  environment.start_postgres_and_solr,
                  environment.fix_storage_permissions,
                  environment.fix_project_permissions,

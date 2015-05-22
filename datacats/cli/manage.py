@@ -23,7 +23,7 @@ Usage:
 
 Options:
   -r --remote        Stop DataCats.com cloud instance
-  -c --child=NAME    Specify a child environment to stop. [default: primary]
+  -s --site=NAME    Specify a site to stop. [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -44,7 +44,7 @@ Options:
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
-  -c --child=NAME    Specify a child environment to start [default: primary]
+  -s --site=NAME    Specify a site to start [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -70,7 +70,7 @@ Options:
   -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
-  -c --child=NAME    Specify a child to reload [default: primary]
+  -s --site=NAME    Specify a site to reload [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -110,8 +110,8 @@ Usage:
 Options:
   -q --quiet         Echo only the web URL or nothing if not running
   -r --remote        Information about DataCats.com cloud instance
-  -c --child=NAME  Provide information about running containers in a specific
-                     child [default: primary]
+  -s --site=NAME  Provide information about running containers in a specific
+                     site [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -133,7 +133,7 @@ Default: '.'
     print ' Environment dir: ' + environment.target
     print '        Data dir: ' + datadir
     print '      Containers: ' + ' '.join(environment.containers_running())
-    print '        Children: ' + ' '.join(environment.children)
+    print '           Sites: ' + ' '.join(environment.sites)
     if not addr:
         return
     print '    Available at: ' + addr
@@ -164,7 +164,7 @@ Options:
   -r --remote        Retrieve logs from DataCats.com cloud instance
   -s --solr-logs     Show solr search logs instead of web logs
   -t --timestamps    Add timestamps to log lines
-  -c --child=NAME  Specify a child environment for logs if needed [default: primary]
+  -s --site=NAME     Specify a site for logs if needed [default: primary]
   --tail=LINES       Number of lines to show [default: all]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
@@ -198,7 +198,7 @@ Usage:
 
 Options:
   -r --remote        Open DataCats.com cloud instance address
-  -c --child=NAME  Choose a child environment to open [default: primary]
+  -c --site=NAME     Choose a site to open [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'

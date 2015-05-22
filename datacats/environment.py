@@ -47,7 +47,7 @@ class Environment(object):
     Create with Environment.new(path) or Environment.load(path)
     """
 
-    def __init__(self, name, target, datadir, child_name, ckan_version=None,
+    def __init__(self, name, target, datadir, site_name, ckan_version=None,
                  port=None, deploy_target=None, site_url=None,
                  always_prod=False, extension_dir='ckan', address=None):
         self.name = name
@@ -55,45 +55,45 @@ class Environment(object):
         self.datadir = datadir
         self.extension_dir = extension_dir
         self.ckan_version = ckan_version
-        # This is the child that all commands will operate on.
-        self.child_name = child_name
-        self.childdir = join(datadir, 'children', child_name)
+        # This is the site that all commands will operate on.
+        self.site_name = site_name
+        self.sitedir = join(datadir, 'sites', site_name)
         self.port = int(port if port else self._choose_port())
         self.address = address
         self.deploy_target = deploy_target
         self.site_url = site_url
         self.always_prod = always_prod
-        self.children = None
+        self.sites = None
 
-    def _load_children(self):
+    def _load_sites(self):
         """
-        Gets the names of all of the children from the datadir and stores them
-        in self.children. Also returns this list.
+        Gets the names of all of the sites from the datadir and stores them
+        in self.sites. Also returns this list.
         """
-        if not self.children:
+        if not self.sites:
             # get a list of all of the subdirectories. We'll call this the list
-            # of children.
+            # of sites.
             try:
-                self.children = listdir(join(self.datadir, 'children'))
+                self.sites = listdir(join(self.datadir, 'sites'))
             except OSError:
-                self.children = []
+                self.sites = []
 
-        return self.children
+        return self.sites
 
-    def save_child(self):
+    def save_site(self):
         """
         Save environment settings in the directory that need to be saved
-        even when creating only a new child env.
+        even when creating only a new sub-site env.
         """
         cp = SafeConfigParser()
 
         cp.read([self.target + '/.datacats-environment'])
 
-        self._load_children()
+        self._load_sites()
 
-        self.children.append(self.child_name)
+        self.sites.append(self.site_name)
 
-        section_name = 'child_' + self.child_name
+        section_name = 'site_' + self.site_name
 
         cp.add_section(section_name)
         cp.set(section_name, 'port', str(self.port))
@@ -112,8 +112,8 @@ class Environment(object):
         for n in sorted(self.passwords):
             cp.set('passwords', n.lower(), self.passwords[n])
 
-        # Write to the childdir so we maintain separate passwords.
-        with open(self.childdir + '/passwords.ini', 'w') as config:
+        # Write to the sitedir so we maintain separate passwords.
+        with open(self.sitedir + '/passwords.ini', 'w') as config:
             cp.write(config)
 
     def save(self):
@@ -151,14 +151,14 @@ class Environment(object):
             pdir.write(self.target)
 
     @classmethod
-    def new(cls, path, ckan_version, child_name, port=None, address=None):
+    def new(cls, path, ckan_version, site_name, port=None, address=None):
         """
         Return a Environment object with settings for a new project.
         No directories or containers are created by this call.
 
         :params path: location for new project directory, may be relative
         :params ckan_version: release of CKAN to install
-        :params child_name: The name of the child environment to install database and solr \
+        :params site_name: The name of the site to install database and solr \
                             eventually.
         :params port: preferred port for local instance
 
@@ -178,30 +178,30 @@ class Environment(object):
         require_images()
 
         datadir = expanduser('~/.datacats/' + name)
-        childdir = join(datadir, child_name)
+        sitedir = join(datadir, site_name)
         # We track through the datadir to the target if we are just making a
-        # child
+        # site
         if isdir(datadir):
             with open(join(datadir, 'project-dir')) as pd:
                 target = pd.read()
         else:
             target = workdir + '/' + name
 
-        if isdir(childdir):
-            raise DatacatsError('Child environment data directory {0} already exists',
-                                (childdir,))
+        if isdir(sitedir):
+            raise DatacatsError('Site data directory {0} already exists',
+                                (sitedir,))
         # This is the case where the data dir has been removed,
         if isdir(target) and not isdir(datadir):
             raise DatacatsError('Environment directory exists, but data directory does not.\n'
                                 'If you simply want to recreate the data directory, run '
                                 '"datacats init" in the environment directory.')
 
-        environment = cls(name, target, datadir, child_name, ckan_version, port)
+        environment = cls(name, target, datadir, site_name, ckan_version, port)
         environment._generate_passwords()
         return environment
 
     @classmethod
-    def load(cls, environment_name=None, child_name='primary', data_only=False):
+    def load(cls, environment_name=None, site_name='primary', data_only=False):
         """
         Return an Environment object based on an existing project.
 
@@ -215,8 +215,8 @@ class Environment(object):
         """
         if environment_name is None:
             environment_name = '.'
-        if child_name is not None and not valid_name(child_name):
-            raise DatacatsError('{} is not a valid child name.'.format(child_name))
+        if site_name is not None and not valid_name(site_name):
+            raise DatacatsError('{} is not a valid site name.'.format(site_name))
 
         require_images()
 
@@ -252,7 +252,7 @@ class Environment(object):
                 ignore, extension_dir = path_split(oldwd)
 
         if data_only and not used_path:
-            return cls(environment_name, None, datadir, child_name)
+            return cls(environment_name, None, datadir, site_name)
 
         cp = SafeConfigParser()
         try:
@@ -260,7 +260,7 @@ class Environment(object):
         except ConfigParserError:
             raise DatacatsError('Error reading environment information')
 
-        child_section = 'child_' + child_name
+        site_section = 'site_' + site_name
         name = cp.get('datacats', 'name')
         datadir = expanduser('~/.datacats/' + name)
 
@@ -282,15 +282,15 @@ class Environment(object):
                                 ' "datacats migrate" command.')
         ckan_version = cp.get('datacats', 'ckan_version')
         try:
-            port = cp.getint(child_section, 'port')
+            port = cp.getint(site_section, 'port')
         except (NoOptionError, NoSectionError):
             port = None
         try:
-            address = cp.get(child_section, 'address')
+            address = cp.get(site_section, 'address')
         except (NoOptionError, NoSectionError):
             address = None
         try:
-            site_url = cp.get(child_section, 'site_url')
+            site_url = cp.get(site_section, 'site_url')
         except (NoOptionError, NoSectionError):
             site_url = None
         try:
@@ -308,7 +308,7 @@ class Environment(object):
             pw_options = cp.options('passwords')
         except NoSectionError:
             cp = SafeConfigParser()
-            cp.read(join(datadir, 'children', child_name) + '/passwords.ini')
+            cp.read(join(datadir, 'sites', site_name) + '/passwords.ini')
             try:
                 pw_options = cp.options('passwords')
             except NoSectionError:
@@ -317,7 +317,7 @@ class Environment(object):
         for n in pw_options:
             passwords[n.upper()] = cp.get('passwords', n)
 
-        environment = cls(name, wd, datadir, child_name, ckan_version, port, deploy_target,
+        environment = cls(name, wd, datadir, site_name, ckan_version, port, deploy_target,
                           site_url=site_url, always_prod=always_prod, address=address,
                           extension_dir=extension_dir)
         if passwords:
@@ -328,7 +328,7 @@ class Environment(object):
         if not used_path:
             environment._update_saved_project_dir()
 
-        environment._load_children()
+        environment._load_sites()
 
         return environment
 
@@ -338,25 +338,25 @@ class Environment(object):
         """
         return isdir(self.datadir)
 
-    def require_valid_child(self):
-        if self.child_name not in self.children:
-            raise DatacatsError('Invalid child name: {}. Valid names are: {}'
-                                .format(self.child_name,
-                                        ', '.join(self.children)))
+    def require_valid_site(self):
+        if self.site_name not in self.sites:
+            raise DatacatsError('Invalid site name: {}. Valid names are: {}'
+                                .format(self.site_name,
+                                        ', '.join(self.sites)))
 
     def data_complete(self):
         """
         Return True if all the expected datadir files are present
         """
-        if (not isdir(self.childdir + '/files')
-                or not isdir(self.childdir + '/run')
-                or not isdir(self.childdir + '/search')):
+        if (not isdir(self.sitedir + '/files')
+                or not isdir(self.sitedir + '/run')
+                or not isdir(self.sitedir + '/search')):
             return False
         if is_boot2docker():
             return True
         return (
             isdir(self.datadir + '/venv') and
-            isdir(self.childdir + '/data'))
+            isdir(self.sitedir + '/data'))
 
     def require_data(self):
         """
@@ -373,22 +373,22 @@ class Environment(object):
         """
         Call once for new projects to create the initial project directories.
         """
-        # It's possible that the datadir already exists (we're making a secondary child)
+        # It's possible that the datadir already exists (we're making a secondary site)
         if not isdir(self.datadir):
             makedirs(self.datadir, mode=0o700)
         try:
-            # This should take care if the 'child' subdir if needed
-            makedirs(self.childdir, mode=0o700)
+            # This should take care if the 'site' subdir if needed
+            makedirs(self.sitedir, mode=0o700)
         except OSError:
-            raise DatacatsError('Child environment {} already exists.'.format(self.child_name))
-        # venv isn't child-specific, the rest are.
-        makedirs(self.childdir + '/search')
+            raise DatacatsError('Site environment {} already exists.'.format(self.site_name))
+        # venv isn't site-specific, the rest are.
+        makedirs(self.sitedir + '/search')
         if not is_boot2docker():
             if not isdir(self.datadir + '/venv'):
                 makedirs(self.datadir + '/venv')
-            makedirs(self.childdir + '/data')
-        makedirs(self.childdir + '/files')
-        makedirs(self.childdir + '/run')
+            makedirs(self.sitedir + '/data')
+        makedirs(self.sitedir + '/files')
+        makedirs(self.sitedir + '/run')
 
         if create_project_dir:
             makedirs(self.target)
@@ -467,12 +467,12 @@ class Environment(object):
         # complicated because postgres needs hard links to
         # work on its data volume. see issue #5
         if is_boot2docker():
-            data_only_container('datacats_pgdata_' + self.name + '_' + self.child_name,
+            data_only_container('datacats_pgdata_' + self.name + '_' + self.site_name,
                                 ['/var/lib/postgresql/data'])
             rw = {}
-            volumes_from = 'datacats_pgdata_' + self.name + '_' + self.child_name
+            volumes_from = 'datacats_pgdata_' + self.name + '_' + self.site_name
         else:
-            rw = {self.childdir + '/postgres': '/var/lib/postgresql/data'}
+            rw = {self.sitedir + '/postgres': '/var/lib/postgresql/data'}
             volumes_from = None
 
         running = self.containers_running()
@@ -482,23 +482,23 @@ class Environment(object):
             # all the user passwords as environment vars
             self.stop_postgres_and_solr()
             run_container(
-                name='datacats_postgres_' + self.name + '_' + self.child_name,
+                name='datacats_postgres_' + self.name + '_' + self.site_name,
                 image='datacats/postgres',
                 environment=self.passwords,
                 rw=rw,
                 volumes_from=volumes_from)
             run_container(
-                name='datacats_solr_' + self.name + '_' + self.child_name,
+                name='datacats_solr_' + self.name + '_' + self.site_name,
                 image='datacats/solr',
-                rw={self.childdir + '/solr': '/var/lib/solr'},
+                rw={self.sitedir + '/solr': '/var/lib/solr'},
                 ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
     def stop_postgres_and_solr(self):
         """
         stop and remove postgres and solr containers
         """
-        remove_container('datacats_postgres_' + self.name + '_' + self.child_name)
-        remove_container('datacats_solr_' + self.name + '_' + self.child_name)
+        remove_container('datacats_postgres_' + self.name + '_' + self.site_name)
+        remove_container('datacats_solr_' + self.name + '_' + self.site_name)
 
     def fix_storage_permissions(self):
         """
@@ -506,7 +506,7 @@ class Environment(object):
         """
         web_command(
             command='/bin/chown -R www-data: /var/www/storage',
-            rw={self.childdir + '/files': '/var/www/storage'})
+            rw={self.sitedir + '/files': '/var/www/storage'})
 
     def create_ckan_ini(self):
         """
@@ -664,9 +664,9 @@ class Environment(object):
         cp.set('app:main', 'solr_url', 'http://solr:8080/solr')
         cp.set('app:main', 'beaker.session.secret', self.passwords['BEAKER_SESSION_SECRET'])
 
-        if not isdir(self.childdir + '/run'):
-            makedirs(self.childdir + '/run')  # upgrade old datadir
-        with open(self.childdir + '/run/' + output, 'w') as runini:
+        if not isdir(self.sitedir + '/run'):
+            makedirs(self.sitedir + '/run')  # upgrade old datadir
+        with open(self.sitedir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
     def _run_web_container(self, port, command, address='127.0.0.1'):
@@ -681,16 +681,16 @@ class Environment(object):
             volumes_from = None
         try:
             run_container(
-                name='datacats_web_' + self.name + '_' + self.child_name,
+                name='datacats_web_' + self.name + '_' + self.site_name,
                 image='datacats/web',
-                rw={self.childdir + '/files': '/var/www/storage'},
+                rw={self.sitedir + '/files': '/var/www/storage'},
                 ro=dict({
                     self.target: '/project/',
-                    self.childdir + '/run/development.ini':
+                    self.sitedir + '/run/development.ini':
                         '/project/development.ini',
                     WEB: '/scripts/web.sh'}, **ro),
-                links={'datacats_solr_' + self.name + '_' + self.child_name: 'solr',
-                    'datacats_postgres_' + self.name + '_' + self.child_name: 'db'},
+                links={'datacats_solr_' + self.name + '_' + self.site_name: 'solr',
+                    'datacats_postgres_' + self.name + '_' + self.site_name: 'db'},
                 volumes_from=volumes_from,
                 command=command,
                 port_bindings={
@@ -710,7 +710,7 @@ class Environment(object):
         """
         try:
             if not wait_for_service_available(
-                    'datacats_web_' + self.name + '_' + self.child_name,
+                    'datacats_web_' + self.name + '_' + self.site_name,
                     self.web_address(),
                     WEB_START_TIMEOUT_SECONDS):
                 raise DatacatsError('Failed to start web container.'
@@ -724,9 +724,9 @@ class Environment(object):
         Return a port number from 5000-5999 based on the environment name
         to be used as a default when the user hasn't selected one.
         """
-        # instead of random let's base it on the name chosen (and the childname)
+        # instead of random let's base it on the name chosen (and the site name)
         return 5000 + unpack('Q',
-                             sha((self.name + self.child_name)
+                             sha((self.name + self.site_name)
                              .decode('ascii')).digest()[:8])[0] % 1000
 
     def _next_port(self, port):
@@ -742,14 +742,14 @@ class Environment(object):
         """
         Stop and remove the web container
         """
-        remove_container('datacats_web_' + self.name + '_' + self.child_name, force=True)
+        remove_container('datacats_web_' + self.name + '_' + self.site_name, force=True)
 
     def _current_web_port(self):
         """
         return just the port number for the web container, or None if
         not running
         """
-        info = inspect_container('datacats_web_' + self.name + '_' + self.child_name)
+        info = inspect_container('datacats_web_' + self.name + '_' + self.site_name)
         if info is None:
             return None
         try:
@@ -776,7 +776,7 @@ class Environment(object):
         """
         running = []
         for n in ['web', 'postgres', 'solr']:
-            info = inspect_container('datacats_' + n + '_' + self.name + '_' + self.child_name)
+            info = inspect_container('datacats_' + n + '_' + self.name + '_' + self.site_name)
             if info and not info['State']['Running']:
                 running.append(n + '(halted)')
             elif info:
@@ -799,7 +799,7 @@ class Environment(object):
         """
         create 'admin' account with given password
         """
-        with open(self.childdir + '/run/admin.json', 'w') as out:
+        with open(self.sitedir + '/run/admin.json', 'w') as out:
             json.dump({
                 'name': 'admin',
                 'email': 'none',
@@ -811,9 +811,9 @@ class Environment(object):
                      'action user_create -i -c /project/development.ini '
                      '< /input/admin.json'],
             db_links=True,
-            ro={self.childdir + '/run/admin.json': '/input/admin.json'},
+            ro={self.sitedir + '/run/admin.json': '/input/admin.json'},
             )
-        remove(self.childdir + '/run/admin.json')
+        remove(self.sitedir + '/run/admin.json')
 
     def interactive_shell(self, command=None, paster=False, detach=False):
         """
@@ -850,7 +850,7 @@ class Environment(object):
         proxy_settings = self._proxy_settings()
         if proxy_settings:
             venv_volumes += ['-v',
-                             self.childdir + '/run/proxy-environment:/etc/environment:ro']
+                             self.sitedir + '/run/proxy-environment:/etc/environment:ro']
 
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
@@ -861,13 +861,13 @@ class Environment(object):
             '-d' if detach else '-i',
             ] + venv_volumes + [
             '-v', self.target + ':/project:rw',
-            '-v', self.childdir + '/files:/var/www/storage:rw',
+            '-v', self.sitedir + '/files:/var/www/storage:rw',
             '-v', script + ':/scripts/shell.sh:ro',
             '-v', PASTER_CD + ':/scripts/paster_cd.sh:ro',
-            '-v', self.childdir + '/run/run.ini:/project/development.ini:ro',
-            '-v', self.childdir + '/run/test.ini:/project/ckan/test-core.ini:ro',
-            '--link', 'datacats_solr_' + self.name + '_' + self.child_name + ':solr',
-            '--link', 'datacats_postgres_' + self.name + '_' + self.child_name + ':db',
+            '-v', self.sitedir + '/run/run.ini:/project/development.ini:ro',
+            '-v', self.sitedir + '/run/test.ini:/project/ckan/test-core.ini:ro',
+            '--link', 'datacats_solr_' + self.name + '_' + self.site_name + ':solr',
+            '--link', 'datacats_postgres_' + self.name + '_' + self.site_name + ':db',
             '--hostname', self.name,
             'datacats/web', '/scripts/shell.sh'] + command)
 
@@ -942,10 +942,10 @@ class Environment(object):
         if db_links:
             self._create_run_ini(self.port, production=False, output='run.ini')
             links = {
-                'datacats_solr_' + self.name + '_' + self.child_name: 'solr',
-                'datacats_postgres_' + self.name + '_' + self.child_name: 'db',
+                'datacats_solr_' + self.name + '_' + self.site_name: 'solr',
+                'datacats_postgres_' + self.name + '_' + self.site_name: 'db',
                 }
-            ro[self.childdir + '/run/run.ini'] = '/project/development.ini'
+            ro[self.sitedir + '/run/run.ini'] = '/project/development.ini'
         else:
             links = None
 
@@ -956,32 +956,32 @@ class Environment(object):
             print 'Failed to run command %s. Logs are as follows:\n%s' % (e.command, e.logs)
             raise
 
-    def purge_data(self, which_children=None, never_delete=False):
+    def purge_data(self, which_sites=None, never_delete=False):
         """
         Remove uploaded files, postgres db, solr index, venv
         """
-        # Default to the set of all children
-        if not which_children:
-            which_children = self.children
+        # Default to the set of all sites
+        if not which_sites:
+            which_sites = self.sites
 
         datadirs = []
         boot2docker = is_boot2docker()
 
-        if which_children:
+        if which_sites:
             if self.target:
                 cp = SafeConfigParser()
                 cp.read([self.target + '/.datacats-environment'])
 
-            for child in which_children:
+            for site in which_sites:
                 if boot2docker:
-                    remove_container('datacats_pgdata_' + self.name + '_' + child)
+                    remove_container('datacats_pgdata_' + self.name + '_' + site)
                 else:
-                    datadirs += [child + '/postgres']
-                # Always rm the child dir & solr & files
-                datadirs += [child, child + '/files', child + '/solr']
+                    datadirs += [site + '/postgres']
+                # Always rm the site dir & solr & files
+                datadirs += [site, site + '/files', site + '/solr']
                 if self.target:
-                    cp.remove_section('child_' + child)
-                    self.children.remove(child)
+                    cp.remove_section('site_' + site)
+                    self.sites.remove(site)
 
             if self.target:
                 with open(self.target + '/.datacats-environment', 'w') as conf:
@@ -989,11 +989,11 @@ class Environment(object):
 
         web_command(
             command=['/scripts/purge.sh']
-                + ['/project/data/children/' + d for d in datadirs],
+                + ['/project/data/sites/' + d for d in datadirs],
             ro={PURGE: '/scripts/purge.sh'},
             rw={self.datadir: '/project/data'},
             )
-        if not self.children and not never_delete:
+        if not self.sites and not never_delete:
             shutil.rmtree(self.datadir)
 
     def logs(self, container, tail='all', follow=False, timestamps=False):
@@ -1004,7 +1004,7 @@ class Environment(object):
         :param timestamps: True to include timestamps
         """
         return container_logs(
-            'datacats_' + container + '_' + self.name + '_' + self.child_name,
+            'datacats_' + container + '_' + self.name + '_' + self.site_name,
             tail,
             follow,
             timestamps)

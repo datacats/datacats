@@ -78,7 +78,7 @@ def main():
         if command_fn != purge.purge and 'ENVIRONMENT' in opts:
             environment = Environment.load(
                 opts['ENVIRONMENT'] or '.',
-                opts['--child'] if '--child' in opts else 'primary')
+                opts['--site'] if '--site' in opts else 'primary')
             return command_fn(environment, opts)
         return command_fn(opts)
     except DatacatsError as e:

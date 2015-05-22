@@ -17,23 +17,23 @@ Usage:
 
 Options:
   --delete-environment   Delete environment directory as well as its data, as
-                         well as the data for **all** children.
-  -c --child=NAME        Specify a child to be purge [default: primary]
+                         well as the data for **all** sites.
+  -s --site=NAME         Specify a site to be purge [default: primary]
   -y --yes               Respond yes to all prompts (i.e. force)
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     try:
-        environment = Environment.load(opts['ENVIRONMENT'], opts['--child'])
+        environment = Environment.load(opts['ENVIRONMENT'], opts['--site'])
     except DatacatsError:
-        environment = Environment.load(opts['ENVIRONMENT'], opts['--child'], data_only=True)
+        environment = Environment.load(opts['ENVIRONMENT'], opts['--site'], data_only=True)
 
-    # We need a valid child if they don't want to blow away everything.
+    # We need a valid site if they don't want to blow away everything.
     if not opts['--delete-environment']:
-        environment.require_valid_child()
+        environment.require_valid_site()
 
-    children = [opts['--child']] if not opts['--delete-environment'] else environment.children
+    sites = [opts['--site']] if not opts['--delete-environment'] else environment.sites
 
     if not opts['--yes']:
         inp = None
@@ -47,7 +47,7 @@ Default: '.'
     environment.stop_web()
     environment.stop_postgres_and_solr()
 
-    environment.purge_data(children)
+    environment.purge_data(sites)
 
     if opts['--delete-environment']:
         if not environment.target:
