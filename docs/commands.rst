@@ -68,3 +68,7 @@ stop
 less
 ----
 .. program-output:: datacats help less
+
+migrate
+-------
+.. program-output:: datacats help migrate

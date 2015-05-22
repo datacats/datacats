@@ -6,7 +6,7 @@ from datacats.error import DatacatsError
 
 
 def migrate(opts):
-    """Stop serving environment and remove all its containers
+    """Migrate an environment to a given revision of the datadir format.
 
 Usage:
   datacats migrate [-y] [-r VERSION] [ENVIRONMENT_DIR]
@@ -16,7 +16,6 @@ Options:
                          to convert to [default: 2]
   -y --yes               Answer yes to all questions.
 
-Migrates an environment to the newer datadir format if necessary.
 Defaults to '.' if ENVIRONMENT_DIR isn't specified.
 """
     try:

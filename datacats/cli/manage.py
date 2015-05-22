@@ -155,14 +155,14 @@ def logs(environment, opts):
     """Display or follow container logs
 
 Usage:
-  datacats logs [-d | -s] [-s NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
-  datacats logs -f [-d | -s] [-s NAME] [-r] [ENVIRONMENT]
+  datacats logs [--postgres | --solr] [-s NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
+  datacats logs -f [--postgres | --solr] [-s NAME] [-r] [ENVIRONMENT]
 
 Options:
-  -d --postgres-logs Show postgres database logs instead of web logs
+  --postgres         Show postgres database logs instead of web logs
   -f --follow        Follow logs instead of exiting immediately
   -r --remote        Retrieve logs from DataCats.com cloud instance
-  -s --solr-logs     Show solr search logs instead of web logs
+  --solr             Show solr search logs instead of web logs
   -t --timestamps    Add timestamps to log lines
   -s --site=NAME     Specify a site for logs if needed [default: primary]
   --tail=LINES       Number of lines to show [default: all]
