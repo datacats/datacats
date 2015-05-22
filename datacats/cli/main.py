@@ -27,11 +27,8 @@ The datacats commands available are:
   shell       Run a command or interactive shell within this environment
   start       Create containers and start serving environment
   stop        Stop serving environment and remove all its containers
-<<<<<<< HEAD
   migrate     Migrates an environment to the newest datadir format
-=======
   less        Recompile less files in an environment
->>>>>>> master
 
 See 'datacats help COMMAND' for information about options and
 arguments available to each command.
