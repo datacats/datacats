@@ -221,21 +221,28 @@ class Environment(object):
             always_prod = cp.getboolean('datacats', 'always_prod')
         except NoOptionError:
             always_prod = False
+
+        # if remote_server's custom ssh connection
+        # address is defined,
+        # we overwrite the default datacats.com one
         try:
             deploy_target = cp.get(
                 'deploy', 'remote_server_user', None) \
                 + "@" + cp.get('deploy', 'remote_server', None)
-        except NoOptionError:
+        except:
             deploy_target = DEFAULT_REMOTE_SERVER_TARGET
 
+        # if remote_server's ssh public key is given,
+        # we overwrite the default datacats.com one
         try:
             known_hosts_path = datadir + '/known_hosts'
             with open(known_hosts_path, "wb") as known_hosts:
                 known_hosts.write(cp.get(
                     'deploy', 'remote_server_key', None))
-        except NoOptionError:
+        except:
             if exists(known_hosts_path):
                 remove(known_hosts_path)
+
         passwords = {}
         try:
             # backwards compatibility  FIXME: remove this
