@@ -206,6 +206,24 @@ the extension directory and run the command from there: ::
     cd ckanext-archiver/
     datacats paster archiver clean
 
+Multisite
+---------
+As of version 1.0.0, datacats has support for having multiple "sites" under a
+single environment. This means that there can exist several discrete data
+catalogues based on the same CKAN source. This is done using the -s switch,
+which can be applied to all commands that make sense to operate on a single
+site (currently all commands excluding ``migrate``, ``pull``, ``less``, and
+``install``). By default, datacats will operate on a site named 'primary',
+to maintain sane defaults.
+
+For example, to initialize a site with the name 'devel' under a pre-existing
+environment called 'testtown', you could run the following command: ::
+
+    datacats init -s devel testtown
+
+This would create all the necessary containers and folders for the site and
+begin running it on an appropriate (non-conflicting) port.
+
 Logs
 ----
 To see the log output of your CKAN: ::
