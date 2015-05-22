@@ -60,9 +60,8 @@ COMMANDS = {
 }
 
 
-command_uses_ssh = lambda cmd: cmd in [
-    deploy.deploy,
-    install.install
+COMMANDS_THAT_USE_SSH = [
+    deploy.deploy
 ]
 
 
@@ -77,13 +76,13 @@ def main():
     try:
         command_fn, opts = _parse_arguments(sys.argv[1:])
         # purge handles loading differently
-        if command_fn == purge.purge or not 'ENVIRONMENT' in opts:
+        if command_fn == purge.purge or 'ENVIRONMENT' not in opts:
             return command_fn(opts)
 
         environment = Environment.load(
             opts['ENVIRONMENT'] or '.')
 
-        if not command_uses_ssh(command_fn):
+        if command_fn not in COMMANDS_THAT_USE_SSH:
             return command_fn(environment, opts)
 
         # for commands that communicate with a remote server

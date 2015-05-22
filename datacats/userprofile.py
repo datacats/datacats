@@ -39,7 +39,8 @@ class UserProfile(object):
         self.generate_ssh_key()
         user_error_message = ("Your profile does not seem to have an ssh key \n"
             " (which is an equivalent of your password so that datacats.io could recognize you).\n"
-            "It is probably because this is your first time running a remote command in which case welcome!\n"
+            "It is probably because this is your first time running"
+            " a remote command in which case welcome!\n"
             "So we generated a new ssh key for you. \n Please go to www.datacats.com/account/key"
             " and add the following public key:"
             " \n \n {public_key} \n \n"

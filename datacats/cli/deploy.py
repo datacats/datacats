@@ -6,7 +6,6 @@
 
 from sys import stdout
 
-from datacats.cli.profile import get_working_profile
 from datacats.cli.create import confirm_password
 from datacats.validate import valid_deploy_name
 from datacats.error import DatacatsError
