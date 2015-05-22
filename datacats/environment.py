@@ -864,8 +864,8 @@ class Environment(object):
             '-v', self.sitedir + '/files:/var/www/storage:rw',
             '-v', script + ':/scripts/shell.sh:ro',
             '-v', PASTER_CD + ':/scripts/paster_cd.sh:ro',
-            '-v', self.datadir + '/run/run.ini:/project/development.ini:ro',
-            '-v', self.datadir +
+            '-v', self.sitedir + '/run/run.ini:/project/development.ini:ro',
+            '-v', self.sitedir +
                 '/run/test.ini:/project/ckan/test-core.ini:ro',
             '--link', self._get_container_name('solr') + ':solr',
             '--link', self._get_container_name('postgres') + ':db',
