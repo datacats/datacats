@@ -94,7 +94,7 @@ def main():
 
     except DatacatsError as e:
         if sys.stdout.isatty():
-                # error message to have colors if stdout goes to shell
+            # error message to have colors if stdout goes to shell
             e.pretty_print()
         else:
             print e

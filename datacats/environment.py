@@ -914,8 +914,6 @@ class Environment(object):
         known_hosts = self.datadir + \
             '/known_hosts' if exists(self.datadir +
             '/known_hosts') else KNOWN_HOSTS
-        # import ipdb
-        # ipdb.set_trace()
         binds = {
             profile.profiledir + '/id_rsa': '/root/.ssh/id_rsa',
             known_hosts: '/root/.ssh/known_hosts',
