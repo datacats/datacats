@@ -18,6 +18,7 @@ class UserProfile(object):
 
     """
     DataCats user profile settings object
+    (at the moment only tracks ssh private key used to call remote commands)
     """
 
     def __init__(self):
@@ -29,8 +30,22 @@ class UserProfile(object):
             self.ssh_private_key = cp.get('ssh', 'private_key')
             self.ssh_public_key = cp.get('ssh', 'public_key')
         else:
-            self.ssh_private_key = None
-            self.ssh_public_key = None
+            self.create_profile()
+
+    def create_profile(self):
+        self.ssh_private_key = self.profiledir + '/id_rsa'
+        self.ssh_public_key = self.profiledir + '/id_rsa.pub'
+        self.save()
+        self.generate_ssh_key()
+        user_error_message = ("Your profile does not seem to have an ssh key \n"
+            " (which is an equivalent of your password so that datacats.io could recognize you).\n"
+            "It is probably because this is your first time running a remote command in which case welcome!\n"
+            "So we generated a new ssh key for you. \n Please go to www.datacats.com/account/key"
+            " and add the following public key:"
+            " \n \n {public_key} \n \n"
+            " to your profile so that the server can recognize you as you."
+                              ).format(public_key=self.read_public_key())
+        raise DatacatsError(user_error_message)
 
     def read_public_key(self):
         """
@@ -77,7 +92,7 @@ class UserProfile(object):
                 command=["ssh",
                          project.deploy_target,
                          'test'],
-                ro=project.remote_command_binds(),
+                ro=project.remote_command_binds(self),
                 clean_up=True
                 )
 
@@ -118,7 +133,7 @@ class UserProfile(object):
             command=[
                 "ssh", project.deploy_target, "create", target_name,
                 ],
-            ro=project.remote_command_binds(),
+            ro=project.remote_command_binds(self),
             stream_output=stream_output,
             clean_up=True,
             )
@@ -133,7 +148,7 @@ class UserProfile(object):
                     "ssh", project.deploy_target,
                     "admin_password", target_name, password,
                     ],
-                ro=project.remote_command_binds(),
+                ro=project.remote_command_binds(self),
                 clean_up=True,
                 )
             return True
@@ -153,7 +168,8 @@ class UserProfile(object):
                     "--exclude=.git",
                     "/project/.",
                     project.deploy_target + ':' + target_name],
-                ro=project.remote_command_binds(include_project_dir=True),
+                ro=project.remote_command_binds(
+                    self, include_project_dir=True),
                 stream_output=stream_output,
                 clean_up=True,
                 )
@@ -169,7 +185,7 @@ class UserProfile(object):
                 command=[
                     "ssh", project.deploy_target, "install", target_name,
                     ],
-                ro=project.remote_command_binds(),
+                ro=project.remote_command_binds(self),
                 stream_output=stream_output,
                 clean_up=True,
                 )

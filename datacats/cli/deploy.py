@@ -12,7 +12,7 @@ from datacats.validate import valid_deploy_name
 from datacats.error import DatacatsError
 
 
-def deploy(environment, opts):
+def deploy(environment, opts, profile=None):
     """Deploy environment to production DataCats.com cloud service
 
 Usage:
@@ -28,8 +28,8 @@ Default: '.'
 TARGET_NAME is the name of the environment on DataCats.com. Defaults to
 the environment name.
 """
-    profile = get_working_profile(environment)
-
+    if not profile:
+        raise Exception("Need to pass a loaded user_profile instance")
     target_name = opts['TARGET_NAME']
     if target_name is None:
         target_name = environment.name

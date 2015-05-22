@@ -38,6 +38,7 @@ from docopt import docopt
 
 from datacats.cli import create, manage, install, pull, purge, shell, deploy, less
 from datacats.environment import Environment, DatacatsError
+from datacats.userprofile import UserProfile
 
 COMMANDS = {
     'create': create.create,
@@ -59,7 +60,7 @@ COMMANDS = {
 }
 
 
-command_uses_ssh = lambda x: x in [
+command_uses_ssh = lambda cmd: cmd in [
     deploy.deploy,
     install.install
 ]
@@ -76,14 +77,24 @@ def main():
     try:
         command_fn, opts = _parse_arguments(sys.argv[1:])
         # purge handles loading differently
-        if command_fn != purge.purge and 'ENVIRONMENT' in opts:
-            environment = Environment.load(
-                opts['ENVIRONMENT'] or '.', test_ssh=command_uses_ssh(command_fn))
+        if command_fn == purge.purge or not 'ENVIRONMENT' in opts:
+            return command_fn(opts)
+
+        environment = Environment.load(
+            opts['ENVIRONMENT'] or '.')
+
+        if not command_uses_ssh(command_fn):
             return command_fn(environment, opts)
-        return command_fn(opts)
+
+        # for commands that communicate with a remote server
+        # we load UserProfile as well
+
+        user_profile = UserProfile()
+        command_fn(environment, opts, profile=user_profile)
+
     except DatacatsError as e:
         if sys.stdout.isatty():
-            # error message to have colors if stdout goes to shell
+                # error message to have colors if stdout goes to shell
             e.pretty_print()
         else:
             print e

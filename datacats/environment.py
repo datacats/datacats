@@ -31,8 +31,6 @@ from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.error import DatacatsError
 
 from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG
-from datacats.userprofile import UserProfile
-from datacats.cli.profile import _create_profile
 
 WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
@@ -246,15 +244,6 @@ class Environment(object):
         environment = cls(name, wd, datadir, ckan_version, port, deploy_target,
                           site_url=site_url, always_prod=always_prod, address=address,
                           extension_dir=extension_dir)
-
-        environment.profile = UserProfile()
-        if test_ssh:
-            if not (environment.profile.ssh_private_key is None) and \
-                exists(environment.profile.ssh_private_key) and \
-                exists(environment.profile.ssh_public_key):
-                environment.profile.test_ssh_key(environment)
-            else:
-                _create_profile(environment.profile)
 
         if passwords:
             environment.passwords = passwords
@@ -904,9 +893,9 @@ class Environment(object):
             ro={COMPILE_LESS: '/project/compile_less.sh'})
         remove_container(c)
 
-    def remote_command_binds(self, include_project_dir=False):
+    def remote_command_binds(self, profile, include_project_dir=False):
         binds = {
-            self.profile.profiledir + '/id_rsa': '/root/.ssh/id_rsa',
+            profile.profiledir + '/id_rsa': '/root/.ssh/id_rsa',
             KNOWN_HOSTS: '/root/.ssh/known_hosts',
             SSH_CONFIG: '/etc/ssh/ssh_config'
             }
