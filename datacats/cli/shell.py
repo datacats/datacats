@@ -11,7 +11,7 @@ def shell(environment, opts):
     """Run a command or interactive shell within this environment
 
 Usage:
-  datacats [-d] [-c NAME] shell [ENVIRONMENT [COMMAND...]]
+  datacats [-d] [-s NAME] shell [ENVIRONMENT [COMMAND...]]
 
 Options:
   -d --detach       Run the resulting container in the background
@@ -32,7 +32,7 @@ def paster(opts):
     """Run a paster command from the current directory
 
 Usage:
-  datacats paster [-d] [-c NAME] [COMMAND...]
+  datacats paster [-d] [-s NAME] [COMMAND...]
 
 Options:
   -s --site=NAME   Specify a site to run this paster command on [default: primary]

@@ -16,7 +16,7 @@ def deploy(environment, opts):
     """Deploy environment to production DataCats.com cloud service
 
 Usage:
-  datacats deploy [-c NAME] [--create] [ENVIRONMENT [TARGET_NAME]]
+  datacats deploy [-s NAME] [--create] [ENVIRONMENT [TARGET_NAME]]
 
 Options:
   --create                Create a new environment on DataCats.com instead

@@ -19,7 +19,7 @@ def stop(environment, opts):
     """Stop serving environment and remove all its containers
 
 Usage:
-  datacats stop [-r] [-c NAME] [ENVIRONMENT]
+  datacats stop [-r] [-s NAME] [ENVIRONMENT]
 
 Options:
   -r --remote        Stop DataCats.com cloud instance
@@ -36,8 +36,8 @@ def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
-  datacats start [-bp] [-c NAME] [--address=IP] [ENVIRONMENT [PORT]]
-  datacats start -r [-b] [-c NAME] [--address=IP] [ENVIRONMENT]
+  datacats start [-bp] [-s NAME] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats start -r [-b] [-s NAME] [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
@@ -62,8 +62,8 @@ def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
-  datacats reload [-bp] [-c NAME] [--address=IP] [ENVIRONMENT [PORT]]
-  datacats reload -r [-b] [-c NAME] [--address=IP] [ENVIRONMENT]
+  datacats reload [-bp] [-s NAME] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats reload -r [-b] [-s NAME] [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
@@ -105,7 +105,7 @@ def info(environment, opts):
     """Display information about environment and running containers
 
 Usage:
-  datacats info [-qr] [-c NAME] [ENVIRONMENT]
+  datacats info [-qr] [-s NAME] [ENVIRONMENT]
 
 Options:
   -q --quiet         Echo only the web URL or nothing if not running
@@ -155,8 +155,8 @@ def logs(environment, opts):
     """Display or follow container logs
 
 Usage:
-  datacats logs [-d | -s] [-c NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
-  datacats logs -f [-d | -s] [-c NAME] [-r] [ENVIRONMENT]
+  datacats logs [-d | -s] [-s NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
+  datacats logs -f [-d | -s] [-s NAME] [-r] [ENVIRONMENT]
 
 Options:
   -d --postgres-logs Show postgres database logs instead of web logs
@@ -194,7 +194,7 @@ def open_(environment, opts):
     """Open web browser window to this environment
 
 Usage:
-  datacats open [-r] [-c NAME] [ENVIRONMENT]
+  datacats open [-r] [-s NAME] [ENVIRONMENT]
 
 Options:
   -r --remote        Open DataCats.com cloud instance address
