@@ -229,7 +229,7 @@ class Environment(object):
             deploy_target = cp.get(
                 'deploy', 'remote_server_user', None) \
                 + "@" + cp.get('deploy', 'remote_server', None)
-        except:
+        except (NoOptionError, NoSectionError):
             deploy_target = DEFAULT_REMOTE_SERVER_TARGET
 
         # if remote_server's ssh public key is given,
@@ -239,7 +239,7 @@ class Environment(object):
             with open(known_hosts_path, "wb") as known_hosts:
                 known_hosts.write(cp.get(
                     'deploy', 'remote_server_key', None))
-        except:
+        except (NoOptionError, NoSectionError):
             if exists(known_hosts_path):
                 remove(known_hosts_path)
 
