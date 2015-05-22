@@ -86,10 +86,11 @@ def main():
             return command_fn(environment, opts)
 
         # for commands that communicate with a remote server
-        # we load UserProfile as well
-
+        # we load UserProfile and test our communication
         user_profile = UserProfile()
-        command_fn(environment, opts, profile=user_profile)
+        user_profile.test_ssh_key(environment)
+
+        return command_fn(environment, opts, profile=user_profile)
 
     except DatacatsError as e:
         if sys.stdout.isatty():

@@ -24,13 +24,13 @@ class UserProfile(object):
     def __init__(self):
         self.profiledir = expanduser('~/.datacats/user-profile')
         config = self.profiledir + '/config'
-        if isdir(self.profiledir) and exists(config):
-            cp = SafeConfigParser()
-            cp.read([config])
-            self.ssh_private_key = cp.get('ssh', 'private_key')
-            self.ssh_public_key = cp.get('ssh', 'public_key')
-        else:
+        if not isdir(self.profiledir) or not exists(config):
             self.create_profile()
+
+        cp = SafeConfigParser()
+        cp.read([config])
+        self.ssh_private_key = cp.get('ssh', 'private_key')
+        self.ssh_public_key = cp.get('ssh', 'public_key')
 
     def create_profile(self):
         self.ssh_private_key = self.profiledir + '/id_rsa'

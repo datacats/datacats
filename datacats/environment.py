@@ -222,10 +222,20 @@ class Environment(object):
         except NoOptionError:
             always_prod = False
         try:
-            deploy_target = cp.get('deploy', 'target', None)
-        except NoSectionError:
+            deploy_target = cp.get(
+                'deploy', 'remote_server_user', None) \
+                + "@" + cp.get('deploy', 'remote_server', None)
+        except NoOptionError:
             deploy_target = DEFAULT_REMOTE_SERVER_TARGET
 
+        try:
+            known_hosts_path = datadir + '/known_hosts'
+            with open(known_hosts_path, "wb") as known_hosts:
+                known_hosts.write(cp.get(
+                    'deploy', 'remote_server_key', None))
+        except NoOptionError:
+            if exists(known_hosts_path):
+                remove(known_hosts_path)
         passwords = {}
         try:
             # backwards compatibility  FIXME: remove this
@@ -894,9 +904,14 @@ class Environment(object):
         remove_container(c)
 
     def remote_command_binds(self, profile, include_project_dir=False):
+        known_hosts = self.datadir + \
+            '/known_hosts' if exists(self.datadir +
+            '/known_hosts') else KNOWN_HOSTS
+        # import ipdb
+        # ipdb.set_trace()
         binds = {
             profile.profiledir + '/id_rsa': '/root/.ssh/id_rsa',
-            KNOWN_HOSTS: '/root/.ssh/known_hosts',
+            known_hosts: '/root/.ssh/known_hosts',
             SSH_CONFIG: '/etc/ssh/ssh_config'
             }
         if include_project_dir:
