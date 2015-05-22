@@ -90,7 +90,7 @@ def main():
         user_profile = UserProfile()
         user_profile.test_ssh_key(environment)
 
-        return command_fn(environment, opts, profile=user_profile)
+        return command_fn(environment, opts, user_profile)
 
     except DatacatsError as e:
         if sys.stdout.isatty():
