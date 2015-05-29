@@ -38,6 +38,7 @@ from docopt import docopt
 
 from datacats.cli import create, manage, install, pull, purge, shell, deploy, less
 from datacats.environment import Environment, DatacatsError
+from datacats.userprofile import UserProfile
 
 COMMANDS = {
     'create': create.create,
@@ -59,6 +60,11 @@ COMMANDS = {
 }
 
 
+COMMANDS_THAT_USE_SSH = [
+    deploy.deploy
+]
+
+
 def main():
     """
     The main entry point for datacats cli tool
@@ -70,10 +76,22 @@ def main():
     try:
         command_fn, opts = _parse_arguments(sys.argv[1:])
         # purge handles loading differently
-        if command_fn != purge.purge and 'ENVIRONMENT' in opts:
-            environment = Environment.load(opts['ENVIRONMENT'] or '.')
+        if command_fn == purge.purge or 'ENVIRONMENT' not in opts:
+            return command_fn(opts)
+
+        environment = Environment.load(
+            opts['ENVIRONMENT'] or '.')
+
+        if command_fn not in COMMANDS_THAT_USE_SSH:
             return command_fn(environment, opts)
-        return command_fn(opts)
+
+        # for commands that communicate with a remote server
+        # we load UserProfile and test our communication
+        user_profile = UserProfile()
+        user_profile.test_ssh_key(environment)
+
+        return command_fn(environment, opts, user_profile)
+
     except DatacatsError as e:
         if sys.stdout.isatty():
             # error message to have colors if stdout goes to shell
