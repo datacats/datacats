@@ -10,7 +10,7 @@ from ConfigParser import SafeConfigParser
 from socket import gethostname
 from getpass import getuser
 
-from datacats.docker import web_command, WebCommandError
+from datacats.docker import remote_server_command, web_command, WebCommandError
 from datacats.error import DatacatsError
 
 
@@ -37,11 +37,13 @@ class UserProfile(object):
         self.ssh_public_key = self.profiledir + '/id_rsa.pub'
         self.save()
         self.generate_ssh_key()
-        user_error_message = ("Your profile does not seem to have an ssh key \n"
-            " (which is an equivalent of your password so that datacats.io could recognize you).\n"
+        user_error_message = ("Your profile does not seem to have an ssh key\n"
+            " (which is an equivalent of your password so that datacats.io"
+            " could recognize you).\n"
             "It is probably because this is your first time running"
             " a remote command in which case welcome!\n"
-            "So we generated a new ssh key for you. \n Please go to www.datacats.com/account/key"
+            "So we generated a new ssh key for you. \n "
+            "Please go to www.datacats.com/account/key"
             " and add the following public key:"
             " \n \n {public_key} \n \n"
             " to your profile so that the server can recognize you as you."
@@ -84,18 +86,14 @@ class UserProfile(object):
             rw={self.profiledir: '/output'},
             )
 
-    def test_ssh_key(self, project):
+    def test_ssh_key(self, environment):
         """
         Return True if this key is accepted by DataCats.com
         """
         try:
-            web_command(
-                command=["ssh",
-                         project.deploy_target,
-                         'test'],
-                ro=project.remote_command_binds(self),
-                clean_up=True
-                )
+            remote_server_command(
+                ["ssh", environment.deploy_target, 'test'],
+                environment, self, clean_up=True)
 
         except WebCommandError as e:
 
@@ -119,58 +117,55 @@ class UserProfile(object):
                 "  2) the server is not up or functioning properly,\n"
                 "  3) there is a firewall block for the datacats application\n"
                 " or something of this sort."
-                ).format(project.deploy_target)
+                ).format(environment.deploy_target)
 
             user_error_message = network_unreachable_error_message \
                 if "Network is unreachable" in e.logs \
                 else user_unrecognized_error_message
             raise DatacatsError(user_error_message, parent_exception=e)
 
-    def create(self, project, target_name, stream_output=None):
+    def create(self, environment, target_name, stream_output=None):
         """
         Sends "create project" command to the remote server
         """
-        web_command(
-            command=[
-                "ssh", project.deploy_target, "create", target_name,
-                ],
-            ro=project.remote_command_binds(self),
+        remote_server_command(
+            ["ssh", environment.deploy_target, "create", target_name],
+            environment, self,
             stream_output=stream_output,
             clean_up=True,
             )
 
-    def admin_password(self, project, target_name, password):
+    def admin_password(self, environment, target_name, password):
         """
         Return True if password was set successfully
         """
         try:
-            web_command(
-                command=[
-                    "ssh", project.deploy_target,
-                    "admin_password", target_name, password,
-                    ],
-                ro=project.remote_command_binds(self),
-                clean_up=True,
+            remote_server_command(
+                ["ssh", environment.deploy_target,
+                    "admin_password", target_name, password],
+                environment, self,
+                clean_up=True
                 )
             return True
         except WebCommandError:
             return False
 
-    def deploy(self, project, target_name, stream_output=None):
+    def deploy(self, environment, target_name, stream_output=None):
         """
         Return True if deployment was successful
         """
         try:
-            web_command(
-                command=[
+            remote_server_command(
+                [
                     "rsync", "-lrv", "--safe-links", "--munge-links",
                     "--delete", "--inplace", "--chmod=ugo=rwX",
                     "--exclude=.datacats-environment",
                     "--exclude=.git",
                     "/project/.",
-                    project.deploy_target + ':' + target_name],
-                ro=project.remote_command_binds(
-                    self, include_project_dir=True),
+                    environment.deploy_target + ':' + target_name
+                ],
+                environment, self,
+                include_project_dir=True,
                 stream_output=stream_output,
                 clean_up=True,
                 )
@@ -182,11 +177,12 @@ class UserProfile(object):
                 )
 
         try:
-            web_command(
-                command=[
-                    "ssh", project.deploy_target, "install", target_name,
+            remote_server_command(
+                [
+                    "ssh", environment.deploy_target, "install", target_name,
                     ],
-                ro=project.remote_command_binds(self),
+                environment, self,
+                ro=environment.remote_command_binds(self),
                 stream_output=stream_output,
                 clean_up=True,
                 )
