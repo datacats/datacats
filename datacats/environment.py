@@ -30,7 +30,6 @@ from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.error import DatacatsError
 
-from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG
 
 WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
@@ -49,7 +48,7 @@ class Environment(object):
 
     def __init__(self, name, target, datadir, ckan_version=None, port=None,
                  deploy_target=None, site_url=None, always_prod=False,
-                 extension_dir='ckan', address=None):
+                 extension_dir='ckan', address=None, remote_server_key=None):
         self.name = name
         self.target = target
         self.datadir = datadir
@@ -58,6 +57,7 @@ class Environment(object):
         self.port = int(port if port else self._choose_port())
         self.address = address
         self.deploy_target = deploy_target
+        self.remote_server_key = remote_server_key
         self.site_url = site_url
         self.always_prod = always_prod
 
@@ -135,8 +135,10 @@ class Environment(object):
         target = workdir + '/' + name
 
         if isdir(datadir):
-            raise DatacatsError('Environment data directory {0} already exists',
-                                (datadir,))
+            raise DatacatsError(
+                'Environment data directory {0} already exists',
+                (datadir,)
+                )
         if isdir(target):
             raise DatacatsError('Environment directory already exists')
 
@@ -226,22 +228,17 @@ class Environment(object):
         # address is defined,
         # we overwrite the default datacats.com one
         try:
-            deploy_target = cp.get(
-                'deploy', 'remote_server_user', None) \
-                + "@" + cp.get('deploy', 'remote_server', None)
+            deploy_target = cp.get('deploy', 'remote_server_user') \
+                + "@" + cp.get('deploy', 'remote_server')
         except (NoOptionError, NoSectionError):
             deploy_target = DEFAULT_REMOTE_SERVER_TARGET
 
         # if remote_server's ssh public key is given,
         # we overwrite the default datacats.com one
         try:
-            known_hosts_path = datadir + '/known_hosts'
-            with open(known_hosts_path, "wb") as known_hosts:
-                known_hosts.write(cp.get(
-                    'deploy', 'remote_server_key', None))
+            remote_server_key = cp.get('deploy', 'remote_server_key')
         except (NoOptionError, NoSectionError):
-            if exists(known_hosts_path):
-                remove(known_hosts_path)
+            remote_server_key = None
 
         passwords = {}
         try:
@@ -260,7 +257,8 @@ class Environment(object):
 
         environment = cls(name, wd, datadir, ckan_version, port, deploy_target,
                           site_url=site_url, always_prod=always_prod, address=address,
-                          extension_dir=extension_dir)
+                          extension_dir=extension_dir,
+                          remote_server_key=remote_server_key)
 
         if passwords:
             environment.passwords = passwords
@@ -301,7 +299,8 @@ class Environment(object):
                                 'Try "datacats init".')
         if not self.data_complete():
             raise DatacatsError('Environment datadir damaged. '
-                                'Try "datacats purge" followed by "datacats init".')
+                                'Try "datacats purge" followed by'
+                                ' "datacats init".')
 
     def create_directories(self, create_project_dir=True):
         """
@@ -909,19 +908,6 @@ class Environment(object):
             rw={self.target: '/project/target'},
             ro={COMPILE_LESS: '/project/compile_less.sh'})
         remove_container(c)
-
-    def remote_command_binds(self, profile, include_project_dir=False):
-        known_hosts = self.datadir + \
-            '/known_hosts' if exists(self.datadir +
-            '/known_hosts') else KNOWN_HOSTS
-        binds = {
-            profile.profiledir + '/id_rsa': '/root/.ssh/id_rsa',
-            known_hosts: '/root/.ssh/known_hosts',
-            SSH_CONFIG: '/etc/ssh/ssh_config'
-            }
-        if include_project_dir:
-            binds[self.target] = '/project'
-        return binds
 
     def _proxy_settings(self):
         """
