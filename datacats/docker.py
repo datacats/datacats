@@ -9,6 +9,7 @@ from __future__ import absolute_import
 from os import environ, devnull
 import json
 import subprocess
+import tempfile
 from urlparse import urlparse
 from functools import cmp_to_key
 from warnings import warn
@@ -30,6 +31,7 @@ from docker.errors import APIError
 from requests import ConnectionError
 
 from datacats.error import DatacatsError
+from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG
 
 MINIMUM_API_VERSION = '1.16'
 
@@ -98,7 +100,8 @@ class WebCommandError(Exception):
             ('\nSSH command to remote server failed\n'
              '    Command: {0}\n'
              '    Docker Error Log:\n'
-             '    {1}\n').format(" ".join(self.command), self.logs, self.container_id)
+             '    {1}\n'
+             ).format(" ".join(self.command), self.logs, self.container_id)
 
 
 class PortAllocatedError(Exception):
@@ -195,6 +198,44 @@ def web_command(command, ro=None, rw=None, links=None,
             warn('failed to remove container: {0}'.format(c['Id']))
     if commit:
         return rval['Id']
+
+
+def remote_server_command(command, environment, user_profile, **kwargs):
+    """
+      Wraps web_command function with docker bindings needed to connect to
+      a remote server (such as datacats.com) and run commands there
+      (for example, when you want to copy your catalog to that server).
+
+      The files binded to the docker image include the user's ssh credentials:
+          ssh_config file,
+          rsa and rsa.pub user keys
+          known_hosts whith public keys of the remote server (if known)
+
+      The **kwargs (keyword arguments) are passed on to the web_command call
+      intact, see the web_command's doc string for details
+    """
+
+    if environment.remote_server_key:
+        temp = tempfile.NamedTemporaryFile(mode="wb")
+        temp.write(environment.remote_server_key)
+        temp.seek(0)
+        known_hosts = temp.name
+    else:
+        known_hosts = KNOWN_HOSTS
+
+    binds = {
+        user_profile.profiledir + '/id_rsa': '/root/.ssh/id_rsa',
+        known_hosts: '/root/.ssh/known_hosts',
+        SSH_CONFIG: '/etc/ssh/ssh_config'
+    }
+
+    if kwargs.get("include_project_dir", None):
+        binds[environment.target] = '/project'
+        del kwargs["include_project_dir"]
+
+    kwargs["ro"] = binds
+
+    web_command(command, **kwargs)
 
 
 def run_container(name, image, command=None, environment=None,

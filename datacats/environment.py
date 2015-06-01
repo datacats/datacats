@@ -33,10 +33,12 @@ from datacats.migrate import needs_format_conversion
 from datacats.password import generate_password
 from datacats.error import DatacatsError
 
+
 WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
 DB_INIT_RETRY_DELAY = 2
 DOCKER_EXE = 'docker'
+DEFAULT_REMOTE_SERVER_TARGET = 'datacats@command.datacats.com'
 
 
 class Environment(object):
@@ -46,10 +48,9 @@ class Environment(object):
 
     Create with Environment.new(path) or Environment.load(path)
     """
-
     def __init__(self, name, target, datadir, site_name, ckan_version=None,
-                 port=None, deploy_target=None, site_url=None,
-                 always_prod=False, extension_dir='ckan', address=None):
+                 port=None, deploy_target=None, site_url=None, always_prod=False,
+                 extension_dir='ckan', address=None, remote_server_key=None):
         self.name = name
         self.target = target
         self.datadir = datadir
@@ -61,6 +62,7 @@ class Environment(object):
         self.port = int(port if port else self._choose_port())
         self.address = address
         self.deploy_target = deploy_target
+        self.remote_server_key = remote_server_key
         self.site_url = site_url
         self.always_prod = always_prod
         self.sites = None
@@ -201,7 +203,7 @@ class Environment(object):
         return environment
 
     @classmethod
-    def load(cls, environment_name=None, site_name='primary', data_only=False):
+    def load(cls, environment_name=None, site_name='primary', data_only=False, test_ssh=False):
         """
         Return an Environment object based on an existing project.
 
@@ -297,10 +299,22 @@ class Environment(object):
             always_prod = cp.getboolean('datacats', 'always_prod')
         except NoOptionError:
             always_prod = False
+
+        # if remote_server's custom ssh connection
+        # address is defined,
+        # we overwrite the default datacats.com one
         try:
-            deploy_target = cp.get('deploy', 'target', None)
-        except NoSectionError:
-            deploy_target = None
+            deploy_target = cp.get('deploy', 'remote_server_user') \
+                + "@" + cp.get('deploy', 'remote_server')
+        except (NoOptionError, NoSectionError):
+            deploy_target = DEFAULT_REMOTE_SERVER_TARGET
+
+        # if remote_server's ssh public key is given,
+        # we overwrite the default datacats.com one
+        try:
+            remote_server_key = cp.get('deploy', 'remote_server_key')
+        except (NoOptionError, NoSectionError):
+            remote_server_key = None
 
         passwords = {}
         try:
@@ -319,7 +333,9 @@ class Environment(object):
 
         environment = cls(name, wd, datadir, site_name, ckan_version, port, deploy_target,
                           site_url=site_url, always_prod=always_prod, address=address,
-                          extension_dir=extension_dir)
+                          extension_dir=extension_dir,
+                          remote_server_key=remote_server_key)
+
         if passwords:
             environment.passwords = passwords
         else:
@@ -367,7 +383,8 @@ class Environment(object):
                                 'Try "datacats init".')
         if not self.data_complete():
             raise DatacatsError('Environment datadir damaged. '
-                                'Try "datacats purge" followed by "datacats init".')
+                                'Try "datacats purge" followed by'
+                                ' "datacats init".')
 
     def create_directories(self, create_project_dir=True):
         """

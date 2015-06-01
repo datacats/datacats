@@ -6,13 +6,12 @@
 
 from sys import stdout
 
-from datacats.cli.profile import get_working_profile
 from datacats.cli.create import confirm_password
 from datacats.validate import valid_deploy_name
 from datacats.error import DatacatsError
 
 
-def deploy(environment, opts):
+def deploy(environment, opts, profile):
     """Deploy environment to production DataCats.com cloud service
 
 Usage:
@@ -29,7 +28,6 @@ Default: '.'
 TARGET_NAME is the name of the environment on DataCats.com. Defaults to
 the environment name.
 """
-    profile = get_working_profile(environment)
 
     target_name = opts['TARGET_NAME']
     if target_name is None:
