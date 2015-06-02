@@ -198,11 +198,12 @@ Usage:
 
 Options:
   -r --remote        Open DataCats.com cloud instance address
-  -c --site=NAME     Choose a site to open [default: primary]
+  -s --site=NAME     Choose a site to open [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+
     environment.require_data()
     addr = environment.web_address()
     if not addr:

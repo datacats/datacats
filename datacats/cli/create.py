@@ -156,7 +156,8 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         print
         raise
 
-    return finish_init(environment, start_web, create_sysadmin, address, do_install=making_full_environment)
+    return finish_init(environment, start_web, create_sysadmin, address,
+                       do_install=making_full_environment)
 
 
 def finish_init(environment, start_web, create_sysadmin, address, do_install=True):
