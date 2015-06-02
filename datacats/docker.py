@@ -26,7 +26,7 @@ try:
 except ImportError:
     # Versions before 1.2.0
     from docker.client import DEFAULT_DOCKER_API_VERSION
-from docker.utils import kwargs_from_env, compare_version, create_host_config
+from docker.utils import kwargs_from_env, compare_version, create_host_config, LogConfig
 from docker.errors import APIError
 from requests import ConnectionError
 
@@ -239,7 +239,7 @@ def remote_server_command(command, environment, user_profile, **kwargs):
 
 def run_container(name, image, command=None, environment=None,
                   ro=None, rw=None, links=None, detach=True, volumes_from=None,
-                  port_bindings=None):
+                  port_bindings=None, log_syslog=False):
     """
     Wrapper for docker create_container, start calls
 
@@ -249,6 +249,11 @@ def run_container(name, image, command=None, environment=None,
     requested port.
     """
     binds = ro_rw_to_binds(ro, rw)
+
+    host_config = create_host_config(binds=binds,
+                                     log_config=LogConfig(
+                                         type=('syslog' if log_syslog else 'json-file')))
+
     c = _get_docker().create_container(
         name=name,
         image=image,
@@ -259,7 +264,7 @@ def run_container(name, image, command=None, environment=None,
         stdin_open=False,
         tty=False,
         ports=list(port_bindings) if port_bindings else None,
-        host_config=create_host_config(binds=binds))
+        host_config=host_config)
     try:
         _get_docker().start(
             container=c['Id'],
