@@ -156,14 +156,15 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         print
         raise
 
-    return finish_init(environment, start_web, create_sysadmin, address)
+    return finish_init(environment, start_web, create_sysadmin, address, do_install=making_full_environment)
 
 
-def finish_init(environment, start_web, create_sysadmin, address):
+def finish_init(environment, start_web, create_sysadmin, address, do_install=True):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """
-    install(environment, {'--clean': False, 'PORT': None})
+    if do_install:
+        install(environment, {'--clean': False, 'PORT': None})
 
     write('Initializing database')
     environment.ckan_db_init()
