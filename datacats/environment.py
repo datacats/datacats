@@ -311,8 +311,9 @@ class Environment(object):
                                 'Try "datacats purge" followed by'
                                 ' "datacats init".')
         if not self.volumes_exist():
-            raise DatacatsError('Volumes damaged. '
-                                'Try "datacats purge" followed by "datacats init"')
+            raise DatacatsError('Volume containers could not be found.\n'
+                                'To reset and discard all data use '
+                                '"datacats purge" followed by "datacats init"')
 
     def create_directories(self, create_project_dir=True):
         """
