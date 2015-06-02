@@ -27,5 +27,6 @@ test:
     - '[ -e ~/.datacats/site1/postgres ]'
     - datacats migrate -y -r 2 site1
     - '[ -e ~/.datacats/site1/sites/primary/postgres ]'
+    - "[ $(datacats --version | wc -l) == 1 ]"
   post:
       - python setup.py test

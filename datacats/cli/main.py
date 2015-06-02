@@ -40,6 +40,7 @@ from docopt import docopt
 from datacats.cli import create, manage, install, pull, purge, shell, deploy, migrate, less
 from datacats.environment import Environment, DatacatsError
 from datacats.userprofile import UserProfile
+from datacats.version import __version__
 
 COMMANDS = {
     'create': create.create,
@@ -122,6 +123,7 @@ def _parse_arguments(args):
         command_fn = COMMANDS[a]
         break
     else:
+        opts = docopt(__doc__, args, version=__version__)
         return _intro_message, {}
 
     # shell, paster are special: options might belong to the command being
@@ -141,7 +143,8 @@ def _parse_arguments(args):
     if help_:
         args.insert(1, '--help')
 
-    opts = docopt(command_fn.__doc__, args)
+    opts = docopt(command_fn.__doc__, args, version=__version__)
+
     _option_not_yet_implemented(opts, '--ckan')
     _option_not_yet_implemented(opts, '--remote')
     return command_fn, opts
