@@ -73,8 +73,8 @@ def _get_docker():
                                 'Please run "boot2docker init" to do so.')
 
         # XXX HACK: This exists because of http://github.com/datacats/datacats/issues/63,
-        # as a temporary fix. We turn off all verification of TLS.
-        if 'tls' in _docker_kwargs and not is_boot2docker():
+        # as a temporary fix.
+        if 'tls' in _docker_kwargs and is_boot2docker():
             import warnings
             # It will print out messages to the user otherwise.
             warnings.filterwarnings("ignore")
