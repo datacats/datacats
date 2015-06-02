@@ -13,11 +13,10 @@ from lockfile import LockFile
 
 from datacats.docker import (is_boot2docker, remove_container,
                              rename_container, web_command,
-                             inspect_container)
+                             inspect_container, require_images)
 from datacats.scripts import MIGRATE
 from datacats.password import generate_password
 from datacats.error import DatacatsError
-
 
 CURRENT_FORMAT_VERSION = 2
 
@@ -191,6 +190,9 @@ def convert_environment(datadir, version, always_yes):
     :param version: The version to convert TO.
     :param always_yes: True if the user shouldn't be prompted about the migration.
     """
+    # Since we don't call either load() or new() we have to call require_images ourselves.
+    require_images()
+
     inp = None
 
     if version > CURRENT_FORMAT_VERSION:

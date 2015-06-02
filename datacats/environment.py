@@ -23,7 +23,7 @@ from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker, data_only_container, docker_host,
                              PortAllocatedError, container_logs, remove_image, WebCommandError,
-                             image_exists)
+                             require_images)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
@@ -32,7 +32,6 @@ from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.migrate import needs_format_conversion
 from datacats.password import generate_password
 from datacats.error import DatacatsError
-
 
 WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
@@ -1103,17 +1102,6 @@ class Environment(object):
             return 'datacats_{}_{}'.format(container_type, self.name)
         else:
             return 'datacats_{}_{}_{}'.format(container_type, self.name, self.site_name)
-
-
-def require_images():
-    """
-    Raises a DatacatsError if the images required to use Datacats don't exist.
-    """
-    if (not image_exists('datacats/web') or
-            not image_exists('datacats/solr') or
-            not image_exists('datacats/postgres')):
-        raise DatacatsError(
-            'You do not have the needed Docker images. Please run "datacats pull"')
 
 
 def posix_quote(s):
