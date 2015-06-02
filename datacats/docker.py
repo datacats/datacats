@@ -72,6 +72,14 @@ def _get_docker():
             raise DatacatsError('You have not created your boot2docker VM. '
                                 'Please run "boot2docker init" to do so.')
 
+        # XXX HACK: This exists because of issue #63, as a temporary fix.
+        # We turn off all verification of TLS.
+        if 'tls' in _docker_kwargs:
+            import warnings
+            # It will print out messages to the user otherwise.
+            warnings.filterwarnings("ignore")
+            _docker_kwargs['tls'].verify = False
+
         # Create the Docker client
         version_client = Client(version=MINIMUM_API_VERSION, **_docker_kwargs)
         try:
