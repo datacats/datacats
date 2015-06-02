@@ -14,6 +14,7 @@ test:
     - datacats start site1 8999
     - datacats info site1
     - datacats shell site1 echo hello from inside site1
+    - datacats logs site1
     - datacats create site2 -n
     - "[ -d site2/ckanext-site2theme ]"
     - '[ "$(echo `datacats list`)" == "site1 site2" ]'

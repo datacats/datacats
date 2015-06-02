@@ -171,9 +171,9 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     container = 'web'
-    if opts['--solr-logs']:
+    if opts['--solr']:
         container = 'solr'
-    if opts['--postgres-logs']:
+    if opts['--postgres']:
         container = 'postgres'
     tail = opts['--tail']
     if tail != 'all':
