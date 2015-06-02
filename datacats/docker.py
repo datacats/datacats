@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 from os import environ, devnull
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import json
 import subprocess
 import tempfile
@@ -50,6 +51,9 @@ _docker_kwargs = kwargs_from_env()
 
 def _get_docker():
     global _docker
+    # HACK: We determine from commands if we're boot2docker
+    # Needed cause this method is called from is_boot2docker...
+    boot2docker = False
     if not _docker:
         # First, check if boot2docker is powered on.
         try:
@@ -65,6 +69,7 @@ def _get_docker():
             if status == 'poweroff':
                 raise DatacatsError('boot2docker is not powered on.'
                                     ' Please run "boot2docker up".')
+            boot2docker = True
         except OSError:
             # We're on Linux, or boot2docker isn't installed.
             pass
@@ -74,10 +79,10 @@ def _get_docker():
 
         # XXX HACK: This exists because of http://github.com/datacats/datacats/issues/63,
         # as a temporary fix.
-        if 'tls' in _docker_kwargs and is_boot2docker():
+        if 'tls' in _docker_kwargs and boot2docker:
             import warnings
             # It will print out messages to the user otherwise.
-            warnings.filterwarnings("ignore")
+            warnings.filterwarnings("ignore", category=InsecureRequestWarning)
             _docker_kwargs['tls'].verify = False
 
         # Create the Docker client
