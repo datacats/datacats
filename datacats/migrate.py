@@ -196,6 +196,8 @@ def convert_environment(datadir, version, always_yes):
     if version > CURRENT_FORMAT_VERSION:
         raise DatacatsError('Cannot migrate to a version higher than the '
                             'current one.')
+    if version < 1:
+        raise DatacatsError('Datadir versioning starts at 1.')
 
     if not always_yes:
         while inp != 'y' and inp != 'n':
