@@ -353,8 +353,8 @@ class Environment(object):
             return True
 
         # Inspect returns None if the container doesn't exist.
-        return (inspect_container('datacats_pgdata_' + self.name) and
-                inspect_container('datacats_venv_' + self.name))
+        return (inspect_container(self._get_container_name('pgdata')) and
+                inspect_container(self._get_container_name('venv')))
 
     def data_exists(self):
         """
