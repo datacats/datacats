@@ -15,7 +15,8 @@ install_requires = [
     'docker-py>=1.1.0',
     'clint',  # to output colored text to terminal
     'requests>=2.5.2',  # help with docker-py requirement
-    'lockfile'
+    'lockfile',
+    'watchdog' # For lesscd
 ]
 
 exec(open("datacats/version.py").read())
@@ -40,5 +41,6 @@ setup(
     entry_points="""
         [console_scripts]
         datacats=datacats.cli.main:main
+        datacats-lesscd=datacats.cli.lesscd:main
         """,
     )
