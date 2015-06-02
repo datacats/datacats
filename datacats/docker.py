@@ -72,9 +72,9 @@ def _get_docker():
             raise DatacatsError('You have not created your boot2docker VM. '
                                 'Please run "boot2docker init" to do so.')
 
-        # XXX HACK: This exists because of issue #63, as a temporary fix.
-        # We turn off all verification of TLS.
-        if 'tls' in _docker_kwargs:
+        # XXX HACK: This exists because of http://github.com/datacats/datacats/issues/63,
+        # as a temporary fix. We turn off all verification of TLS.
+        if 'tls' in _docker_kwargs and not is_boot2docker():
             import warnings
             # It will print out messages to the user otherwise.
             warnings.filterwarnings("ignore")
