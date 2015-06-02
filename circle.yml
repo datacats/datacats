@@ -21,5 +21,6 @@ test:
     - '[ "$(echo `datacats list`)" == "site2" ]'
     - datacats init site1 -n
     - datacats install site1
+    - "[ $(datacats --version | wc -l) == 1 ]"
   post:
       - python setup.py test
