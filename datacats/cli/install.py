@@ -9,6 +9,8 @@ from os import listdir
 from os.path import isdir, exists
 
 from datacats.cli import manage
+from datacats.docker import check_connectivity
+from datacats.error import DatacatsError
 
 
 def write(s):
@@ -42,6 +44,9 @@ Default: '.'
 
 
 def install_all(environment, clean):
+    logs = check_connectivity()
+    if logs.strip():
+        raise DatacatsError(logs)
     srcdirs = set()
     reqdirs = set()
     for d in listdir(environment.target):
