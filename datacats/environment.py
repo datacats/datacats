@@ -107,7 +107,7 @@ class Environment(object):
             pdir.write(self.target)
 
     @classmethod
-    def new(cls, path, ckan_version, port=None, address=None):
+    def new(cls, path, ckan_version, **kwargs):
         """
         Return a Environment object with settings for a new project.
         No directories or containers are created by this call.
@@ -142,7 +142,7 @@ class Environment(object):
         if isdir(target):
             raise DatacatsError('Environment directory already exists')
 
-        environment = cls(name, target, datadir, ckan_version, port)
+        environment = cls(name, target, datadir, ckan_version, **kwargs)
         environment._generate_passwords()
         return environment
 
