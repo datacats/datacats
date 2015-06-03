@@ -167,11 +167,11 @@ def _hack_site_opt(args, i, paster=False):
     # Avoid out of bounds
     if i + 1 == len(args):
         return i
-    elif not args[i+1].startswith('-'):
+    elif not args[i + 1].startswith('-'):
         found_env = True
         i += 1
 
-    arg = args[i+1] if len(args) != i+1 else None
+    arg = args[i + 1] if len(args) != i + 1 else None
 
     if arg == SHORT_SITE or arg == LONG_SITE:
         # The thing after is a site name
