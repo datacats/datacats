@@ -29,7 +29,6 @@ class LessCompileEventHandler(FileSystemEventHandler):
 
     def on_modified(self, event):
         if isinstance(event, FileModifiedEvent):
-            print 'event! ' + str(event)
             less(self.environment, {})
 
 
