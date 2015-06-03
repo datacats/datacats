@@ -126,9 +126,11 @@ def _parse_arguments(args):
         opts = docopt(__doc__, args, version=__version__)
         return _intro_message, {}
 
+    # i is where the subcommand starts.
     # shell, paster are special: options might belong to the command being
     # executed
     if command_fn == shell.shell:
+        i = _hack_site_opt(args, i)
         # assume commands don't start with '-' and that those options
         # are intended for datacats
         for j, a in enumerate(args[i + 2:], i + 2):
@@ -138,6 +140,7 @@ def _parse_arguments(args):
                 break
 
     if command_fn == shell.paster:
+        i = _hack_site_opt(args, i, True)
         args = args[:i + 1] + ['--'] + args[i + 1:]
 
     if help_:
@@ -150,6 +153,40 @@ def _parse_arguments(args):
     return command_fn, opts
 
 
+def _hack_site_opt(args, i, paster=False):
+    """
+    Adjusts the "cut off point" for positional argument protection.
+    :param args: The arguments list
+    :param i: The current cut off
+    :return: The new i value
+    """
+    SHORT_SITE = '-s'
+    LONG_SITE = '--site'
+    found_env = False
+
+    # Avoid out of bounds
+    if i + 1 == len(args):
+        return i
+    elif not args[i+1].startswith('-'):
+        found_env = True
+        i += 1
+
+    arg = args[i+1] if len(args) != i+1 else None
+
+    if arg == SHORT_SITE or arg == LONG_SITE:
+        # The thing after is a site name
+        i += 2 if paster else 1
+
+    if i + 1 == len(args):
+        return i
+
+    if not found_env and not args[i+1].startswith('-'):
+        found_env = True
+        i += 1
+
+    return i
+
+
 def _option_not_yet_implemented(opts, name):
     if name not in opts or not opts[name]:
         return
@@ -159,3 +196,6 @@ def _option_not_yet_implemented(opts, name):
 
 def _intro_message(opts):
     return docopt(__doc__, ['--help'])
+
+if __name__ == '__main__':
+    main()
