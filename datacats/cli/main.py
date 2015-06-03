@@ -167,7 +167,7 @@ def _hack_site_opt(args, i, paster=False):
     # Avoid out of bounds
     if i + 1 == len(args):
         return i
-    elif not args[i + 1].startswith('-'):
+    elif not args[i + 1].startswith('-') and not paster:
         found_env = True
         i += 1
 
@@ -180,7 +180,7 @@ def _hack_site_opt(args, i, paster=False):
     if i + 1 == len(args):
         return i
 
-    if not found_env and not args[i+1].startswith('-'):
+    if not found_env and not args[i + 1].startswith('-') and not paster:
         found_env = True
         i += 1
 

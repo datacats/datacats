@@ -1025,12 +1025,18 @@ class Environment(object):
                 with open(self.target + '/.datacats-environment', 'w') as conf:
                     cp.write(conf)
 
+        datadirs = ['sites/' + datadir for datadir in datadirs]
+
+        if not self.sites:
+            datadirs.append('venv')
+
         web_command(
             command=['/scripts/purge.sh']
-                + ['/project/data/sites/' + d for d in datadirs],
+                + ['/project/data/' + d for d in datadirs],
             ro={PURGE: '/scripts/purge.sh'},
             rw={self.datadir: '/project/data'},
             )
+
         if not self.sites and not never_delete:
             shutil.rmtree(self.datadir)
 
