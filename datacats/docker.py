@@ -32,7 +32,7 @@ from docker.errors import APIError
 from requests import ConnectionError
 
 from datacats.error import DatacatsError
-from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG, CHECK_DNS
+from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG, CHECK_CONNECTIVITY
 
 MINIMUM_API_VERSION = '1.16'
 
@@ -354,9 +354,9 @@ def container_logs(name, tail, follow, timestamps):
     )
 
 
-def check_dns():
-    c = run_container(None, 'datacats/web', '/project/check_dns.sh',
-                      ro={CHECK_DNS: '/project/check_dns.sh'}, detach=False)
+def check_connectivity():
+    c = run_container(None, 'datacats/web', '/project/check_connectivity.sh',
+                      ro={CHECK_CONNECTIVITY: '/project/check_connectivity.sh'}, detach=False)
     logs = container_logs(c['Id'], "all", True, None)
     string = ""
     for s in logs:

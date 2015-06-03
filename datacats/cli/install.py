@@ -9,7 +9,7 @@ from os import listdir
 from os.path import isdir, exists
 
 from datacats.cli import manage
-from datacats.docker import check_dns
+from datacats.docker import check_connectivity
 from datacats.error import DatacatsError
 
 
@@ -44,7 +44,7 @@ Default: '.'
 
 
 def install_all(environment, clean):
-    logs = check_dns()
+    logs = check_connectivity()
     if logs.strip():
         raise DatacatsError(logs)
     srcdirs = set()
