@@ -70,7 +70,7 @@ Create a CKAN development environment. Open a shell and run: ::
 
     datacats create catstown
 
-Once done, a CKAN environment is created for you in the directory ``catstown``.
+Once done, a CKAN source directory is created for you in the directory ``catstown``.
 You will be prompted to create an admin password for your instance. You can
 use this password to log into your CKAN site.A message will also appear in your
 prompt at the end of the create command, with the address of where your CKAN
@@ -81,8 +81,8 @@ instance is running. To open that address easily at any time, you can always run
 .. note::
 
     All ``datacats`` commands work without having to specify the project to run
-    them on, as long as you are within a datacats environment directory. For the
-    above command, we could as well have ran: ::
+    them on, as long as you are within a datacats environment directory or any sub-
+    directory. For the above command, we could as well have ran: ::
 
         cd catstown/
         datacats open
