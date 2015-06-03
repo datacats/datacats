@@ -9,6 +9,8 @@ from os.path import expanduser
 import webbrowser
 import sys
 
+from datacats.error import DatacatsError
+
 
 def write(s):
     sys.stdout.write(s)
@@ -105,38 +107,51 @@ def info(environment, opts):
     """Display information about environment and running containers
 
 Usage:
-  datacats info [-qr] [-s NAME] [ENVIRONMENT]
+  datacats info [-qr] [ENVIRONMENT]
 
 Options:
   -q --quiet         Echo only the web URL or nothing if not running
   -r --remote        Information about DataCats.com cloud instance
-  -s --site=NAME  Provide information about running containers in a specific
-                     site [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    addr = environment.web_address()
+    damaged = False
+    sites = environment.sites
+    if not environment.sites:
+        sites = []
+        damaged = True
+
     if opts['--quiet']:
-        if addr:
-            print addr
+        if damaged:
+            raise DatacatsError('Damaged datadir: cannot get address.')
+        for site in sites:
+            environment.site_name = site
+            print '{}: {}'.format(site, environment.web_address())
         return
 
     datadir = environment.datadir
     if not environment.data_exists():
         datadir = ''
-    elif not environment.data_complete():
+    elif damaged:
         datadir += ' (damaged)'
 
     print 'Environment name: ' + environment.name
-    print '    Default port: ' + str(environment.port)
     print ' Environment dir: ' + environment.target
     print '        Data dir: ' + datadir
-    print '      Containers: ' + ' '.join(environment.containers_running())
     print '           Sites: ' + ' '.join(environment.sites)
-    if not addr:
-        return
-    print '    Available at: ' + addr
+
+    for site in environment.sites:
+        print
+        environment.site_name = site
+        print '            Site: ' + site
+        print '      Containers: ' + ' '.join(environment.containers_running())
+
+        sitedir = environment.sitedir + (' (damaged)' if not environment.data_complete() else '')
+        print '        Site dir: ' + sitedir
+        addr = environment.web_address()
+        if addr:
+            print '    Available at: ' + addr
 
 
 def list_(opts):

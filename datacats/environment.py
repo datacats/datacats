@@ -57,7 +57,6 @@ class Environment(object):
         self.ckan_version = ckan_version
         # This is the site that all commands will operate on.
         self.site_name = site_name
-        self.sitedir = join(datadir, 'sites', site_name)
         self.port = int(port if port else self._choose_port())
         self.address = address
         self.deploy_target = deploy_target
@@ -65,6 +64,15 @@ class Environment(object):
         self.site_url = site_url
         self.always_prod = always_prod
         self.sites = None
+
+    def set_site_name(self, site_name):
+        self._site_name = site_name
+        self.sitedir = join(self.datadir, 'sites', site_name)
+
+    def get_site_name(self):
+        return self._site_name
+
+    site_name = property(fget=get_site_name, fset=set_site_name)
 
     def _load_sites(self):
         """
