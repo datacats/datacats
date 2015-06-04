@@ -131,7 +131,6 @@ class RemoteCommandError(WebCommandError):
 
 
 
-
 class PortAllocatedError(Exception):
     pass
 
@@ -261,8 +260,10 @@ def remote_server_command(command, environment, user_profile, **kwargs):
         del kwargs["include_project_dir"]
 
     kwargs["ro"] = binds
-
-    web_command(command, **kwargs)
+    try:
+        web_command(command, **kwargs)
+    except WebCommandError as e:
+        raise RemoteCommandError(e)
 
 
 def run_container(name, image, command=None, environment=None,
