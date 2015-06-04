@@ -63,7 +63,7 @@ def install_all(environment, clean):
         srcdirs.remove('ckan')
         reqdirs.remove('ckan')
     except KeyError:
-        print 'ckan not found in environment directory'
+        raise DatacatsError('ckan not found in environment directory')
         return
 
     if clean:
