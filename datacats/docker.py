@@ -32,7 +32,7 @@ from docker.errors import APIError
 from requests import ConnectionError
 
 from datacats.error import (DatacatsError,
-        WebCommandError,PortAllocatedError)
+        WebCommandError, PortAllocatedError)
 from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG, CHECK_CONNECTIVITY
 
 MINIMUM_API_VERSION = '1.16'
@@ -100,7 +100,6 @@ def _get_docker():
         _docker = Client(version=version, **_docker_kwargs)
 
     return _docker
-
 
 
 _boot2docker = None
