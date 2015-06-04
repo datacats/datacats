@@ -110,11 +110,24 @@ class WebCommandError(Exception):
 
     def __str__(self):
         return \
-            ('\nSSH command to remote server failed\n'
+            ('\nDocker container "/web" command failed\n'
              '    Command: {0}\n'
              '    Docker Error Log:\n'
              '    {1}\n'
              ).format(" ".join(self.command), self.logs, self.container_id)
+
+
+
+class RemoteCommandError(WebCommandError):
+    def __str__(self):
+        return \
+            ('\nSending a command to remote server failed\n'
+             '    Command: {0}\n'
+             '    Docker Error Log:\n'
+             '    {1}\n'
+             ).format(" ".join(self.command), self.logs, self.container_id)
+
+
 
 
 class PortAllocatedError(Exception):
