@@ -107,7 +107,7 @@ class Environment(object):
             pdir.write(self.target)
 
     @classmethod
-    def new(cls, path, ckan_version, port=None, address=None):
+    def new(cls, path, ckan_version, **kwargs):
         """
         Return a Environment object with settings for a new project.
         No directories or containers are created by this call.
@@ -142,7 +142,7 @@ class Environment(object):
         if isdir(target):
             raise DatacatsError('Environment directory already exists')
 
-        environment = cls(name, target, datadir, ckan_version, port)
+        environment = cls(name, target, datadir, ckan_version, **kwargs)
         environment._generate_passwords()
         return environment
 
@@ -270,6 +270,15 @@ class Environment(object):
 
         return environment
 
+    def volumes_exist(self):
+        # We don't use data only containers on non-boot2docker
+        if not is_boot2docker():
+            return True
+
+        # Inspect returns None if the container doesn't exist.
+        return (inspect_container(self._get_container_name('pgdata')) and
+                inspect_container(self._get_container_name('venv')))
+
     def data_exists(self):
         """
         Return True if the datadir for this environment exists
@@ -292,7 +301,7 @@ class Environment(object):
 
     def require_data(self):
         """
-        raise a DatacatsError if the datadir is missing or damaged
+        raise a DatacatsError if the datadir or volumes are missing or damaged
         """
         if not self.data_exists():
             raise DatacatsError('Environment datadir missing. '
@@ -301,6 +310,10 @@ class Environment(object):
             raise DatacatsError('Environment datadir damaged. '
                                 'Try "datacats purge" followed by'
                                 ' "datacats init".')
+        if not self.volumes_exist():
+            raise DatacatsError('Volume containers could not be found.\n'
+                                'To reset and discard all data use '
+                                '"datacats purge" followed by "datacats init"')
 
     def create_directories(self, create_project_dir=True):
         """

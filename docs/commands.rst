@@ -1,6 +1,7 @@
 Command Reference
 =================
-
+datacats
+~~~~~~~~
 help
 ----
 .. program-output:: datacats help
@@ -68,3 +69,7 @@ stop
 less
 ----
 .. program-output:: datacats help less
+
+datacats-lesscd
+~~~~~~~~~~~~~~~
+.. program-output:: datacats-lesscd --help
