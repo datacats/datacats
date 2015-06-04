@@ -117,8 +117,10 @@ class WebCommandError(Exception):
              ).format(" ".join(self.command), self.logs, self.container_id)
 
 
-
 class RemoteCommandError(WebCommandError):
+    def __init__(self, base_WebCommandError):
+        self.__dict__ = base_WebCommandError.__dict__
+
     def __str__(self):
         return \
             ('\nSending a command to remote server failed\n'
