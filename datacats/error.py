@@ -25,3 +25,36 @@ class DatacatsError(Exception):
         for line in self.message.format(*self.format_args).split('\n'):
             print "  ", line
         print colored.blue("-" * 40)
+
+
+class WebCommandError(Exception):
+
+    def __init__(self, command, container_id, logs):
+        self.command = command
+        self.container_id = container_id
+        self.logs = logs
+
+    def __str__(self):
+        return \
+            ('\nDocker container "/web" command failed\n'
+             '    Command: {0}\n'
+             '    Docker Error Log:\n'
+             '    {1}\n'
+             ).format(" ".join(self.command), self.logs, self.container_id)
+
+
+class RemoteCommandError(WebCommandError):
+    def __init__(self, base_WebCommandError):
+        self.__dict__ = base_WebCommandError.__dict__
+
+    def __str__(self):
+        return \
+            ('\nSending a command to remote server failed\n'
+             '    Command: {0}\n'
+             '    Docker Error Log:\n'
+             '    {1}\n'
+             ).format(" ".join(self.command), self.logs, self.container_id)
+
+
+class PortAllocatedError(Exception):
+    pass

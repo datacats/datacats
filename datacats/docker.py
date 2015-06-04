@@ -31,7 +31,9 @@ from docker.utils import kwargs_from_env, compare_version, create_host_config
 from docker.errors import APIError
 from requests import ConnectionError
 
-from datacats.error import DatacatsError
+from datacats.error import (DatacatsError,
+        WebCommandError, RemoteCommandError,
+        PortAllocatedError)
 from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG, CHECK_CONNECTIVITY
 
 MINIMUM_API_VERSION = '1.16'
@@ -101,38 +103,6 @@ def _get_docker():
     return _docker
 
 
-class WebCommandError(Exception):
-
-    def __init__(self, command, container_id, logs):
-        self.command = command
-        self.container_id = container_id
-        self.logs = logs
-
-    def __str__(self):
-        return \
-            ('\nDocker container "/web" command failed\n'
-             '    Command: {0}\n'
-             '    Docker Error Log:\n'
-             '    {1}\n'
-             ).format(" ".join(self.command), self.logs, self.container_id)
-
-
-class RemoteCommandError(WebCommandError):
-    def __init__(self, base_WebCommandError):
-        self.__dict__ = base_WebCommandError.__dict__
-
-    def __str__(self):
-        return \
-            ('\nSending a command to remote server failed\n'
-             '    Command: {0}\n'
-             '    Docker Error Log:\n'
-             '    {1}\n'
-             ).format(" ".join(self.command), self.logs, self.container_id)
-
-
-
-class PortAllocatedError(Exception):
-    pass
 
 _boot2docker = None
 

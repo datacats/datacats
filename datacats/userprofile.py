@@ -10,8 +10,8 @@ from ConfigParser import SafeConfigParser
 from socket import gethostname
 from getpass import getuser
 
-from datacats.docker import remote_server_command, web_command, WebCommandError
-from datacats.error import DatacatsError
+from datacats.docker import remote_server_command, web_command
+from datacats.error import DatacatsError, WebCommandError
 
 
 class UserProfile(object):
