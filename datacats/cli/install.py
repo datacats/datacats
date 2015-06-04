@@ -7,6 +7,7 @@
 import sys
 from os import listdir
 from os.path import isdir, exists
+from datacats.docker import container_logs
 
 from datacats.cli import manage
 from datacats.docker import check_connectivity
@@ -32,7 +33,7 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.require_data()
-    install_all(environment, opts['--clean'])
+    install_all(environment, opts['--clean'], verbose=True)
 
     if 'web' in environment.containers_running():
         # FIXME: reload without changing debug setting?
@@ -43,10 +44,11 @@ Default: '.'
             '--address': opts['--address']})
 
 
-def install_all(environment, clean):
+def install_all(environment, clean, verbose=False):
     logs = check_connectivity()
     if logs.strip():
         raise DatacatsError(logs)
+
     srcdirs = set()
     reqdirs = set()
     for d in listdir(environment.target):
@@ -71,9 +73,13 @@ def install_all(environment, clean):
 
     for s in ['ckan'] + sorted(srcdirs):
         write('Installing ' + s)
-        environment.install_package_develop(s)
+        c_id = environment.install_package_develop(s)
+        if verbose and c_id:
+            print '\n'.join(container_logs(c_id, "all", True, None))
         write('\n')
     for s in ['ckan'] + sorted(reqdirs):
         write('Installing ' + s + ' requirements')
-        environment.install_package_requirements(s)
+        c_id = environment.install_package_requirements(s)
+        if verbose and c_id:
+            print '\n'.join(container_logs(c_id, "all", True, None))
         write('\n')

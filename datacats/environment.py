@@ -811,7 +811,7 @@ class Environment(object):
             reqname = '/pip-requirements.txt'
             if not exists(package + reqname):
                 return
-        self.user_run_script(
+        return self.user_run_script(
             script=INSTALL_REQS,
             args=['/project/' + psrc + reqname],
             rw_venv=True,
@@ -828,7 +828,7 @@ class Environment(object):
         assert isdir(package), package
         if not exists(package + '/setup.py'):
             return
-        self.user_run_script(
+        return self.user_run_script(
             script=INSTALL_PACKAGE,
             args=['/project/' + psrc],
             rw_venv=True,
