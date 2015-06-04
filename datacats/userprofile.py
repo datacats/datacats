@@ -131,7 +131,6 @@ class UserProfile(object):
         remote_server_command(
             ["ssh", environment.deploy_target, "create", target_name],
             environment, self,
-            stream_output=stream_output,
             clean_up=True,
             )
 
@@ -166,7 +165,6 @@ class UserProfile(object):
                 ],
                 environment, self,
                 include_project_dir=True,
-                stream_output=stream_output,
                 clean_up=True,
                 )
         except WebCommandError as e:
@@ -183,7 +181,6 @@ class UserProfile(object):
                     ],
                 environment, self,
                 ro=environment.remote_command_binds(self),
-                stream_output=stream_output,
                 clean_up=True,
                 )
             return True
