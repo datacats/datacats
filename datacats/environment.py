@@ -22,7 +22,7 @@ from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker, data_only_container, docker_host,
                              PortAllocatedError, container_logs, remove_image, WebCommandError,
-                             image_exists)
+                             image_exists, collect_logs)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
@@ -640,11 +640,9 @@ class Environment(object):
                     self._get_container_name('web'),
                     self.web_address(),
                     WEB_START_TIMEOUT_SECONDS):
-                raise DatacatsError('Failed to start web container.'
-                                    ' Run "datacats logs" to check the output.')
+                raise DatacatsError(collect_logs(self._get_container_name('web')))
         except ServiceTimeout:
-            raise DatacatsError('Timeout waiting for web container to start.'
-                                ' Run "datacats logs" to check the output.')
+            raise DatacatsError(collect_logs(self._get_container_name('web')))
 
     def _choose_port(self):
         """
