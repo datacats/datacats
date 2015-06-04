@@ -231,7 +231,7 @@ def remote_server_command(command, environment, user_profile, **kwargs):
     try:
         web_command(command, **kwargs)
     except WebCommandError as e:
-        e.user_description = '\nSending a command to remote server failed\n'
+        e.user_description = 'Sending a command to remote server failed'
         raise e
 
 
