@@ -32,8 +32,7 @@ from docker.errors import APIError
 from requests import ConnectionError
 
 from datacats.error import (DatacatsError,
-        WebCommandError, RemoteCommandError,
-        PortAllocatedError)
+        WebCommandError,PortAllocatedError)
 from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG, CHECK_CONNECTIVITY
 
 MINIMUM_API_VERSION = '1.16'
@@ -233,7 +232,8 @@ def remote_server_command(command, environment, user_profile, **kwargs):
     try:
         web_command(command, **kwargs)
     except WebCommandError as e:
-        raise RemoteCommandError(e)
+        e.user_description = '\nSending a command to remote server failed\n'
+        raise e
 
 
 def run_container(name, image, command=None, environment=None,

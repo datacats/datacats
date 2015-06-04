@@ -2,14 +2,20 @@ from clint.textui import colored
 
 
 class DatacatsError(Exception):
-
     def __init__(self, message, format_args=(), parent_exception=None):
         self.message = message
-        if parent_exception:
-            self.message += '\n\n' + '~' * 30 + \
-                "\nTechnical Details:\n" + \
-                parent_exception.__str__() + \
-                '~' * 30 + '\n'
+        if parent_exception and hasattr(parent_exception, 'user_description'):
+            vals = {
+              "original": self.message,
+              "type_description": parent_exception.user_description,
+              "message": parent_exception.__str__(),
+            }
+            self.message = "".join(["{original}\n\n",
+                            "~" * 30,
+                            "\n{type_description}:\n",
+                            "{message}",
+                            "~" * 30, "\n"]).format(**vals)
+
         self.format_args = format_args
         super(DatacatsError, self).__init__(message, format_args)
 
@@ -28,33 +34,18 @@ class DatacatsError(Exception):
 
 
 class WebCommandError(Exception):
+    user_description = '\nDocker container "/web" command failed\n'
 
     def __init__(self, command, container_id, logs):
         self.command = command
-        self.container_id = container_id
         self.logs = logs
 
     def __str__(self):
-        return \
-            ('\nDocker container "/web" command failed\n'
-             '    Command: {0}\n'
-             '    Docker Error Log:\n'
-             '    {1}\n'
-             ).format(" ".join(self.command), self.logs, self.container_id)
-
-
-class RemoteCommandError(WebCommandError):
-    def __init__(self, base_WebCommandError):
-        self.__dict__ = base_WebCommandError.__dict__
-
-    def __str__(self):
-        return \
-            ('\nSending a command to remote server failed\n'
-             '    Command: {0}\n'
-             '    Docker Error Log:\n'
-             '    {1}\n'
-             ).format(" ".join(self.command), self.logs, self.container_id)
+        return ('    Command: {0}\n'
+                 '    Docker Error Log:\n'
+                 '    {1}\n'
+             ).format(" ".join(self.command), self.logs)
 
 
 class PortAllocatedError(Exception):
-    pass
+    user_description = "Unable to allocate port"
