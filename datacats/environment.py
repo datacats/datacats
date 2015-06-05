@@ -798,7 +798,7 @@ class Environment(object):
             '--hostname', self.name,
             'datacats/web', '/scripts/shell.sh'] + command)
 
-    def install_package_requirements(self, psrc):
+    def install_package_requirements(self, psrc, stream_output=None):
         """
         Install from requirements.txt file found in psrc
 
@@ -816,9 +816,10 @@ class Environment(object):
             args=['/project/' + psrc + reqname],
             rw_venv=True,
             rw_project=True,
+            stream_output=stream_output
             )
 
-    def install_package_develop(self, psrc):
+    def install_package_develop(self, psrc, stream_output=None):
         """
         Install a src package in place (setup.py develop)
 
@@ -833,10 +834,11 @@ class Environment(object):
             args=['/project/' + psrc],
             rw_venv=True,
             rw_project=True,
+            stream_output=stream_output
             )
 
     def user_run_script(self, script, args, db_links=False, rw_venv=False,
-                        rw_project=False, rw=None, ro=None):
+                        rw_project=False, rw=None, ro=None, stream_output=None):
         return self.run_command(
             command=['/scripts/run_as_user.sh', '/scripts/run.sh'] + args,
             db_links=db_links,
@@ -847,10 +849,12 @@ class Environment(object):
                 RUN_AS_USER: '/scripts/run_as_user.sh',
                 script: '/scripts/run.sh',
                 }),
+            stream_output=stream_output
             )
 
     def run_command(self, command, db_links=False, rw_venv=False,
-                    rw_project=False, rw=None, ro=None, clean_up=False):
+                    rw_project=False, rw=None, ro=None, clean_up=False,
+                    stream_output=None):
 
         rw = {} if rw is None else dict(rw)
         ro = {} if ro is None else dict(ro)
@@ -878,7 +882,8 @@ class Environment(object):
 
         try:
             return web_command(command=command, ro=ro, rw=rw, links=links,
-                               volumes_from=volumes_from, clean_up=clean_up)
+                               volumes_from=volumes_from, clean_up=clean_up,
+                               commit=True, stream_output=stream_output)
         except WebCommandError as e:
             print 'Failed to run command %s. Logs are as follows:\n%s' % (e.command, e.logs)
             raise
