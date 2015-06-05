@@ -527,7 +527,7 @@ class Environment(object):
             'DATASTORE_RW_PASSWORD': generate_db_password(),
             }
 
-    def start_web(self, production=False, address='127.0.0.1'):
+    def start_web(self, production=False, address='127.0.0.1', log_syslog=False):
         """
         Start the apache server or paster serve
 
@@ -556,7 +556,7 @@ class Environment(object):
         while True:
             self._create_run_ini(port, production)
             try:
-                self._run_web_container(port, command, address)
+                self._run_web_container(port, command, address, log_syslog=log_syslog)
                 if not is_boot2docker():
                     self.address = address
             except PortAllocatedError:
@@ -602,7 +602,7 @@ class Environment(object):
         with open(self.datadir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command, address='127.0.0.1'):
+    def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False):
         """
         Start web container on port with command
         """
@@ -628,6 +628,7 @@ class Environment(object):
             command=command,
             port_bindings={
                 5000: port if is_boot2docker() else (address, port)},
+            log_syslog=log_syslog
             )
 
     def wait_for_web_available(self):
