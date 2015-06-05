@@ -19,10 +19,6 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileModifiedEvent
 
 
-# None to start off with, defined in main()
-environment = None
-
-
 class LessCompileEventHandler(FileSystemEventHandler):
     def __init__(self, environment):
         self.environment = environment

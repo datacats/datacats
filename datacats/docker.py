@@ -26,6 +26,7 @@ try:
     from docker.constants import DEFAULT_DOCKER_API_VERSION
 except ImportError:
     # Versions before 1.2.0
+    # pylint: disable=no-name-in-module
     from docker.client import DEFAULT_DOCKER_API_VERSION
 from docker.utils import kwargs_from_env, compare_version, create_host_config
 from docker.errors import APIError
@@ -39,9 +40,9 @@ MINIMUM_API_VERSION = '1.16'
 
 def get_api_version(*versions):
     # compare_version is backwards
-    def cmp(a, b):
+    def rev_cmp(a, b):
         return -1 * compare_version(a, b)
-    return min(versions, key=cmp_to_key(cmp))
+    return min(versions, key=cmp_to_key(rev_cmp))
 
 # Lazy instantiation of _docker
 _docker = None
@@ -102,8 +103,8 @@ def _get_docker():
 
 
 class WebCommandError(Exception):
-
     def __init__(self, command, container_id, logs):
+        Exception.__init__(self)
         self.command = command
         self.container_id = container_id
         self.logs = logs

@@ -64,7 +64,6 @@ def install_all(environment, clean):
         reqdirs.remove('ckan')
     except KeyError:
         raise DatacatsError('ckan not found in environment directory')
-        return
 
     if clean:
         environment.clean_virtualenv()

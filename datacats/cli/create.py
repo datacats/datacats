@@ -41,12 +41,11 @@ part of this path will be used as the environment name.
         create_skin=not opts['--bare'],
         start_web=not opts['--image-only'],
         create_sysadmin=not opts['--no-sysadmin'],
-        ckan_version=opts['--ckan'],
         address=opts['--address']
         )
 
 
-def create_environment(environment_dir, port, ckan_version, create_skin,
+def create_environment(environment_dir, port, create_skin,
         start_web, create_sysadmin, address):
 
     # FIXME: only 2.3 preload supported at the moment
