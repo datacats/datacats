@@ -9,7 +9,7 @@ from os.path import abspath
 from getpass import getpass
 
 from datacats.environment import Environment
-from datacats.cli.install import install
+from datacats.cli.install import install_all
 from datacats.validate import valid_deploy_name
 
 
@@ -147,7 +147,7 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """
-    install(environment, {'--clean': False, 'PORT': None})
+    install_all(environment, False, verbose=False)
 
     write('Initializing database')
     environment.ckan_db_init()
