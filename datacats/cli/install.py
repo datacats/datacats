@@ -25,11 +25,11 @@ def install(environment, opts):
     """Install or reinstall Python packages within this environment
 
 Usage:
-  datacats install [-c] [--address=IP] [--quiet] [ENVIRONMENT]
+  datacats install [-cq] [--address=IP] [ENVIRONMENT]
 
 Options:
-  -c --clean            Reinstall packages into a clean virtualenv
   --address=IP          The address to bind to when reloading after install [default: 127.0.0.1]
+  -c --clean            Reinstall packages into a clean virtualenv
   -q --quiet            Do not show output from installing packages and requirements.
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
