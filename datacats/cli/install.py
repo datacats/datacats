@@ -75,11 +75,16 @@ def install_all(environment, clean, verbose=False):
         write('Installing ' + s)
         c_id = environment.install_package_develop(s)
         if verbose and c_id:
-            print '\n'.join(container_logs(c_id, "all", True, None))
+            _print_logs(c_id)
         write('\n')
     for s in ['ckan'] + sorted(reqdirs):
         write('Installing ' + s + ' requirements')
         c_id = environment.install_package_requirements(s)
         if verbose and c_id:
-            print '\n'.join(container_logs(c_id, "all", True, None))
+            _print_logs(c_id)
         write('\n')
+
+
+def _print_logs(c_id):
+    for item in container_logs(c_id, "all", True, None):
+        print item
