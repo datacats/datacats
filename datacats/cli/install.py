@@ -9,6 +9,8 @@ from os import listdir
 from os.path import isdir, exists
 
 from datacats.cli import manage
+from datacats.docker import check_connectivity
+from datacats.error import DatacatsError
 
 
 def write(s):
@@ -38,10 +40,14 @@ Default: '.'
             '--production': False,
             'PORT': None,
             '--background': False,
-            '--address': opts['--address']})
+            '--address': opts['--address'],
+            '--syslog': False})
 
 
 def install_all(environment, clean):
+    logs = check_connectivity()
+    if logs.strip():
+        raise DatacatsError(logs)
     srcdirs = set()
     reqdirs = set()
     for d in listdir(environment.target):
@@ -58,7 +64,7 @@ def install_all(environment, clean):
         srcdirs.remove('ckan')
         reqdirs.remove('ckan')
     except KeyError:
-        print 'ckan not found in environment directory'
+        raise DatacatsError('ckan not found in environment directory')
         return
 
     if clean:

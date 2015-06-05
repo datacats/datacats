@@ -22,8 +22,8 @@ from docker import APIError
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker, data_only_container, docker_host,
-                             PortAllocatedError, container_logs, remove_image, WebCommandError,
-                             require_images)
+                             container_logs, remove_image, require_images,
+                             image_exists)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
@@ -31,7 +31,7 @@ from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.migrate import needs_format_conversion
 from datacats.password import generate_password
-from datacats.error import DatacatsError
+from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
 
 WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
@@ -160,7 +160,7 @@ class Environment(object):
             pdir.write(self.target)
 
     @classmethod
-    def new(cls, path, ckan_version, site_name, port=None, address=None):
+    def new(cls, path, ckan_version, site_name, **kwargs):
         """
         Return a Environment object with settings for a new project.
         No directories or containers are created by this call.
@@ -205,7 +205,7 @@ class Environment(object):
                                 'If you simply want to recreate the data directory, run '
                                 '"datacats init" in the environment directory.')
 
-        environment = cls(name, target, datadir, site_name, ckan_version, port)
+        environment = cls(name, target, datadir, site_name, ckan_version, **kwargs)
         environment._generate_passwords()
         return environment
 
@@ -630,7 +630,7 @@ class Environment(object):
             'BEAKER_SESSION_SECRET': generate_password(),
             }
 
-    def start_web(self, production=False, address='127.0.0.1'):
+    def start_web(self, production=False, address='127.0.0.1', log_syslog=False):
         """
         Start the apache server or paster serve
 
@@ -659,7 +659,7 @@ class Environment(object):
         while True:
             self._create_run_ini(port, production)
             try:
-                self._run_web_container(port, command, address)
+                self._run_web_container(port, command, address, log_syslog=log_syslog)
                 if not is_boot2docker():
                     self.address = address
             except PortAllocatedError:
@@ -706,7 +706,7 @@ class Environment(object):
         with open(self.sitedir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command, address='127.0.0.1'):
+    def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False):
         """
         Start web container on port with command
         """
@@ -732,6 +732,7 @@ class Environment(object):
                 command=command,
                 port_bindings={
                     5000: port if is_boot2docker() else (address, port)},
+                log_syslog=log_syslog
                 )
         except APIError as e:
             if '409' in str(e):
@@ -991,7 +992,8 @@ class Environment(object):
             return web_command(command=command, ro=ro, rw=rw, links=links,
                                volumes_from=volumes_from, clean_up=clean_up)
         except WebCommandError as e:
-            print 'Failed to run command %s. Logs are as follows:\n%s' % (e.command, e.logs)
+            print ('Failed to run command %s.'
+                ' Logs are as follows:\n%s') % (e.command, e.logs)
             raise
 
     def purge_data(self, which_sites=None, never_delete=False):

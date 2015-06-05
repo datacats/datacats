@@ -8,8 +8,6 @@
 
 set -e
 
-wget -q --spider https://pypi.python.org/simple || { echo "Error: Couldn't connect to PyPi. Is your DNS configured correctly?"; exit 1; }
-
 if [ -e /etc/environment ]; then
     source /etc/environment
     export http_proxy HTTP_PROXY https_proxy HTTPS_PROXY no_proxy NO_PROXY

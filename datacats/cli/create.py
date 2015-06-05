@@ -23,7 +23,7 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bin] [-s NAME] [--address=IP] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
+  datacats create [-bin] [-s NAME] [--address=IP] [--syslog] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
@@ -33,6 +33,7 @@ Options:
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME          Pick a site to create [default: primary]
+  --syslog                Log to the syslog
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
@@ -45,23 +46,16 @@ part of this path will be used as the environment name.
         create_sysadmin=not opts['--no-sysadmin'],
         site_name=opts['--site'],
         ckan_version=opts['--ckan'],
-        address=opts['--address']
+        address=opts['--address'],
+        log_syslog=opts['--syslog']
         )
 
 
 def create_environment(environment_dir, port, ckan_version, create_skin, site_name,
-        start_web, create_sysadmin, address):
-    try:
-        # FIXME: only 2.3 preload supported at the moment
-        environment = Environment.new(environment_dir, '2.3', site_name, port)
-    except DatacatsError as e:
-        print e
-        return 1
+        start_web, create_sysadmin, address, log_syslog=False):
 
-    if not valid_deploy_name(environment.name):
-        print "WARNING: When deploying you will need to choose a"
-        print "target name that is at least 5 characters long"
-        print
+    # FIXME: only 2.3 preload supported at the moment
+    environment = Environment.new(environment_dir, '2.3', site_name, port=port)
 
     try:
         # There are a lot of steps we can/must skip if we're making a sub-site only
@@ -90,7 +84,7 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
             write('.')
         write('\n')
 
-        return finish_init(environment, start_web, create_sysadmin, address)
+        return finish_init(environment, start_web, create_sysadmin, address, log_syslog=log_syslog)
     except:
         # Make sure that it doesn't get printed right after the dots
         # by printing a newline
@@ -103,13 +97,15 @@ def init(opts):
     """Initialize a purged environment or copied environment directory
 
 Usage:
-  datacats init [-in] [-s NAME] [--address=IP] [ENVIRONMENT_DIR [PORT]]
+  datacats init [-in] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT_DIR [PORT]]
+  datacats init [-ni] [--syslog] [--address=IP] [ENVIRONMENT_DIR [PORT]]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME         Pick a site to initialize [default: primary]
+  --syslog                Log to the syslog
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
@@ -121,6 +117,7 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     site_name = opts['--site']
 
     environment_dir = abspath(environment_dir or '.')
+    log_syslog = opts['--syslog']
 
     environment = Environment.load(environment_dir, site_name)
     environment.address = address
@@ -156,11 +153,10 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         print
         raise
 
-    return finish_init(environment, start_web, create_sysadmin, address,
-                       do_install=making_full_environment)
+    return finish_init(environment, start_web, create_sysadmin, address, log_syslog=log_syslog)
 
 
-def finish_init(environment, start_web, create_sysadmin, address, do_install=True):
+def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False, do_install=True):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """
@@ -172,7 +168,7 @@ def finish_init(environment, start_web, create_sysadmin, address, do_install=Tru
     write('\n')
 
     if start_web:
-        environment.start_web(address=address)
+        environment.start_web(address=address, log_syslog=log_syslog)
         write('Starting web server at {0} ...\n'.format(
             environment.web_address()))
 
