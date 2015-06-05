@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+0.11.0
+------
+
+- workaround for common TLS error with boot2docker and recent openssl
+- less: new command to compile less files to css
+- new script datacats-lesscd to monitor less files for changes and
+  automatically rebuild css files
+- start/reload: errors now displayed immediately instead of prompting user
+  to run "datacats logs"
+- install: now verbose, use --quiet for old behavior
+- install: now checks connectivity to pypi before starting
+- create/init/install/start/reload: --syslog send log messages to syslog
+- deploy: improved error reporting
+- improved error messages when boot2docker containers are missing
+
 0.10.0
 ------
 
