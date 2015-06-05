@@ -10,7 +10,6 @@ from getpass import getpass
 
 from datacats.environment import Environment
 from datacats.cli.install import install
-from datacats.validate import valid_deploy_name
 from datacats.error import DatacatsError
 
 
@@ -23,7 +22,8 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bin] [-s NAME] [--address=IP] [--syslog] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
+  datacats create [-bin] [-s NAME] [--address=IP] [--syslog] [--ckan=CKAN_VERSION]\
+ ENVIRONMENT_DIR [PORT]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
@@ -156,7 +156,8 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     return finish_init(environment, start_web, create_sysadmin, address, log_syslog=log_syslog)
 
 
-def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False, do_install=True):
+def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False,
+                do_install=True):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """

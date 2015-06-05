@@ -180,7 +180,6 @@ class UserProfile(object):
                     "ssh", environment.deploy_target, "install", target_name,
                     ],
                 environment, self,
-                stream_output=stream_output,
                 clean_up=True,
                 )
             return True
