@@ -1,6 +1,6 @@
 # datacats
 
-[![Circle CI](https://circleci.com/gh/datacats/datacats.svg?style=svg)](https://circleci.com/gh/boxkite/datacats)
+[![Circle CI](https://circleci.com/gh/datacats/datacats.svg?style=svg)](https://circleci.com/gh/datacats/datacats)
 [![docs](https://readthedocs.org/projects/docs/badge/?version=latest)](http://docs.datacats.com/)
 
 

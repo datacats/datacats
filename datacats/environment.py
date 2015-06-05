@@ -21,14 +21,14 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker, data_only_container, docker_host,
-                             PortAllocatedError, container_logs, remove_image, WebCommandError,
+                             container_logs, remove_image,
                              image_exists)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
     COMPILE_LESS)
 from datacats.network import wait_for_service_available, ServiceTimeout
-from datacats.error import DatacatsError
+from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
 
 
 WEB_START_TIMEOUT_SECONDS = 30
@@ -107,7 +107,7 @@ class Environment(object):
             pdir.write(self.target)
 
     @classmethod
-    def new(cls, path, ckan_version, port=None, address=None):
+    def new(cls, path, ckan_version, **kwargs):
         """
         Return a Environment object with settings for a new project.
         No directories or containers are created by this call.
@@ -142,7 +142,7 @@ class Environment(object):
         if isdir(target):
             raise DatacatsError('Environment directory already exists')
 
-        environment = cls(name, target, datadir, ckan_version, port)
+        environment = cls(name, target, datadir, ckan_version, **kwargs)
         environment._generate_passwords()
         return environment
 
@@ -527,7 +527,7 @@ class Environment(object):
             'DATASTORE_RW_PASSWORD': generate_db_password(),
             }
 
-    def start_web(self, production=False, address='127.0.0.1'):
+    def start_web(self, production=False, address='127.0.0.1', log_syslog=False):
         """
         Start the apache server or paster serve
 
@@ -556,7 +556,7 @@ class Environment(object):
         while True:
             self._create_run_ini(port, production)
             try:
-                self._run_web_container(port, command, address)
+                self._run_web_container(port, command, address, log_syslog=log_syslog)
                 if not is_boot2docker():
                     self.address = address
             except PortAllocatedError:
@@ -602,7 +602,7 @@ class Environment(object):
         with open(self.datadir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command, address='127.0.0.1'):
+    def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False):
         """
         Start web container on port with command
         """
@@ -628,6 +628,7 @@ class Environment(object):
             command=command,
             port_bindings={
                 5000: port if is_boot2docker() else (address, port)},
+            log_syslog=log_syslog
             )
 
     def wait_for_web_available(self):
@@ -881,7 +882,8 @@ class Environment(object):
             return web_command(command=command, ro=ro, rw=rw, links=links,
                                volumes_from=volumes_from, clean_up=clean_up)
         except WebCommandError as e:
-            print 'Failed to run command %s. Logs are as follows:\n%s' % (e.command, e.logs)
+            print ('Failed to run command %s.'
+                ' Logs are as follows:\n%s') % (e.command, e.logs)
             raise
 
     def purge_data(self):

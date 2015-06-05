@@ -35,14 +35,15 @@ def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
-  datacats start [-bp] [--address=IP] [ENVIRONMENT [PORT]]
-  datacats start -r [-b] [--address=IP] [ENVIRONMENT]
+  datacats start [-bp] [--address=IP] [--syslog] [ENVIRONMENT [PORT]]
+  datacats start -r [-b] [--address=IP] [--syslog] [ENVIRONMENT]
 
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
+  --syslog           Log to the syslog
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -60,14 +61,15 @@ def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
-  datacats reload [-bp] [--address=IP] [ENVIRONMENT [PORT]]
-  datacats reload -r [-b] [--address=IP] [ENVIRONMENT]
+  datacats reload [-bp] [--address=IP] [--syslog] [ENVIRONMENT [PORT]]
+  datacats reload -r [-b] [--address=IP] [--syslog] [ENVIRONMENT]
 
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
+  --syslog           Log to the syslog
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -86,7 +88,8 @@ Default: '.'
 
     environment.start_web(
         production=opts['--production'],
-        address=opts['--address'])
+        address=opts['--address'],
+        log_syslog=opts['--syslog'])
     write('Starting web server at {0} ...'.format(environment.web_address()))
     if opts['--background']:
         write('\n')

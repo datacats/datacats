@@ -10,8 +10,8 @@ from ConfigParser import SafeConfigParser
 from socket import gethostname
 from getpass import getuser
 
-from datacats.docker import remote_server_command, web_command, WebCommandError
-from datacats.error import DatacatsError
+from datacats.docker import remote_server_command, web_command
+from datacats.error import DatacatsError, WebCommandError
 
 
 class UserProfile(object):
@@ -124,14 +124,13 @@ class UserProfile(object):
                 else user_unrecognized_error_message
             raise DatacatsError(user_error_message, parent_exception=e)
 
-    def create(self, environment, target_name, stream_output=None):
+    def create(self, environment, target_name):
         """
         Sends "create project" command to the remote server
         """
         remote_server_command(
             ["ssh", environment.deploy_target, "create", target_name],
             environment, self,
-            stream_output=stream_output,
             clean_up=True,
             )
 
@@ -150,7 +149,7 @@ class UserProfile(object):
         except WebCommandError:
             return False
 
-    def deploy(self, environment, target_name, stream_output=None):
+    def deploy(self, environment, target_name):
         """
         Return True if deployment was successful
         """
@@ -166,7 +165,6 @@ class UserProfile(object):
                 ],
                 environment, self,
                 include_project_dir=True,
-                stream_output=stream_output,
                 clean_up=True,
                 )
         except WebCommandError as e:
@@ -183,7 +181,6 @@ class UserProfile(object):
                     ],
                 environment, self,
                 ro=environment.remote_command_binds(self),
-                stream_output=stream_output,
                 clean_up=True,
                 )
             return True

@@ -27,11 +27,12 @@ try:
 except ImportError:
     # Versions before 1.2.0
     from docker.client import DEFAULT_DOCKER_API_VERSION
-from docker.utils import kwargs_from_env, compare_version, create_host_config
+from docker.utils import kwargs_from_env, compare_version, create_host_config, LogConfig
 from docker.errors import APIError
 from requests import ConnectionError
 
-from datacats.error import DatacatsError
+from datacats.error import (DatacatsError,
+        WebCommandError, PortAllocatedError)
 from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG, CHECK_CONNECTIVITY
 
 MINIMUM_API_VERSION = '1.16'
@@ -77,7 +78,8 @@ def _get_docker():
             raise DatacatsError('You have not created your boot2docker VM. '
                                 'Please run "boot2docker init" to do so.')
 
-        # XXX HACK: This exists because of http://github.com/datacats/datacats/issues/63,
+        # XXX HACK: This exists because of
+        #           http://github.com/datacats/datacats/issues/63,
         # as a temporary fix.
         if 'tls' in _docker_kwargs and boot2docker:
             import warnings
@@ -100,25 +102,6 @@ def _get_docker():
 
     return _docker
 
-
-class WebCommandError(Exception):
-
-    def __init__(self, command, container_id, logs):
-        self.command = command
-        self.container_id = container_id
-        self.logs = logs
-
-    def __str__(self):
-        return \
-            ('\nSSH command to remote server failed\n'
-             '    Command: {0}\n'
-             '    Docker Error Log:\n'
-             '    {1}\n'
-             ).format(" ".join(self.command), self.logs, self.container_id)
-
-
-class PortAllocatedError(Exception):
-    pass
 
 _boot2docker = None
 
@@ -162,7 +145,7 @@ def binds_to_volumes(volumes):
 
 def web_command(command, ro=None, rw=None, links=None,
                 image='datacats/web', volumes_from=None, commit=False,
-                clean_up=False, stream_output=None):
+                clean_up=False):
     """
     Run a single command in a web image optionally preloaded with the ckan
     source and virtual envrionment.
@@ -175,7 +158,6 @@ def web_command(command, ro=None, rw=None, links=None,
     :param volumes_from:
     :param commit: True to create a new image based on result
     :param clean_up: True to remove container even on error
-    :param stream_output: file to write stderr+stdout from command
 
     :returns: image id if commit=True
     """
@@ -191,10 +173,6 @@ def web_command(command, ro=None, rw=None, links=None,
         links=links,
         binds=binds,
         volumes_from=volumes_from)
-    if stream_output:
-        for output in _get_docker().attach(
-                c['Id'], stdout=True, stderr=True, stream=True):
-            stream_output.write(output)
     if _get_docker().wait(c['Id']):
         # Before the (potential) cleanup, grab the logs!
         logs = _get_docker().logs(c['Id'])
@@ -246,13 +224,16 @@ def remote_server_command(command, environment, user_profile, **kwargs):
         del kwargs["include_project_dir"]
 
     kwargs["ro"] = binds
-
-    web_command(command, **kwargs)
+    try:
+        web_command(command, **kwargs)
+    except WebCommandError as e:
+        e.user_description = 'Sending a command to remote server failed'
+        raise e
 
 
 def run_container(name, image, command=None, environment=None,
                   ro=None, rw=None, links=None, detach=True, volumes_from=None,
-                  port_bindings=None):
+                  port_bindings=None, log_syslog=False):
     """
     Wrapper for docker create_container, start calls
 
@@ -262,6 +243,11 @@ def run_container(name, image, command=None, environment=None,
     requested port.
     """
     binds = ro_rw_to_binds(ro, rw)
+
+    host_config = create_host_config(binds=binds,
+                                     log_config=LogConfig(
+                                         type=('syslog' if log_syslog else 'json-file')))
+
     c = _get_docker().create_container(
         name=name,
         image=image,
@@ -272,7 +258,7 @@ def run_container(name, image, command=None, environment=None,
         stdin_open=False,
         tty=False,
         ports=list(port_bindings) if port_bindings else None,
-        host_config=create_host_config(binds=binds))
+        host_config=host_config)
     try:
         _get_docker().start(
             container=c['Id'],
