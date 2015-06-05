@@ -12,6 +12,5 @@ if [ -e /etc/environment ]; then
     source /etc/environment
     export http_proxy HTTP_PROXY https_proxy HTTPS_PROXY no_proxy NO_PROXY
 fi
-env
 
 /usr/lib/ckan/bin/pip install -r "$1"

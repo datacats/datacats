@@ -144,7 +144,7 @@ def binds_to_volumes(volumes):
     return [v['bind'] for v in volumes.itervalues()]
 
 
-def web_command(command, ro=None, rw=None, links=None,
+def web_command(command, ro=None, rw=None, links=None, stream_output=None,
                 image='datacats/web', volumes_from=None, commit=False,
                 clean_up=False):
     """
@@ -159,6 +159,7 @@ def web_command(command, ro=None, rw=None, links=None,
     :param volumes_from:
     :param commit: True to create a new image based on result
     :param clean_up: True to remove container even on error
+    :param stream_output: file to write stderr+stdout from command
 
     :returns: image id if commit=True
     """
@@ -174,6 +175,10 @@ def web_command(command, ro=None, rw=None, links=None,
         links=links,
         binds=binds,
         volumes_from=volumes_from)
+    if stream_output:
+        for output in _get_docker().attach(
+                c['Id'], stdout=True, stderr=True, stream=True):
+            stream_output.write(output)
     if _get_docker().wait(c['Id']):
         # Before the (potential) cleanup, grab the logs!
         logs = _get_docker().logs(c['Id'])
