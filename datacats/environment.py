@@ -641,11 +641,12 @@ class Environment(object):
                     self._get_container_name('web'),
                     self.web_address(),
                     WEB_START_TIMEOUT_SECONDS):
-                raise DatacatsError('Failed to start web container.'
-                                    ' Run "datacats logs" to check the output.')
+                raise DatacatsError('Error while starting web container:\n' +
+                                    container_logs(self._get_container_name('web'), "all",
+                                                   False, None))
         except ServiceTimeout:
-            raise DatacatsError('Timeout waiting for web container to start.'
-                                ' Run "datacats logs" to check the output.')
+            raise DatacatsError('Timeout while starting web container. Logs:' +
+                                container_logs(self._get_container_name('web'), "all", False, None))
 
     def _choose_port(self):
         """
