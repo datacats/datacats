@@ -16,11 +16,6 @@ from datacats.docker import check_connectivity
 from datacats.error import DatacatsError
 
 
-def write(s):
-    sys.stdout.write(s)
-    sys.stdout.flush()
-
-
 def install(environment, opts):
     """Install or reinstall Python packages within this environment
 
@@ -80,14 +75,16 @@ def install_all(environment, clean, verbose=False):
         else:
             print 'Installing ' + s
         environment.install_package_develop(s, sys.stdout if verbose else None)
-        write('\n')
+        if verbose:
+            print
     for s in ['ckan'] + sorted(reqdirs):
         if verbose:
             print colored.yellow('Installing ' + s + ' requirements' + '\n')
         else:
             print 'Installing ' + s + ' requirements'
         environment.install_package_requirements(s, sys.stdout if verbose else None)
-        write('\n')
+        if verbose:
+            print
 
 
 def _print_logs(c_id):
