@@ -7,7 +7,7 @@ Usage:
   --help -h         Show this help and quit.
 """
 
-from os.path import expanduser, join as path_join, split as path_split, exists
+from os.path import expanduser, join as path_join, exists
 import signal
 
 from docopt import docopt
