@@ -21,12 +21,7 @@ from warnings import warn
 # in the future.
 
 from docker import Client
-try:
-    # Versions after 1.2.0
-    from docker.constants import DEFAULT_DOCKER_API_VERSION
-except ImportError:
-    # Versions before 1.2.0
-    from docker.client import DEFAULT_DOCKER_API_VERSION
+from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.utils import kwargs_from_env, compare_version, create_host_config, LogConfig
 from docker.errors import APIError
 from requests import ConnectionError
