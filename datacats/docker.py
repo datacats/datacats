@@ -21,12 +21,7 @@ from warnings import warn
 # in the future.
 
 from docker import Client
-try:
-    # Versions after 1.2.0
-    from docker.constants import DEFAULT_DOCKER_API_VERSION
-except ImportError:
-    # Versions before 1.2.0
-    from docker.client import DEFAULT_DOCKER_API_VERSION
+from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.utils import kwargs_from_env, compare_version, create_host_config, LogConfig
 from docker.errors import APIError
 from requests import ConnectionError
@@ -350,17 +345,26 @@ def container_logs(name, tail, follow, timestamps):
     )
 
 
-def check_connectivity():
-    c = run_container(None, 'datacats/web', '/project/check_connectivity.sh',
-                      ro={
-                          CHECK_CONNECTIVITY: '/project/check_connectivity.sh'
-                      },
-                      detach=False)
-    logs = container_logs(c['Id'], "all", True, None)
+def collect_logs(name):
+    """
+    Returns a string representation of the logs from a container.
+    This is similar to container_logs but uses the `follow` option
+    and flattens the logs into a string instead of a generator.
+
+    :param name: The container name to grab logs for
+    :return: A string representation of the logs
+    """
+    logs = container_logs(name, "all", True, None)
     string = ""
     for s in logs:
         string += s
     return string
+
+
+def check_connectivity():
+    c = run_container(None, 'datacats/web', '/project/check_connectivity.sh',
+                      ro={CHECK_CONNECTIVITY: '/project/check_connectivity.sh'}, detach=False)
+    return collect_logs(c['Id'])
 
 
 def pull_stream(image):
