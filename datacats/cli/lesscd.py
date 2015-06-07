@@ -7,7 +7,7 @@ Usage:
   --help -h         Show this help and quit.
 """
 
-from os.path import expanduser, join as path_join
+from os.path import expanduser, join as path_join, exists
 import signal
 
 from docopt import docopt
@@ -32,8 +32,13 @@ def main():
     opts = docopt(__doc__, version=__version__)
     env_path = expanduser(opts['TARGET'])
     environment = Environment.load(env_path)
-    # Path to less files in ckan. This is the path we're gonna watch.
+    env_path = environment.target
     less_path = path_join(env_path, 'ckan', 'ckan', 'public', 'base', 'less')
+
+    if not env_path or not exists(less_path):
+        print 'No source code to watch found'
+        return
+
     observer = Observer()
     event_handler = LessCompileEventHandler(environment)
     observer.schedule(event_handler, less_path, recursive=True)

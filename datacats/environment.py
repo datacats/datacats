@@ -21,14 +21,14 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker, data_only_container, docker_host,
-                             PortAllocatedError, container_logs, remove_image, WebCommandError,
+                             container_logs, remove_image,
                              image_exists)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
     COMPILE_LESS)
 from datacats.network import wait_for_service_available, ServiceTimeout
-from datacats.error import DatacatsError
+from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
 
 
 WEB_START_TIMEOUT_SECONDS = 30
@@ -528,7 +528,7 @@ class Environment(object):
             'DATASTORE_RW_PASSWORD': generate_db_password(),
             }
 
-    def start_web(self, production=False, address='127.0.0.1'):
+    def start_web(self, production=False, address='127.0.0.1', log_syslog=False):
         """
         Start the apache server or paster serve
 
@@ -557,7 +557,7 @@ class Environment(object):
         while True:
             self._create_run_ini(port, production)
             try:
-                self._run_web_container(port, command, address)
+                self._run_web_container(port, command, address, log_syslog=log_syslog)
                 if not is_boot2docker():
                     self.address = address
             except PortAllocatedError:
@@ -603,7 +603,7 @@ class Environment(object):
         with open(self.datadir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command, address='127.0.0.1'):
+    def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False):
         """
         Start web container on port with command
         """
@@ -629,6 +629,7 @@ class Environment(object):
             command=command,
             port_bindings={
                 5000: port if is_boot2docker() else (address, port)},
+            log_syslog=log_syslog
             )
 
     def wait_for_web_available(self):
@@ -641,11 +642,12 @@ class Environment(object):
                     self._get_container_name('web'),
                     self.web_address(),
                     WEB_START_TIMEOUT_SECONDS):
-                raise DatacatsError('Failed to start web container.'
-                                    ' Run "datacats logs" to check the output.')
+                raise DatacatsError('Error while starting web container:\n' +
+                                    container_logs(self._get_container_name('web'), "all",
+                                                   False, None))
         except ServiceTimeout:
-            raise DatacatsError('Timeout waiting for web container to start.'
-                                ' Run "datacats logs" to check the output.')
+            raise DatacatsError('Timeout while starting web container. Logs:' +
+                                container_logs(self._get_container_name('web'), "all", False, None))
 
     def _choose_port(self):
         """
@@ -799,7 +801,7 @@ class Environment(object):
             '--hostname', self.name,
             'datacats/web', '/scripts/shell.sh'] + command)
 
-    def install_package_requirements(self, psrc):
+    def install_package_requirements(self, psrc, stream_output=None):
         """
         Install from requirements.txt file found in psrc
 
@@ -812,14 +814,15 @@ class Environment(object):
             reqname = '/pip-requirements.txt'
             if not exists(package + reqname):
                 return
-        self.user_run_script(
+        return self.user_run_script(
             script=INSTALL_REQS,
             args=['/project/' + psrc + reqname],
             rw_venv=True,
             rw_project=True,
+            stream_output=stream_output
             )
 
-    def install_package_develop(self, psrc):
+    def install_package_develop(self, psrc, stream_output=None):
         """
         Install a src package in place (setup.py develop)
 
@@ -829,15 +832,16 @@ class Environment(object):
         assert isdir(package), package
         if not exists(package + '/setup.py'):
             return
-        self.user_run_script(
+        return self.user_run_script(
             script=INSTALL_PACKAGE,
             args=['/project/' + psrc],
             rw_venv=True,
             rw_project=True,
+            stream_output=stream_output
             )
 
     def user_run_script(self, script, args, db_links=False, rw_venv=False,
-                        rw_project=False, rw=None, ro=None):
+                        rw_project=False, rw=None, ro=None, stream_output=None):
         return self.run_command(
             command=['/scripts/run_as_user.sh', '/scripts/run.sh'] + args,
             db_links=db_links,
@@ -848,10 +852,12 @@ class Environment(object):
                 RUN_AS_USER: '/scripts/run_as_user.sh',
                 script: '/scripts/run.sh',
                 }),
+            stream_output=stream_output
             )
 
     def run_command(self, command, db_links=False, rw_venv=False,
-                    rw_project=False, rw=None, ro=None, clean_up=False):
+                    rw_project=False, rw=None, ro=None, clean_up=False,
+                    stream_output=None):
 
         rw = {} if rw is None else dict(rw)
         ro = {} if ro is None else dict(ro)
@@ -879,9 +885,11 @@ class Environment(object):
 
         try:
             return web_command(command=command, ro=ro, rw=rw, links=links,
-                               volumes_from=volumes_from, clean_up=clean_up)
+                               volumes_from=volumes_from, clean_up=clean_up,
+                               commit=True, stream_output=stream_output)
         except WebCommandError as e:
-            print 'Failed to run command %s. Logs are as follows:\n%s' % (e.command, e.logs)
+            print ('Failed to run command %s.'
+                ' Logs are as follows:\n%s') % (e.command, e.logs)
             raise
 
     def purge_data(self):
