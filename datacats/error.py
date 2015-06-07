@@ -37,8 +37,8 @@ class DatacatsError(Exception):
 class WebCommandError(Exception):
     user_description = "Docker container \"/web\" command failed"
 
-    def __init__(self, command, container_id, logs):
-        super(WebCommandError, self).__init__(message, format_args)
+    def __init__(self, command, logs):
+        super(WebCommandError, self).__init__()
         self.command = command
         self.logs = logs
 
