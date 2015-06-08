@@ -22,7 +22,8 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bni] [--address=IP] [--syslog] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
+  datacats create [-bni] [--address=IP] [--no-datapusher] [--syslog] [--ckan=CKAN_VERSION] \
+ENVIRONMENT_DIR [PORT]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
@@ -68,8 +69,7 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
             environment.create_bash_profile,
             environment.save,
             environment.create_virtualenv,
-            environment.create_source] + \
-            [environment.add_datapusher] if datapusher else [] + [
+            environment.create_source,
             environment.start_supporting_containers,
             environment.fix_storage_permissions,
             environment.create_ckan_ini,
@@ -169,7 +169,7 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
             print
 
     if not start_web:
-        environment.stop_postgres_and_solr()
+        environment.stop_supporting_containers()
 
 
 def confirm_password():

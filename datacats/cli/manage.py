@@ -28,7 +28,7 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.stop_web()
-    environment.stop_postgres_and_solr()
+    environment.stop_supporting_containers()
 
 
 def start(environment, opts):
@@ -83,7 +83,7 @@ Default: '.'
             environment.address = opts['--address']
         environment.save()
     if 'postgres' not in environment.containers_running():
-        environment.stop_postgres_and_solr()
+        environment.stop_supporting_containers()
         environment.start_supporting_containers()
 
     environment.start_web(

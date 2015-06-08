@@ -415,7 +415,7 @@ class Environment(object):
         # all the user passwords as environment vars
         running = self.containers_running()
         if 'postgres' not in running or 'solr' not in running:
-            self.stop_postgres_and_solr()
+            self.stop_supporting_containers()
             run_container(
                 name=self._get_container_name('postgres'),
                 image='datacats/postgres',
@@ -428,7 +428,7 @@ class Environment(object):
                 rw={self.datadir + '/solr': '/var/lib/solr'},
                 ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
-    def stop_postgres_and_solr(self):
+    def stop_supporting_containers(self):
         """
         stop and remove postgres and solr containers
         """
@@ -467,7 +467,7 @@ class Environment(object):
             'ckan.datastore.write_url = postgresql://<hidden>',
             'solr_url = http://solr:8080/solr',
             'ckan.storage_path = /var/www/storage',
-            'ckan.plugins = datastore resource_proxy text_view '
+            'ckan.plugins = datastore resource_proxy text_view datapusher '
             + 'recline_grid_view recline_graph_view'
             + (' {0}_theme'.format(self.name) if skin else ''),
             'ckan.site_title = ' + self.name,

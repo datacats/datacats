@@ -37,7 +37,7 @@ Default: '.'
             raise DatacatsError('Aborting purge by user request.')
 
     environment.stop_web()
-    environment.stop_postgres_and_solr()
+    environment.stop_supporting_containers()
 
     if opts['--delete-environment']:
         if not environment.target:
