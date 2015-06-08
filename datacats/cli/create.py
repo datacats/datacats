@@ -33,7 +33,6 @@ Options:
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   --syslog                Log to the syslog
-  --no-datapusher         Don't enable the datapusher plugin or create the container.
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
@@ -47,7 +46,6 @@ part of this path will be used as the environment name.
         ckan_version=opts['--ckan'],
         address=opts['--address'],
         log_syslog=opts['--syslog'],
-        datapusher=not opts['--no-datapusher']
         )
 
 

@@ -465,7 +465,7 @@ class Environment(object):
             'sqlalchemy.url = postgresql://<hidden>',
             'ckan.datastore.read_url = postgresql://<hidden>',
             'ckan.datastore.write_url = postgresql://<hidden>',
-            'ckan.datapusher.url = http://datapusher:'
+            'ckan.datapusher.url = http://datapusher:8800'
             'solr_url = http://solr:8080/solr',
             'ckan.storage_path = /var/www/storage',
             'ckan.plugins = datastore resource_proxy text_view datapusher '
