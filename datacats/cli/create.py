@@ -32,6 +32,7 @@ Options:
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   --syslog                Log to the syslog
+  --no-datapusher         Don't enable the datapusher plugin or create the container.
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
@@ -44,12 +45,13 @@ part of this path will be used as the environment name.
         create_sysadmin=not opts['--no-sysadmin'],
         ckan_version=opts['--ckan'],
         address=opts['--address'],
-        log_syslog=opts['--syslog']
+        log_syslog=opts['--syslog'],
+        datapusher=not opts['--no-datapusher']
         )
 
 
 def create_environment(environment_dir, port, ckan_version, create_skin,
-        start_web, create_sysadmin, address, log_syslog=False):
+        start_web, create_sysadmin, address, log_syslog=False, datapusher=True):
 
     # FIXME: only 2.3 preload supported at the moment
     environment = Environment.new(environment_dir, '2.3', port=port)
@@ -66,8 +68,9 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
             environment.create_bash_profile,
             environment.save,
             environment.create_virtualenv,
-            environment.create_source,
-            environment.start_postgres_and_solr,
+            environment.create_source] + \
+            [environment.add_datapusher] if datapusher else [] + [
+            environment.start_supporting_containers,
             environment.fix_storage_permissions,
             environment.create_ckan_ini,
             lambda: environment.update_ckan_ini(skin=create_skin),
@@ -127,7 +130,7 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
             lambda: environment.create_directories(create_project_dir=False),
             environment.save,
             environment.create_virtualenv,
-            environment.start_postgres_and_solr,
+            environment.start_supporting_containers,
             environment.fix_storage_permissions,
             environment.fix_project_permissions,
             ]

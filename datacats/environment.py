@@ -396,7 +396,7 @@ class Environment(object):
             self.target + '/ckan/ckan/config/solr/schema.xml',
             self.target)
 
-    def start_postgres_and_solr(self):
+    def start_supporting_containers(self):
         """
         run the DB and search containers
         """

@@ -84,7 +84,7 @@ Default: '.'
         environment.save()
     if 'postgres' not in environment.containers_running():
         environment.stop_postgres_and_solr()
-        environment.start_postgres_and_solr()
+        environment.start_supporting_containers()
 
     environment.start_web(
         production=opts['--production'],
