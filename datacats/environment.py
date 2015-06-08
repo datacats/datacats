@@ -1000,7 +1000,9 @@ def require_images():
     """
     if (not image_exists('datacats/web') or
             not image_exists('datacats/solr') or
-            not image_exists('datacats/postgres')):
+            not image_exists('datacats/postgres') or
+            not image_exists('datacats/datapusher') or
+            not image_exists('redis')):
         raise DatacatsError(
             'You do not have the needed Docker images. Please run "datacats pull"')
 

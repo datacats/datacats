@@ -14,6 +14,7 @@ docker build -t datacats/solr solr/
 docker build -t datacats/postgres postgres/
 docker build -t datacats/web web/
 docker build -t datacats/lessc lessc/
+docker build -t datacats/datapusher datapusher/
 
 docker rm datacats_preload_1 || true
 docker run -i --name datacats_preload_1 \
@@ -39,6 +40,7 @@ docker run -i --name datacats_preload_2 \
     /bin/bash -c \
     'cat > /project/ckan/ckan/public/base/css/main.debug.css' \
     < "$HERE/src/main.debug.css"
+
 docker rmi datacats/web:preload-2.3 || true
 docker commit datacats_preload_2 datacats/web:preload-2.3
 
@@ -52,3 +54,4 @@ docker push datacats/web
 docker push datacats/postgres
 docker push datacats/solr
 docker push datacats/lessc
+docker push datacats/datapusher
