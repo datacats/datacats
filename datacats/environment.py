@@ -977,6 +977,8 @@ class Environment(object):
             - 'web'
             - 'pgdata'
             - 'lessc'
+            - 'datapusher'
+            - 'redis'
         The name will be formatted appropriately with any prefixes and postfixes
         needed.
 
