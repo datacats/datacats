@@ -15,7 +15,6 @@ IMAGES = [
     'datacats/web:preload-2.3',
     'datacats/postgres',
     'datacats/solr',
-    'datacats/datapusher',
     'redis'
     ]
 
