@@ -69,6 +69,10 @@ less
 ----
 .. program-output:: datacats help less
 
+migrate
+-------
+.. program-output:: datacats help migrate
+
 datacats-lesscd
 ---------------
 .. program-output:: datacats-lesscd --help

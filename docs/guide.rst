@@ -70,7 +70,7 @@ Create a CKAN development environment. Open a shell and run: ::
 
     datacats create catstown
 
-Once done, a CKAN environment is created for you in the directory ``catstown``.
+Once done, a CKAN source directory is created for you in the directory ``catstown``.
 You will be prompted to create an admin password for your instance. You can
 use this password to log into your CKAN site.A message will also appear in your
 prompt at the end of the create command, with the address of where your CKAN
@@ -81,8 +81,8 @@ instance is running. To open that address easily at any time, you can always run
 .. note::
 
     All ``datacats`` commands work without having to specify the project to run
-    them on, as long as you are within a datacats environment directory. For the
-    above command, we could as well have ran: ::
+    them on, as long as you are within a datacats environment directory or any sub-
+    directory. For the above command, we could as well have ran: ::
 
         cd catstown/
         datacats open
@@ -205,6 +205,24 @@ the extension directory and run the command from there: ::
 
     cd ckanext-archiver/
     datacats paster archiver clean
+
+Multisite
+---------
+As of version 1.0.0, datacats has support for having multiple "sites" under a
+single environment. This means that there can exist several discrete data
+catalogues based on the same CKAN source. This is done using the -s switch,
+which can be applied to all commands that make sense to operate on a single
+site (currently all commands excluding ``migrate``, ``pull``, ``less``, and
+``install``). By default, datacats will operate on a site named 'primary',
+to maintain sane defaults.
+
+For example, to initialize a site with the name 'devel' under a pre-existing
+environment called 'testtown', you could run the following command: ::
+
+    datacats init -s devel testtown
+
+This would create all the necessary containers and folders for the site and
+begin running it on an appropriate (non-conflicting) port.
 
 Logs
 ----

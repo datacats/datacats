@@ -15,6 +15,7 @@ install_requires = [
     'docker-py>=1.2.1',
     'clint',  # to output colored text to terminal
     'requests>=2.5.2',  # help with docker-py requirement
+    'lockfile',
     'watchdog' # For lesscd
 ]
 
