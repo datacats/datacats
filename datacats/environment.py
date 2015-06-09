@@ -1141,10 +1141,10 @@ class Environment(object):
             out.append('no_proxy=' + posix_quote(no_proxy) + '\n')
             out.append('NO_PROXY=' + posix_quote(no_proxy) + '\n')
 
-        with open(self.datadir + '/run/proxy-environment', 'w') as f:
+        with open(self.sitedir + '/run/proxy-environment', 'w') as f:
             f.write("".join(out))
 
-        return {self.datadir + '/run/proxy-environment': '/etc/environment'}
+        return {self.sitedir + '/run/proxy-environment': '/etc/environment'}
 
     def _get_container_name(self, container_type):
         """
