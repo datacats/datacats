@@ -528,7 +528,7 @@ class Environment(object):
         run_container(
             name=self._get_container_name('solr'),
             image='datacats/solr',
-            rw={self.datadir + '/solr': '/var/lib/solr'},
+            rw={self.sitedir + '/solr': '/var/lib/solr'},
             ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
     def stop_supporting_containers(self):
