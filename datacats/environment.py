@@ -752,7 +752,7 @@ class Environment(object):
         }
 
         if datapusher:
-            if not inspect_container(self._get_container_name('datapusher')):
+            if 'datapusher' not in self.containers_running():
                 raise DatacatsError(container_logs(self._get_container_name('datapusher'), "all",
                                                    False, False))
             links[self._get_container_name('datapusher')] = 'datapusher'
