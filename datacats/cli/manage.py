@@ -9,6 +9,8 @@ from os.path import expanduser
 import webbrowser
 import sys
 
+from datacats.error import DatacatsError
+
 
 def write(s):
     sys.stdout.write(s)
@@ -19,10 +21,11 @@ def stop(environment, opts):
     """Stop serving environment and remove all its containers
 
 Usage:
-  datacats stop [-r] [ENVIRONMENT]
+  datacats stop [-r] [-s NAME] [ENVIRONMENT]
 
 Options:
   -r --remote        Stop DataCats.com cloud instance
+  -s --site=NAME    Specify a site to stop. [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -35,14 +38,15 @@ def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
-  datacats start [-bp] [--address=IP] [--syslog] [ENVIRONMENT [PORT]]
-  datacats start -r [-b] [--address=IP] [--syslog] [ENVIRONMENT]
+  datacats start [-bp] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats start -r [-b] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
+  -s --site=NAME    Specify a site to start [default: primary]
   --syslog           Log to the syslog
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
@@ -61,14 +65,15 @@ def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
-  datacats reload [-bp] [--address=IP] [--syslog] [ENVIRONMENT [PORT]]
-  datacats reload -r [-b] [--address=IP] [--syslog] [ENVIRONMENT]
+  datacats reload [-bp] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats reload -r [-b] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
+  -s --site=NAME    Specify a site to reload [default: primary]
   --syslog           Log to the syslog
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
@@ -114,26 +119,42 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    addr = environment.web_address()
+    damaged = False
+    sites = environment.sites
+    if not environment.sites:
+        sites = []
+        damaged = True
+
     if opts['--quiet']:
-        if addr:
-            print addr
+        if damaged:
+            raise DatacatsError('Damaged datadir: cannot get address.')
+        for site in sites:
+            environment.site_name = site
+            print '{}: {}'.format(site, environment.web_address())
         return
 
     datadir = environment.datadir
     if not environment.data_exists():
         datadir = ''
-    elif not environment.data_complete():
+    elif damaged:
         datadir += ' (damaged)'
 
     print 'Environment name: ' + environment.name
-    print '    Default port: ' + str(environment.port)
     print ' Environment dir: ' + environment.target
     print '        Data dir: ' + datadir
-    print '      Containers: ' + ' '.join(environment.containers_running())
-    if not addr:
-        return
-    print '    Available at: ' + addr
+    print '           Sites: ' + ' '.join(environment.sites)
+
+    for site in environment.sites:
+        print
+        environment.site_name = site
+        print '            Site: ' + site
+        print '      Containers: ' + ' '.join(environment.containers_running())
+
+        sitedir = environment.sitedir + (' (damaged)' if not environment.data_complete() else '')
+        print '        Site dir: ' + sitedir
+        addr = environment.web_address()
+        if addr:
+            print '    Available at: ' + addr
 
 
 def list_(opts):
@@ -152,24 +173,25 @@ def logs(environment, opts):
     """Display or follow container logs
 
 Usage:
-  datacats logs [-d | -s] [-tr] [--tail=LINES] [ENVIRONMENT]
-  datacats logs -f [-d | -s] [-r] [ENVIRONMENT]
+  datacats logs [--postgres | --solr] [-s NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
+  datacats logs -f [--postgres | --solr] [-s NAME] [-r] [ENVIRONMENT]
 
 Options:
-  -d --postgres-logs Show postgres database logs instead of web logs
+  --postgres         Show postgres database logs instead of web logs
   -f --follow        Follow logs instead of exiting immediately
   -r --remote        Retrieve logs from DataCats.com cloud instance
-  -s --solr-logs     Show solr search logs instead of web logs
+  --solr             Show solr search logs instead of web logs
   -t --timestamps    Add timestamps to log lines
+  -s --site=NAME     Specify a site for logs if needed [default: primary]
   --tail=LINES       Number of lines to show [default: all]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     container = 'web'
-    if opts['--solr-logs']:
+    if opts['--solr']:
         container = 'solr'
-    if opts['--postgres-logs']:
+    if opts['--postgres']:
         container = 'postgres'
     tail = opts['--tail']
     if tail != 'all':
@@ -190,14 +212,16 @@ def open_(environment, opts):
     """Open web browser window to this environment
 
 Usage:
-  datacats open [-r] [ENVIRONMENT]
+  datacats open [-r] [-s NAME] [ENVIRONMENT]
 
 Options:
   -r --remote        Open DataCats.com cloud instance address
+  -s --site=NAME     Choose a site to open [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+
     environment.require_data()
     addr = environment.web_address()
     if not addr:

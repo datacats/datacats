@@ -180,7 +180,6 @@ class UserProfile(object):
                     "ssh", environment.deploy_target, "install", target_name,
                     ],
                 environment, self,
-                ro=environment.remote_command_binds(self),
                 clean_up=True,
                 )
             return True

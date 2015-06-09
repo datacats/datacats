@@ -110,6 +110,7 @@ def docker_host():
     url = _docker_kwargs.get('base_url')
     if not url:
         return 'localhost'
+
     return urlparse(url).netloc.split(':')[0]
 
 
@@ -275,6 +276,10 @@ def run_container(name, image, command=None, environment=None,
     return c
 
 
+def rename_container(old_name, new_name):
+    _docker.rename(old_name, new_name)
+
+
 def image_exists(name):
     """
     Queries Docker about if a particular image has been downloaded.
@@ -388,3 +393,15 @@ def data_only_container(name, volumes):
 
 def remove_image(image, force=False, noprune=False):
     _get_docker().remove_image(image, force=force, noprune=noprune)
+
+
+def require_images():
+    """
+    Raises a DatacatsError if the images required to use Datacats don't exist.
+    """
+    if (not image_exists('datacats/web') or
+            not image_exists('datacats/solr') or
+            not image_exists('datacats/postgres') or
+            not image_exists('redis')):
+        raise DatacatsError(
+            'You do not have the needed Docker images. Please run "datacats pull"')
