@@ -765,10 +765,10 @@ class Environment(object):
             run_container(
                 name=self._get_container_name('web'),
                 image='datacats/web',
-                rw={self.datadir + '/files': '/var/www/storage'},
+                rw={self.sitedir + '/files': '/var/www/storage'},
                 ro=dict({
                     self.target: '/project/',
-                    self.datadir + '/run/development.ini':
+                    self.sitedir + '/run/development.ini':
                         '/project/development.ini',
                     WEB: '/scripts/web.sh'}, **ro),
                 links=links,
