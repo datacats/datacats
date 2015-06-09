@@ -531,11 +531,6 @@ class Environment(object):
             rw={self.datadir + '/solr': '/var/lib/solr'},
             ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
-        run_container(
-            name=self._get_container_name('redis'),
-            image='redis'
-        )
-
     def stop_supporting_containers(self):
         """
         Stop and remove supporting containers (containers that are used by CKAN but don't host
@@ -544,7 +539,6 @@ class Environment(object):
         """
         remove_container(self._get_container_name('postgres'))
         remove_container(self._get_container_name('solr'))
-        remove_container(self._get_container_name('redis'))
 
     def fix_storage_permissions(self):
         """
@@ -687,7 +681,6 @@ class Environment(object):
                     self.target: '/project',
                     DATAPUSHER: '/scripts/datapusher.sh'
                 },
-                links={self._get_container_name('redis'): 'redis'},
                 volumes_from=(self._get_container_name('venv') if is_boot2docker() else None))
 
         while True:
@@ -859,7 +852,7 @@ class Environment(object):
         for containers tracked by this project that are running
         """
         running = []
-        for n in ['web', 'postgres', 'solr', 'redis']:
+        for n in ['web', 'postgres', 'solr', 'datapusher']:
             info = inspect_container(self._get_container_name(n))
             if info and not info['State']['Running']:
                 running.append(n + '(halted)')
@@ -1161,7 +1154,6 @@ class Environment(object):
             - 'pgdata'
             - 'lessc'
             - 'datapusher'
-            - 'redis'
         The name will be formatted appropriately with any prefixes and postfixes
         needed.
 
