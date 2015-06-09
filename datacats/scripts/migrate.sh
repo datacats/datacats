@@ -11,6 +11,5 @@ set -e
 echo "${@:3}"
 
 for f in "${@:3}"; do
-    echo 'test'
     [ -e "$1/$f" ] && mv "$1/$f" "$2/$f"
 done
