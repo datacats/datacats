@@ -36,7 +36,7 @@ Default: '.'
         if inp.lower()[:1] == 'n' or not inp:
             raise DatacatsError('Aborting purge by user request.')
 
-    environment.stop_web()
+    environment.stop_ckan()
     environment.stop_supporting_containers()
 
     if opts['--delete-environment']:

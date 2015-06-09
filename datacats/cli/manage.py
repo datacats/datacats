@@ -27,7 +27,7 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    environment.stop_web()
+    environment.stop_ckan()
     environment.stop_supporting_containers()
 
 
@@ -75,7 +75,7 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.require_data()
-    environment.stop_web()
+    environment.stop_ckan()
     if opts['PORT'] or opts['--address'] != '127.0.0.1':
         if opts['PORT']:
             environment.port = int(opts['PORT'])
@@ -86,7 +86,7 @@ Default: '.'
         environment.stop_supporting_containers()
         environment.start_supporting_containers()
 
-    environment.start_web(
+    environment.start_ckan(
         production=opts['--production'],
         address=opts['--address'],
         log_syslog=opts['--syslog'])

@@ -389,6 +389,10 @@ class Environment(object):
             command='/bin/cp -a /project/ckan /project_target/ckan',
             rw={self.target: '/project_target'},
             image=self._preload_image())
+        web_command(
+            command='/bin/cp -a /project/datapusher /project_target/datapusher',
+            rw={self.target: '/project_target'},
+            image=self._preload_image())
         shutil.copy(
             self.target + '/ckan/ckan/config/who.ini',
             self.target)
@@ -398,7 +402,8 @@ class Environment(object):
 
     def start_supporting_containers(self):
         """
-        run the DB and search containers
+        Start supporting containers (containers that are used by CKAN but don't host CKAN
+        or CKAN plugins)
         """
         # complicated because postgres needs hard links to
         # work on its data volume. see issue #5
@@ -411,29 +416,35 @@ class Environment(object):
             rw = {self.datadir + '/postgres': '/var/lib/postgresql/data'}
             volumes_from = None
 
-        # users are created when data dir is blank so we must pass
-        # all the user passwords as environment vars
-        running = self.containers_running()
-        if 'postgres' not in running or 'solr' not in running:
-            self.stop_supporting_containers()
-            run_container(
-                name=self._get_container_name('postgres'),
-                image='datacats/postgres',
-                environment=self.passwords,
-                rw=rw,
-                volumes_from=volumes_from)
-            run_container(
-                name=self._get_container_name('solr'),
-                image='datacats/solr',
-                rw={self.datadir + '/solr': '/var/lib/solr'},
-                ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
+        self.stop_supporting_containers()
+
+        run_container(
+            name=self._get_container_name('postgres'),
+            image='datacats/postgres',
+            environment=self.passwords,
+            rw=rw,
+            volumes_from=volumes_from)
+
+        run_container(
+            name=self._get_container_name('solr'),
+            image='datacats/solr',
+            rw={self.datadir + '/solr': '/var/lib/solr'},
+            ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
+
+        run_container(
+            name=self._get_container_name('redis'),
+            image='redis'
+        )
 
     def stop_supporting_containers(self):
         """
-        stop and remove postgres and solr containers
+        Stop and remove supporting containers (containers that are used by CKAN but don't host
+        CKAN or CKAN plugins). This method should *only* be called after CKAN has been stopped
+        or behaviour is undefined.
         """
         remove_container(self._get_container_name('postgres'))
         remove_container(self._get_container_name('solr'))
+        remove_container(self._get_container_name('redis'))
 
     def fix_storage_permissions(self):
         """
@@ -528,7 +539,7 @@ class Environment(object):
             'DATASTORE_RW_PASSWORD': generate_db_password(),
             }
 
-    def start_web(self, production=False, address='127.0.0.1', log_syslog=False):
+    def start_ckan(self, production=False, address='127.0.0.1', log_syslog=False):
         """
         Start the apache server or paster serve
 
@@ -667,7 +678,7 @@ class Environment(object):
             raise DatacatsError('Too many instances running')
         return port
 
-    def stop_web(self):
+    def stop_ckan(self):
         """
         Stop and remove the web container
         """
@@ -704,7 +715,7 @@ class Environment(object):
         for containers tracked by this project that are running
         """
         running = []
-        for n in ['web', 'postgres', 'solr']:
+        for n in ['web', 'postgres', 'solr', 'redis']:
             info = inspect_container(self._get_container_name(n))
             if info and not info['State']['Running']:
                 running.append(n + '(halted)')
@@ -1004,7 +1015,6 @@ def require_images():
     if (not image_exists('datacats/web') or
             not image_exists('datacats/solr') or
             not image_exists('datacats/postgres') or
-            not image_exists('datacats/datapusher') or
             not image_exists('redis')):
         raise DatacatsError(
             'You do not have the needed Docker images. Please run "datacats pull"')

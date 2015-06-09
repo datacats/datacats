@@ -155,7 +155,7 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
     write('\n')
 
     if start_web:
-        environment.start_web(address=address, log_syslog=log_syslog)
+        environment.start_ckan(address=address, log_syslog=log_syslog)
         write('Starting web server at {0} ...\n'.format(
             environment.web_address()))
 

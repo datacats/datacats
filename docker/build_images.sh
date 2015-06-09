@@ -14,7 +14,6 @@ docker build -t datacats/solr solr/
 docker build -t datacats/postgres postgres/
 docker build -t datacats/web web/
 docker build -t datacats/lessc lessc/
-docker build -t datacats/datapusher datapusher/
 
 docker rm datacats_preload_1 || true
 docker run -i --name datacats_preload_1 \
@@ -54,4 +53,3 @@ docker push datacats/web
 docker push datacats/postgres
 docker push datacats/solr
 docker push datacats/lessc
-docker push datacats/datapusher
