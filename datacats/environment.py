@@ -26,7 +26,7 @@ from datacats.docker import (web_command, run_container, remove_container,
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
-    COMPILE_LESS)
+    COMPILE_LESS, DATAPUSHER)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
 
@@ -476,7 +476,7 @@ class Environment(object):
             'sqlalchemy.url = postgresql://<hidden>',
             'ckan.datastore.read_url = postgresql://<hidden>',
             'ckan.datastore.write_url = postgresql://<hidden>',
-            'ckan.datapusher.url = http://datapusher:8800'
+            'ckan.datapusher.url = http://datapusher:8800',
             'solr_url = http://solr:8080/solr',
             'ckan.storage_path = /var/www/storage',
             'ckan.plugins = datastore resource_proxy text_view datapusher '
@@ -539,6 +539,14 @@ class Environment(object):
             'DATASTORE_RW_PASSWORD': generate_db_password(),
             }
 
+    def needs_datapusher(self):
+        cp = SafeConfigParser()
+        try:
+            cp.read(self.target + '/development.ini')
+            return 'datapusher' in cp.get('app:main', 'ckan.plugins')
+        except ConfigParserError as e:
+            raise DatacatsError('Failed to read and parse development.ini: ' + str(e))
+
     def start_ckan(self, production=False, address='127.0.0.1', log_syslog=False):
         """
         Start the apache server or paster serve
@@ -547,6 +555,8 @@ class Environment(object):
         :param address: On Linux, the address to serve from (can be 0.0.0.0 for
                         listening on all addresses)
         """
+        self.stop_ckan()
+
         port = self.port
         command = None
 
@@ -557,6 +567,8 @@ class Environment(object):
         if address != '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify address on boot2docker.')
 
+        datapusher = self.needs_datapusher()
+
         # XXX nasty hack, remove this once we have a lessc command
         # for users (not just for building our preload image)
         if not production:
@@ -565,10 +577,23 @@ class Environment(object):
                 from shutil import copyfile
                 copyfile(css + '/main.css', css + '/main.debug.css')
 
+        if datapusher:
+            run_container(
+                self._get_container_name('datapusher'),
+                'datacats/web',
+                '/scripts/datapusher.sh',
+                ro={
+                    self.target: '/project',
+                    DATAPUSHER: '/scripts/datapusher.sh'
+                },
+                links={self._get_container_name('redis'): 'redis'},
+                volumes_from=(self._get_container_name('venv') if is_boot2docker() else None))
+
         while True:
             self._create_run_ini(port, production)
             try:
-                self._run_web_container(port, command, address, log_syslog=log_syslog)
+                self._run_web_container(port, command, address, log_syslog=log_syslog,
+                                        datapusher=datapusher)
                 if not is_boot2docker():
                     self.address = address
             except PortAllocatedError:
@@ -614,7 +639,8 @@ class Environment(object):
         with open(self.datadir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False):
+    def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False,
+                           datapusher=True):
         """
         Start web container on port with command
         """
@@ -625,6 +651,14 @@ class Environment(object):
             ro = {self.datadir + '/venv': '/usr/lib/ckan'}
             volumes_from = None
 
+        links = {
+            self._get_container_name('solr'): 'solr',
+            self._get_container_name('postgres'): 'db'
+        }
+
+        if datapusher:
+            links[self._get_container_name('datapusher')] = 'datapusher'
+
         run_container(
             name=self._get_container_name('web'),
             image='datacats/web',
@@ -634,8 +668,7 @@ class Environment(object):
                 self.datadir + '/run/development.ini':
                     '/project/development.ini',
                 WEB: '/scripts/web.sh'}, **ro),
-            links={self._get_container_name('solr'): 'solr',
-                   self._get_container_name('postgres'): 'db'},
+            links=links,
             volumes_from=volumes_from,
             command=command,
             port_bindings={
@@ -683,6 +716,7 @@ class Environment(object):
         Stop and remove the web container
         """
         remove_container(self._get_container_name('web'), force=True)
+        remove_container(self._get_container_name('datapusher'), force=True)
 
     def _current_web_port(self):
         """
