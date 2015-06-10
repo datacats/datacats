@@ -995,14 +995,10 @@ class Environment(object):
         else:
             links = None
 
-        try:
-            return web_command(command=command, ro=ro, rw=rw, links=links,
-                               volumes_from=volumes_from, clean_up=clean_up,
-                               commit=True, stream_output=stream_output)
-        except WebCommandError as e:
-            print ('Failed to run command %s.'
-                ' Logs are as follows:\n%s') % (e.command, e.logs)
-            raise
+        return web_command(command=command, ro=ro, rw=rw, links=links,
+                           volumes_from=volumes_from, clean_up=clean_up,
+                           commit=True, stream_output=stream_output)
+
 
     def purge_data(self, which_sites=None, never_delete=False):
         """
