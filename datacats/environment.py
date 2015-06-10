@@ -672,15 +672,20 @@ class Environment(object):
                 from shutil import copyfile
                 copyfile(css + '/main.css', css + '/main.debug.css')
 
+        ro = {
+            self.target: '/project',
+            DATAPUSHER: '/scripts/datapusher.sh'
+        }
+
+        if not is_boot2docker():
+            ro[self.datadir + '/venv'] = '/usr/lib/ckan'
+
         if datapusher:
             run_container(
                 self._get_container_name('datapusher'),
                 'datacats/web',
                 '/scripts/datapusher.sh',
-                ro={
-                    self.target: '/project',
-                    DATAPUSHER: '/scripts/datapusher.sh'
-                },
+                ro=ro,
                 volumes_from=(self._get_container_name('venv') if is_boot2docker() else None))
 
         while True:
