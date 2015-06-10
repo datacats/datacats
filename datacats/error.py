@@ -11,11 +11,11 @@ class DatacatsError(Exception):
                 "type_description": parent_exception.user_description,
                 "message": parent_exception.__str__(),
             }
-            self.message = "".join(["{original}\n\n",
+            self.message = "".join([colored.blue("{original}\n\n").__str__(),
                                     "~" * 30,
                                     "\n{type_description}:\n",
-                                    "{message}",
-                                    "~" * 30, "\n"]).format(**vals)
+                                    colored.yellow("{message}\n").__str__()]
+                                    ).format(**vals)
 
         self.format_args = format_args
         super(DatacatsError, self).__init__(message, format_args)
@@ -29,8 +29,7 @@ class DatacatsError(Exception):
         """
         print colored.blue("-" * 40)
         print colored.red("datacats: problem was encountered:")
-        for line in self.message.format(*self.format_args).split('\n'):
-            print "    ", line
+        print self.message.format(*self.format_args)
         print colored.blue("-" * 40)
 
 
