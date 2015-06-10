@@ -37,16 +37,17 @@ class DatacatsError(Exception):
 class WebCommandError(Exception):
     user_description = "Docker container \"/web\" command failed"
 
-    def __init__(self, command, logs):
+    def __init__(self, command, container_id, logs):
         super(WebCommandError, self).__init__()
         self.command = command
+        self.container_id = container_id
         self.logs = logs
 
     def __str__(self):
         return ('    Command: {0}\n'
                 '    Docker Error Log:\n'
                 '    {1}\n'
-                ).format(" ".join(self.command), self.logs)
+                ).format(''.join(self.command), self.logs)
 
 
 class PortAllocatedError(Exception):
