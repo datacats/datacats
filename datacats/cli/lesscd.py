@@ -2,9 +2,11 @@
 Watches a CKAN environment for changes in its .less files, and recompiles them when they do.
 
 Usage:
-  datacats-lesscd [--help] TARGET
+  datacats-lesscd [--help] ENVIRONMENT_DIR
 
   --help -h         Show this help and quit.
+
+ENVIRONMENT_DIR is a path to an environment directory.  Default: '.'
 """
 
 from os.path import expanduser, join as path_join, exists
@@ -30,7 +32,7 @@ class LessCompileEventHandler(FileSystemEventHandler):
 
 def main():
     opts = docopt(__doc__, version=__version__)
-    env_path = expanduser(opts['TARGET'])
+    env_path = expanduser(opts['ENVIRONMENT_DIR'])
     environment = Environment.load(env_path)
     env_path = environment.target
     less_path = path_join(env_path, 'ckan', 'ckan', 'public', 'base', 'less')
