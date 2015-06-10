@@ -195,6 +195,7 @@ def _option_not_yet_implemented(opts, name):
 
 
 def _intro_message(opts):
+    # pylint: disable=unused-argument
     return docopt(__doc__, ['--help'])
 
 if __name__ == '__main__':

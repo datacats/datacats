@@ -17,6 +17,8 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
                           NoOptionError, NoSectionError)
 
 from lockfile import LockFile
+
+# pylint: disable=relative-import
 from docker import APIError
 
 from datacats.validate import valid_name
@@ -209,7 +211,7 @@ class Environment(object):
         return environment
 
     @classmethod
-    def load(cls, environment_name=None, site_name='primary', data_only=False, test_ssh=False):
+    def load(cls, environment_name=None, site_name='primary', data_only=False):
         """
         Return an Environment object based on an existing project.
 
@@ -251,13 +253,13 @@ class Environment(object):
             oldwd = None
             while not exists(wd + '/.datacats-environment'):
                 oldwd = wd
-                wd, ignore = path_split(wd)
+                wd, _ = path_split(wd)
                 if wd == oldwd:
                     raise DatacatsError(
                         'Environment not found in {0} or above', first_wd)
 
             if oldwd:
-                ignore, extension_dir = path_split(oldwd)
+                _, extension_dir = path_split(oldwd)
 
         if data_only and not used_path:
             return cls(environment_name, None, datadir, site_name)
@@ -438,6 +440,7 @@ class Environment(object):
             prof.write('source /usr/lib/ckan/bin/activate\n')
 
     def _preload_image(self):
+        # pylint: disable=no-self-use
         """
         Return the preloaded ckan src and venv image name
         """

@@ -13,6 +13,7 @@ LESSC_IMAGE = 'datacats/lessc'
 
 
 def less(environment, opts):
+    # pylint: disable=unused-argument
     """Recompiles less files in an environment.
 
 Usage:

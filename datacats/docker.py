@@ -35,9 +35,9 @@ MINIMUM_API_VERSION = '1.16'
 
 def get_api_version(*versions):
     # compare_version is backwards
-    def cmp(a, b):
+    def rev_cmp(a, b):
         return -1 * compare_version(a, b)
-    return min(versions, key=cmp_to_key(cmp))
+    return min(versions, key=cmp_to_key(rev_cmp))
 
 # Lazy instantiation of _docker
 _docker = None
@@ -96,7 +96,6 @@ def _get_docker():
         _docker = Client(version=version, **_docker_kwargs)
 
     return _docker
-
 
 _boot2docker = None
 

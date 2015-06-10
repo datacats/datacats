@@ -18,6 +18,7 @@ def write(s):
 
 
 def stop(environment, opts):
+    # pylint: disable=unused-argument
     """Stop serving environment and remove all its containers
 
 Usage:
@@ -158,6 +159,7 @@ Default: '.'
 
 
 def list_(opts):
+    # pylint: disable=unused-argument
     """List all environments for this user
 
 Usage:
@@ -209,6 +211,7 @@ Default: '.'
 
 
 def open_(environment, opts):
+    # pylint: disable=unused-argument
     """Open web browser window to this environment
 
 Usage:
