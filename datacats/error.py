@@ -50,3 +50,6 @@ class WebCommandError(Exception):
 
 class PortAllocatedError(Exception):
     user_description = "Unable to allocate port"
+
+class UndocumentedError(Exception):
+    user_description = "Please quote this traceback when reporting this error"
