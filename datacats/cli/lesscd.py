@@ -10,7 +10,7 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
 
-from os.path import expanduser, join as path_join, exists
+from os.path import join as path_join, exists
 import signal
 
 from docopt import docopt
