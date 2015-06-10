@@ -22,13 +22,12 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bin] [-s NAME] [--address=IP] [--syslog] [--ckan=CKAN_VERSION]\
- ENVIRONMENT_DIR [PORT]
+  datacats create [-bin] [-s NAME] [--address=IP] [--syslog]
+                  [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
-  --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION, defaults to
-                          latest development release
+  --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION, defaults to 2.3
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
