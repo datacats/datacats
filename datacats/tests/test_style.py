@@ -1,6 +1,6 @@
 import unittest
 import pep8
-from pyflakes import api as pyflakes_api, reporter
+from pylint import epylint as lint
 
 
 IGNORE_PEP8 = ('E131', 'E123', 'W503', 'E128', 'E125', 'E124', 'E121')
@@ -15,6 +15,7 @@ class TestStyle(unittest.TestCase):
         result = pep8style.check_files(['datacats'])
         self.assertEqual(result.total_errors, 0, 'Found code style errors.')
 
-    def test_pyflakes(self):
-        self.assertEqual(pyflakes_api.checkRecursive(['datacats'],
-                         reporter._makeDefaultReporter()), 0)
+    def test_pylint(self):
+        (stdout, _) = lint.py_run('datacats', return_std=True)
+        stdout_str = stdout.read().strip()
+        self.failIf(stdout_str, stdout_str)
