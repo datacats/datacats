@@ -24,11 +24,11 @@ from docker import APIError
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker, data_only_container, docker_host,
-                             container_logs, remove_image, require_images)
+                             container_logs, remove_image, require_images, exec_command)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
-    COMPILE_LESS)
+    COMPILE_LESS, INSTALL_POSTGIS)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.migrate import needs_format_conversion
 from datacats.password import generate_password
@@ -524,6 +524,7 @@ class Environment(object):
                 name=self._get_container_name('postgres'),
                 image='datacats/postgres',
                 environment=self.passwords,
+                ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
                 rw=rw,
                 volumes_from=volumes_from)
             run_container(
@@ -614,8 +615,10 @@ class Environment(object):
                     db_links=True,
                     clean_up=True,
                     )
+                exec_command(self._get_container_name('postgres'), '/scripts/install_postgis.sh')
                 return
-            except WebCommandError:
+            except WebCommandError as e:
+                print e.message
                 if started + retry_seconds > time.time():
                     raise
             time.sleep(DB_INIT_RETRY_DELAY)
