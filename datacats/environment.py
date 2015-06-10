@@ -418,7 +418,7 @@ class Environment(object):
             # This should take care if the 'site' subdir if needed
             makedirs(self.sitedir, mode=0o700)
         except OSError:
-            raise DatacatsError('Site environment {} already exists.'.format(self.site_name))
+            raise DatacatsError('Site directory {} already exists.'.format(self.name + "/" + self.site_name))
         # venv isn't site-specific, the rest are.
         makedirs(self.sitedir + '/search')
         if not is_boot2docker():
