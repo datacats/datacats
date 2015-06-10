@@ -103,6 +103,9 @@ def main():
 
     except DatacatsError as e:
         _error_exit(e)
+    except SystemExit:
+        # datacats --version raises SystemExit to quit
+        sys.exit(0)
     except:
         exc_info = "\n".join([line.rstrip()
             for line in traceback.format_exception(*sys.exc_info())])
