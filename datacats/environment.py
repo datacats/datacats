@@ -483,7 +483,7 @@ class Environment(object):
             rw_venv=True,
             )
 
-    def create_source(self):
+    def create_source(self, datapusher=True):
         """
         Populate ckan directory from preloaded image and copy
         who.ini and schema.xml info conf directory
@@ -492,10 +492,11 @@ class Environment(object):
             command='/bin/cp -a /project/ckan /project_target/ckan',
             rw={self.target: '/project_target'},
             image=self._preload_image())
-        web_command(
-            command='/bin/cp -a /project/datapusher /project_target/datapusher',
-            rw={self.target: '/project_target'},
-            image=self._preload_image())
+        if datapusher:
+            web_command(
+                command='/bin/cp -a /project/datapusher /project_target/datapusher',
+                rw={self.target: '/project_target'},
+                image=self._preload_image())
         shutil.copy(
             self.target + '/ckan/ckan/config/who.ini',
             self.target)
@@ -576,7 +577,8 @@ class Environment(object):
             'ckan.datapusher.url = http://datapusher:8800',
             'solr_url = http://solr:8080/solr',
             'ckan.storage_path = /var/www/storage',
-            'ckan.plugins = datastore resource_proxy text_view datapusher '
+            'ckan.plugins = datastore resource_proxy text_view ' +
+            ('datapusher ' if exists(self.target + '/datapusher') else '')
             + 'recline_grid_view recline_graph_view'
             + (' {0}_theme'.format(self.name) if skin else ''),
             'ckan.site_title = ' + self.name,

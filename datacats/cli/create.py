@@ -23,7 +23,7 @@ def create(opts):
 
 Usage:
   datacats create [-bin] [-s NAME] [--address=IP] [--syslog] [--ckan=CKAN_VERSION]\
- ENVIRONMENT_DIR [PORT]
+ [--no-datapusher] ENVIRONMENT_DIR [PORT]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
@@ -34,6 +34,7 @@ Options:
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME          Pick a site to create [default: primary]
   --syslog                Log to the syslog
+  --no-datapusher         Don't install/enable ckanext-datapusher
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
@@ -48,6 +49,7 @@ part of this path will be used as the environment name.
         ckan_version=opts['--ckan'],
         address=opts['--address'],
         log_syslog=opts['--syslog'],
+        datapusher=not opts['--no-datapusher'],
         )
 
 
@@ -64,14 +66,20 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
         write('Creating environment "{0}/{1}"'.format(environment.name, environment.site_name))
         steps = [
             lambda: environment.create_directories(making_full_environment),
-            environment.create_bash_profile] + ([environment.create_virtualenv,
-            environment.save,
-            environment.create_source,
-            environment.create_ckan_ini] if making_full_environment else []
-            ) + [environment.save_site, environment.start_supporting_containers,
-            environment.fix_storage_permissions,
-            lambda: environment.update_ckan_ini(skin=create_skin),
-            environment.fix_project_permissions,
+            environment.create_bash_profile
+            ] + \
+            ([
+                environment.create_virtualenv,
+                environment.save,
+                lambda: environment.create_source(datapusher),
+                environment.create_ckan_ini] if making_full_environment else []
+            ) + \
+            [
+                environment.save_site,
+                environment.start_supporting_containers,
+                environment.fix_storage_permissions,
+                lambda: environment.update_ckan_ini(skin=create_skin),
+                environment.fix_project_permissions,
             ]
 
         if create_skin and making_full_environment:
@@ -84,7 +92,8 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
             write('.')
         write('\n')
 
-        return finish_init(environment, start_web, create_sysadmin, address, log_syslog=log_syslog)
+        return finish_init(environment, start_web, create_sysadmin, address,
+                           log_syslog=log_syslog)
     except:
         # Make sure that it doesn't get printed right after the dots
         # by printing a newline
