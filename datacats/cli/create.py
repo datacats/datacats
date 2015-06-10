@@ -10,7 +10,7 @@ from getpass import getpass
 
 from datacats.environment import Environment
 from datacats.cli.install import install_all
-from datacats.validate import valid_deploy_name
+from datacats.error import DatacatsError
 
 
 def write(s):
@@ -22,7 +22,8 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bni] [--address=IP] [--syslog] [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
+  datacats create [-bin] [-s NAME] [--address=IP] [--syslog] [--ckan=CKAN_VERSION]\
+ ENVIRONMENT_DIR [PORT]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
@@ -31,6 +32,7 @@ Options:
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
+  -s --site=NAME          Pick a site to create [default: primary]
   --syslog                Log to the syslog
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
@@ -42,39 +44,37 @@ part of this path will be used as the environment name.
         create_skin=not opts['--bare'],
         start_web=not opts['--image-only'],
         create_sysadmin=not opts['--no-sysadmin'],
-        address=opts['--address'],
+        site_name=opts['--site'],
         ckan_version=opts['--ckan'],
+        address=opts['--address'],
         log_syslog=opts['--syslog']
         )
 
 
-def create_environment(environment_dir, port, ckan_version, create_skin,
+def create_environment(environment_dir, port, ckan_version, create_skin, site_name,
         start_web, create_sysadmin, address, log_syslog=False):
     # pylint: disable=unused-argument
     # FIXME: only 2.3 preload supported at the moment
-    environment = Environment.new(environment_dir, '2.3', port=port)
+    environment = Environment.new(environment_dir, '2.3', site_name, port=port)
 
     try:
-        if not valid_deploy_name(environment.name):
-            print "WARNING: When deploying you will need to choose a"
-            print "target name that is at least 5 characters long"
-            print
+        # There are a lot of steps we can/must skip if we're making a sub-site only
+        making_full_environment = not environment.data_exists()
 
-        write('Creating environment "{0}"'.format(environment.name))
+        write('Creating environment "{0}/{1}"'.format(environment.name, environment.site_name))
         steps = [
-            environment.create_directories,
-            environment.create_bash_profile,
+            lambda: environment.create_directories(making_full_environment),
+            environment.create_bash_profile] + ([environment.create_virtualenv,
             environment.save,
-            environment.create_virtualenv,
             environment.create_source,
-            environment.start_postgres_and_solr,
+            environment.create_ckan_ini] if making_full_environment else []
+            ) + [environment.save_site, environment.start_postgres_and_solr,
             environment.fix_storage_permissions,
-            environment.create_ckan_ini,
             lambda: environment.update_ckan_ini(skin=create_skin),
             environment.fix_project_permissions,
             ]
 
-        if create_skin:
+        if create_skin and making_full_environment:
             steps.append(environment.create_install_template_skin)
 
         steps.append(environment.ckan_db_init)
@@ -97,12 +97,14 @@ def init(opts):
     """Initialize a purged environment or copied environment directory
 
 Usage:
+  datacats init [-in] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT_DIR [PORT]]
   datacats init [-ni] [--syslog] [--address=IP] [ENVIRONMENT_DIR [PORT]]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
+  -s --site=NAME         Pick a site to initialize [default: primary]
   --syslog                Log to the syslog
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
@@ -112,24 +114,35 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     address = opts['--address']
     start_web = not opts['--image-only']
     create_sysadmin = not opts['--no-sysadmin']
+    site_name = opts['--site']
+
     environment_dir = abspath(environment_dir or '.')
     log_syslog = opts['--syslog']
 
-    environment = Environment.load(environment_dir)
+    environment = Environment.load(environment_dir, site_name)
     environment.address = address
     if port:
         environment.port = int(port)
 
     try:
-        write('Creating from existing environment directory "{0}"'.format(
-            environment.name))
+        if environment.sites and site_name in environment.sites:
+            raise DatacatsError('Site named {0} already exists.'
+                                .format(site_name))
+        # There are a couple of steps we can/must skip if we're making a sub-site only
+        making_full_environment = not environment.data_exists()
+
+        write('Creating environment {0}/{1} '
+              'from existing environment directory "{0}"'
+              .format(environment.name, environment.site_name))
         steps = [
-            lambda: environment.create_directories(create_project_dir=False),
-            environment.save,
-            environment.create_virtualenv,
-            environment.start_postgres_and_solr,
-            environment.fix_storage_permissions,
-            environment.fix_project_permissions,
+            lambda: environment.create_directories(create_project_dir=False)] + ([
+             environment.save,
+             environment.create_virtualenv
+             ] if making_full_environment else []) + [
+                 environment.save_site,
+                 environment.start_postgres_and_solr,
+                 environment.fix_storage_permissions,
+                 environment.fix_project_permissions,
             ]
 
         for fn in steps:
@@ -143,11 +156,13 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     return finish_init(environment, start_web, create_sysadmin, address, log_syslog=log_syslog)
 
 
-def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False):
+def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False,
+                do_install=True):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """
-    install_all(environment, False, verbose=False)
+    if do_install:
+        install_all(environment, False, verbose=False)
 
     write('Initializing database')
     environment.ckan_db_init()

@@ -4,32 +4,35 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
-from os.path import abspath, split as path_split, expanduser, isdir, exists
-from os import makedirs, remove, environ
+from os.path import abspath, split as path_split, expanduser, isdir, exists, join
+from os import makedirs, remove, environ, listdir
 import sys
 import subprocess
 import shutil
 import json
 import time
-from string import uppercase, lowercase, digits
-from random import SystemRandom
 from sha import sha
 from struct import unpack
 from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
                           NoOptionError, NoSectionError)
 
+from lockfile import LockFile
+
+# pylint: disable=relative-import
+from docker import APIError
+
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker, data_only_container, docker_host,
-                             container_logs, remove_image,
-                             image_exists)
+                             container_logs, remove_image, require_images)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
     COMPILE_LESS)
 from datacats.network import wait_for_service_available, ServiceTimeout
+from datacats.migrate import needs_format_conversion
+from datacats.password import generate_password
 from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
-
 
 WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
@@ -45,43 +48,69 @@ class Environment(object):
 
     Create with Environment.new(path) or Environment.load(path)
     """
-
-    def __init__(self, name, target, datadir, ckan_version=None, port=None,
-                 deploy_target=None, site_url=None, always_prod=False,
+    def __init__(self, name, target, datadir, site_name, ckan_version=None,
+                 port=None, deploy_target=None, site_url=None, always_prod=False,
                  extension_dir='ckan', address=None, remote_server_key=None):
         self.name = name
         self.target = target
         self.datadir = datadir
         self.extension_dir = extension_dir
         self.ckan_version = ckan_version
+        # This is the site that all commands will operate on.
+        self.site_name = site_name
         self.port = int(port if port else self._choose_port())
         self.address = address
         self.deploy_target = deploy_target
         self.remote_server_key = remote_server_key
         self.site_url = site_url
         self.always_prod = always_prod
+        self.sites = None
 
-    def save(self):
+    def set_site_name(self, site_name):
+        self._site_name = site_name
+        self.sitedir = join(self.datadir, 'sites', site_name)
+
+    def get_site_name(self):
+        return self._site_name
+
+    site_name = property(fget=get_site_name, fset=set_site_name)
+
+    def _load_sites(self):
         """
-        Save environment settings into environment directory
+        Gets the names of all of the sites from the datadir and stores them
+        in self.sites. Also returns this list.
+        """
+        if not self.sites:
+            # get a list of all of the subdirectories. We'll call this the list
+            # of sites.
+            try:
+                self.sites = listdir(join(self.datadir, 'sites'))
+            except OSError:
+                self.sites = []
+
+        return self.sites
+
+    def save_site(self):
+        """
+        Save environment settings in the directory that need to be saved
+        even when creating only a new sub-site env.
         """
         cp = SafeConfigParser()
 
-        cp.add_section('datacats')
-        cp.set('datacats', 'name', self.name)
-        cp.set('datacats', 'ckan_version', self.ckan_version)
-        cp.set('datacats', 'port', str(self.port))
-        cp.set('datacats', 'address', self.address or '127.0.0.1')
+        cp.read([self.target + '/.datacats-environment'])
 
-        if self.deploy_target:
-            cp.add_section('deploy')
-            cp.set('deploy', 'target', self.deploy_target)
+        self._load_sites()
 
-        if self.site_url or self.always_prod:
-            if self.site_url:
-                cp.set('datacats', 'site_url', self.site_url)
-            if self.always_prod:
-                cp.set('datacats', 'always_prod', 'true')
+        self.sites.append(self.site_name)
+
+        section_name = 'site_' + self.site_name
+
+        cp.add_section(section_name)
+        cp.set(section_name, 'port', str(self.port))
+        cp.set(section_name, 'address', self.address or '127.0.0.1')
+
+        if self.site_url:
+            cp.set(section_name, 'site_url', self.site_url)
 
         with open(self.target + '/.datacats-environment', 'w') as config:
             cp.write(config)
@@ -93,7 +122,32 @@ class Environment(object):
         for n in sorted(self.passwords):
             cp.set('passwords', n.lower(), self.passwords[n])
 
-        with open(self.datadir + '/passwords.ini', 'w') as config:
+        # Write to the sitedir so we maintain separate passwords.
+        with open(self.sitedir + '/passwords.ini', 'w') as config:
+            cp.write(config)
+
+    def save(self):
+        """
+        Save environment settings into environment directory
+        """
+        cp = SafeConfigParser()
+
+        with open(join(self.datadir, '.version'), 'w') as f:
+            # Version 2
+            f.write('2')
+
+        cp.add_section('datacats')
+        cp.set('datacats', 'name', self.name)
+        cp.set('datacats', 'ckan_version', self.ckan_version)
+
+        if self.deploy_target:
+            cp.add_section('deploy')
+            cp.set('deploy', 'target', self.deploy_target)
+
+        if self.always_prod:
+            cp.set('datacats', 'always_prod', 'true')
+
+        with open(self.target + '/.datacats-environment', 'w') as config:
             cp.write(config)
 
         self._update_saved_project_dir()
@@ -107,13 +161,15 @@ class Environment(object):
             pdir.write(self.target)
 
     @classmethod
-    def new(cls, path, ckan_version, **kwargs):
+    def new(cls, path, ckan_version, site_name, **kwargs):
         """
         Return a Environment object with settings for a new project.
         No directories or containers are created by this call.
 
         :params path: location for new project directory, may be relative
         :params ckan_version: release of CKAN to install
+        :params site_name: The name of the site to install database and solr \
+                            eventually.
         :params port: preferred port for local instance
 
         Raises DatcatsError if directories or project with same
@@ -132,22 +188,30 @@ class Environment(object):
         require_images()
 
         datadir = expanduser('~/.datacats/' + name)
-        target = workdir + '/' + name
-
+        sitedir = join(datadir, site_name)
+        # We track through the datadir to the target if we are just making a
+        # site
         if isdir(datadir):
-            raise DatacatsError(
-                'Environment data directory {0} already exists',
-                (datadir,)
-                )
-        if isdir(target):
-            raise DatacatsError('Environment directory already exists')
+            with open(join(datadir, 'project-dir')) as pd:
+                target = pd.read()
+        else:
+            target = workdir + '/' + name
 
-        environment = cls(name, target, datadir, ckan_version, **kwargs)
+        if isdir(sitedir):
+            raise DatacatsError('Site data directory {0} already exists',
+                                (sitedir,))
+        # This is the case where the data dir has been removed,
+        if isdir(target) and not isdir(datadir):
+            raise DatacatsError('Environment directory exists, but data directory does not.\n'
+                                'If you simply want to recreate the data directory, run '
+                                '"datacats init" in the environment directory.')
+
+        environment = cls(name, target, datadir, site_name, ckan_version, **kwargs)
         environment._generate_passwords()
         return environment
 
     @classmethod
-    def load(cls, environment_name=None, data_only=False):
+    def load(cls, environment_name=None, site_name='primary', data_only=False):
         """
         Return an Environment object based on an existing project.
 
@@ -161,6 +225,8 @@ class Environment(object):
         """
         if environment_name is None:
             environment_name = '.'
+        if site_name is not None and not valid_name(site_name):
+            raise DatacatsError('{} is not a valid site name.'.format(site_name))
 
         require_images()
 
@@ -196,7 +262,7 @@ class Environment(object):
                 _, extension_dir = path_split(oldwd)
 
         if data_only and not used_path:
-            return cls(environment_name, None, datadir)
+            return cls(environment_name, None, datadir, site_name)
 
         cp = SafeConfigParser()
         try:
@@ -204,20 +270,38 @@ class Environment(object):
         except ConfigParserError:
             raise DatacatsError('Error reading environment information')
 
+        site_section = 'site_' + site_name
         name = cp.get('datacats', 'name')
         datadir = expanduser('~/.datacats/' + name)
+
+        lockfile = LockFile(join(datadir, '.migration_lock'))
+
+        if lockfile.is_locked():
+            raise DatacatsError('Migration in progress, cannot continue.\n'
+                                'If you interrupted a migration, you should'
+                                ' attempt manual recovery or contact us by'
+                                ' filing an issue at http://github.com/datacats/'
+                                'datacats.\nAs a last resort, you could delete'
+                                ' all your stored data and create a new environment'
+                                ' by running "datacats purge" followed by'
+                                ' "datacats init".')
+
+        if needs_format_conversion(datadir):
+            raise DatacatsError('This environment uses an old format. You must'
+                                ' migrate to the new format. To do so, use the'
+                                ' "datacats migrate" command.')
         ckan_version = cp.get('datacats', 'ckan_version')
         try:
-            address = cp.get('datacats', 'address')
-        except NoOptionError:
-            address = None
-        try:
-            port = cp.getint('datacats', 'port')
-        except NoOptionError:
+            port = cp.getint(site_section, 'port')
+        except (NoOptionError, NoSectionError):
             port = None
         try:
-            site_url = cp.get('datacats', 'site_url')
-        except NoOptionError:
+            address = cp.get(site_section, 'address')
+        except (NoOptionError, NoSectionError):
+            address = None
+        try:
+            site_url = cp.get(site_section, 'site_url')
+        except (NoOptionError, NoSectionError):
             site_url = None
         try:
             always_prod = cp.getboolean('datacats', 'always_prod')
@@ -246,7 +330,7 @@ class Environment(object):
             pw_options = cp.options('passwords')
         except NoSectionError:
             cp = SafeConfigParser()
-            cp.read(datadir + '/passwords.ini')
+            cp.read(join(datadir, 'sites', site_name) + '/passwords.ini')
             try:
                 pw_options = cp.options('passwords')
             except NoSectionError:
@@ -255,7 +339,7 @@ class Environment(object):
         for n in pw_options:
             passwords[n.upper()] = cp.get('passwords', n)
 
-        environment = cls(name, wd, datadir, ckan_version, port, deploy_target,
+        environment = cls(name, wd, datadir, site_name, ckan_version, port, deploy_target,
                           site_url=site_url, always_prod=always_prod, address=address,
                           extension_dir=extension_dir,
                           remote_server_key=remote_server_key)
@@ -267,6 +351,8 @@ class Environment(object):
 
         if not used_path:
             environment._update_saved_project_dir()
+
+        environment._load_sites()
 
         return environment
 
@@ -285,19 +371,25 @@ class Environment(object):
         """
         return isdir(self.datadir)
 
+    def require_valid_site(self):
+        if self.site_name not in self.sites:
+            raise DatacatsError('Invalid site name: {}. Valid names are: {}'
+                                .format(self.site_name,
+                                        ', '.join(self.sites)))
+
     def data_complete(self):
         """
         Return True if all the expected datadir files are present
         """
-        if (not isdir(self.datadir + '/files')
-                or not isdir(self.datadir + '/run')
-                or not isdir(self.datadir + '/search')):
+        if (not isdir(self.sitedir + '/files')
+                or not isdir(self.sitedir + '/run')
+                or not isdir(self.sitedir + '/search')):
             return False
         if is_boot2docker():
             return True
         return (
             isdir(self.datadir + '/venv') and
-            isdir(self.datadir + '/data'))
+            isdir(self.sitedir + '/data'))
 
     def require_data(self):
         """
@@ -319,13 +411,23 @@ class Environment(object):
         """
         Call once for new projects to create the initial project directories.
         """
-        makedirs(self.datadir, mode=0o700)
-        makedirs(self.datadir + '/search')
+        # It's possible that the datadir already exists (we're making a secondary site)
+        if not isdir(self.datadir):
+            makedirs(self.datadir, mode=0o700)
+        try:
+            # This should take care if the 'site' subdir if needed
+            makedirs(self.sitedir, mode=0o700)
+        except OSError:
+            raise DatacatsError('Site environment {} already exists.'.format(self.site_name))
+        # venv isn't site-specific, the rest are.
+        makedirs(self.sitedir + '/search')
         if not is_boot2docker():
-            makedirs(self.datadir + '/venv')
-            makedirs(self.datadir + '/data')
-        makedirs(self.datadir + '/files')
-        makedirs(self.datadir + '/run')
+            if not isdir(self.datadir + '/venv'):
+                makedirs(self.datadir + '/venv')
+            makedirs(self.sitedir + '/data')
+        makedirs(self.sitedir + '/files')
+        makedirs(self.sitedir + '/run')
+
         if create_project_dir:
             makedirs(self.target)
 
@@ -409,13 +511,14 @@ class Environment(object):
             rw = {}
             volumes_from = self._get_container_name('pgdata')
         else:
-            rw = {self.datadir + '/postgres': '/var/lib/postgresql/data'}
+            rw = {self.sitedir + '/postgres': '/var/lib/postgresql/data'}
             volumes_from = None
 
-        # users are created when data dir is blank so we must pass
-        # all the user passwords as environment vars
         running = self.containers_running()
+
         if 'postgres' not in running or 'solr' not in running:
+            # users are created when data dir is blank so we must pass
+            # all the user passwords as environment vars
             self.stop_postgres_and_solr()
             run_container(
                 name=self._get_container_name('postgres'),
@@ -426,7 +529,7 @@ class Environment(object):
             run_container(
                 name=self._get_container_name('solr'),
                 image='datacats/solr',
-                rw={self.datadir + '/solr': '/var/lib/solr'},
+                rw={self.sitedir + '/solr': '/var/lib/solr'},
                 ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
     def stop_postgres_and_solr(self):
@@ -442,7 +545,7 @@ class Environment(object):
         """
         web_command(
             command='/bin/chown -R www-data: /var/www/storage',
-            rw={self.datadir + '/files': '/var/www/storage'})
+            rw={self.sitedir + '/files': '/var/www/storage'})
 
     def create_ckan_ini(self):
         """
@@ -522,10 +625,11 @@ class Environment(object):
         Generate new DB passwords and store them in self.passwords
         """
         self.passwords = {
-            'POSTGRES_PASSWORD': generate_db_password(),
-            'CKAN_PASSWORD': generate_db_password(),
-            'DATASTORE_RO_PASSWORD': generate_db_password(),
-            'DATASTORE_RW_PASSWORD': generate_db_password(),
+            'POSTGRES_PASSWORD': generate_password(),
+            'CKAN_PASSWORD': generate_password(),
+            'DATASTORE_RO_PASSWORD': generate_password(),
+            'DATASTORE_RW_PASSWORD': generate_password(),
+            'BEAKER_SESSION_SECRET': generate_password(),
             }
 
     def start_web(self, production=False, address='127.0.0.1', log_syslog=False):
@@ -597,10 +701,11 @@ class Environment(object):
                'postgresql://ckan_datastore_readwrite:{0}@db:5432/ckan_datastore'
                .format(self.passwords['DATASTORE_RW_PASSWORD']))
         cp.set('app:main', 'solr_url', 'http://solr:8080/solr')
+        cp.set('app:main', 'beaker.session.secret', self.passwords['BEAKER_SESSION_SECRET'])
 
-        if not isdir(self.datadir + '/run'):
-            makedirs(self.datadir + '/run')  # upgrade old datadir
-        with open(self.datadir + '/run/' + output, 'w') as runini:
+        if not isdir(self.sitedir + '/run'):
+            makedirs(self.sitedir + '/run')  # upgrade old datadir
+        with open(self.sitedir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
     def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False):
@@ -613,24 +718,30 @@ class Environment(object):
         else:
             ro = {self.datadir + '/venv': '/usr/lib/ckan'}
             volumes_from = None
-
-        run_container(
-            name=self._get_container_name('web'),
-            image='datacats/web',
-            rw={self.datadir + '/files': '/var/www/storage'},
-            ro=dict({
-                self.target: '/project/',
-                self.datadir + '/run/development.ini':
-                    '/project/development.ini',
-                WEB: '/scripts/web.sh'}, **ro),
-            links={self._get_container_name('solr'): 'solr',
-                   self._get_container_name('postgres'): 'db'},
-            volumes_from=volumes_from,
-            command=command,
-            port_bindings={
-                5000: port if is_boot2docker() else (address, port)},
-            log_syslog=log_syslog
-            )
+        try:
+            run_container(
+                name=self._get_container_name('web'),
+                image='datacats/web',
+                rw={self.sitedir + '/files': '/var/www/storage'},
+                ro=dict({
+                    self.target: '/project/',
+                    self.sitedir + '/run/development.ini':
+                        '/project/development.ini',
+                    WEB: '/scripts/web.sh'}, **ro),
+                links={'datacats_solr_' + self.name + '_' + self.site_name: 'solr',
+                    'datacats_postgres_' + self.name + '_' + self.site_name: 'db'},
+                volumes_from=volumes_from,
+                command=command,
+                port_bindings={
+                    5000: port if is_boot2docker() else (address, port)},
+                log_syslog=log_syslog
+                )
+        except APIError as e:
+            if '409' in str(e):
+                raise DatacatsError('Web container already running. '
+                                    'Please stop_web before running.')
+            else:
+                raise
 
     def wait_for_web_available(self):
         """
@@ -654,9 +765,10 @@ class Environment(object):
         Return a port number from 5000-5999 based on the environment name
         to be used as a default when the user hasn't selected one.
         """
-        # instead of random let's base it on the name chosen
+        # instead of random let's base it on the name chosen (and the site name)
         return 5000 + unpack('Q',
-                             sha(self.name.decode('ascii')).digest()[:8])[0] % 1000
+                             sha((self.name + self.site_name)
+                             .decode('ascii')).digest()[:8])[0] % 1000
 
     def _next_port(self, port):
         """
@@ -728,7 +840,7 @@ class Environment(object):
         """
         create 'admin' account with given password
         """
-        with open(self.datadir + '/run/admin.json', 'w') as out:
+        with open(self.sitedir + '/run/admin.json', 'w') as out:
             json.dump({
                 'name': 'admin',
                 'email': 'none',
@@ -740,9 +852,9 @@ class Environment(object):
                      'action user_create -i -c /project/development.ini '
                      '< /input/admin.json'],
             db_links=True,
-            ro={self.datadir + '/run/admin.json': '/input/admin.json'},
+            ro={self.sitedir + '/run/admin.json': '/input/admin.json'},
             )
-        remove(self.datadir + '/run/admin.json')
+        remove(self.sitedir + '/run/admin.json')
 
     def interactive_shell(self, command=None, paster=False, detach=False):
         """
@@ -779,7 +891,7 @@ class Environment(object):
         proxy_settings = self._proxy_settings()
         if proxy_settings:
             venv_volumes += ['-v',
-                             self.datadir + '/run/proxy-environment:/etc/environment:ro']
+                             self.sitedir + '/run/proxy-environment:/etc/environment:ro']
 
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
@@ -790,11 +902,11 @@ class Environment(object):
             '-d' if detach else '-i',
             ] + venv_volumes + [
             '-v', self.target + ':/project:rw',
-            '-v', self.datadir + '/files:/var/www/storage:rw',
+            '-v', self.sitedir + '/files:/var/www/storage:rw',
             '-v', script + ':/scripts/shell.sh:ro',
             '-v', PASTER_CD + ':/scripts/paster_cd.sh:ro',
-            '-v', self.datadir + '/run/run.ini:/project/development.ini:ro',
-            '-v', self.datadir +
+            '-v', self.sitedir + '/run/run.ini:/project/development.ini:ro',
+            '-v', self.sitedir +
                 '/run/test.ini:/project/ckan/test-core.ini:ro',
             '--link', self._get_container_name('solr') + ':solr',
             '--link', self._get_container_name('postgres') + ':db',
@@ -879,7 +991,7 @@ class Environment(object):
                 self._get_container_name('solr'): 'solr',
                 self._get_container_name('postgres'): 'db',
                 }
-            ro[self.datadir + '/run/run.ini'] = '/project/development.ini'
+            ro[self.sitedir + '/run/run.ini'] = '/project/development.ini'
         else:
             links = None
 
@@ -892,24 +1004,51 @@ class Environment(object):
                 ' Logs are as follows:\n%s') % (e.command, e.logs)
             raise
 
-    def purge_data(self):
+    def purge_data(self, which_sites=None, never_delete=False):
         """
         Remove uploaded files, postgres db, solr index, venv
         """
-        datadirs = ['files', 'solr']
-        if is_boot2docker():
-            remove_container(self._get_container_name('pgdata'))
-            remove_container(self._get_container_name('venv'))
-        else:
-            datadirs += ['postgres', 'venv']
+        # Default to the set of all sites
+        if not which_sites:
+            which_sites = self.sites
+
+        datadirs = []
+        boot2docker = is_boot2docker()
+
+        if which_sites:
+            if self.target:
+                cp = SafeConfigParser()
+                cp.read([self.target + '/.datacats-environment'])
+
+            for site in which_sites:
+                if boot2docker:
+                    remove_container(self._get_container_name('pgdata'))
+                else:
+                    datadirs += [site + '/postgres']
+                # Always rm the site dir & solr & files
+                datadirs += [site, site + '/files', site + '/solr']
+                if self.target:
+                    cp.remove_section('site_' + site)
+                    self.sites.remove(site)
+
+            if self.target:
+                with open(self.target + '/.datacats-environment', 'w') as conf:
+                    cp.write(conf)
+
+        datadirs = ['sites/' + datadir for datadir in datadirs]
+
+        if not self.sites:
+            datadirs.append('venv')
 
         web_command(
             command=['/scripts/purge.sh']
-            + ['/project/data/' + d for d in datadirs],
+                + ['/project/data/' + d for d in datadirs],
             ro={PURGE: '/scripts/purge.sh'},
             rw={self.datadir: '/project/data'},
             )
-        shutil.rmtree(self.datadir)
+
+        if not self.sites and not never_delete:
+            shutil.rmtree(self.datadir)
 
     def logs(self, container, tail='all', follow=False, timestamps=False):
         """
@@ -983,27 +1122,10 @@ class Environment(object):
 
         :param container_type: The type of container name to generate (see above).
         """
-        return 'datacats_{}_{}'.format(container_type, self.name)
-
-
-def generate_db_password():
-    """
-    Return a 16-character alphanumeric random string generated by the
-    operating system's secure pseudo random number generator
-    """
-    chars = uppercase + lowercase + digits
-    return ''.join(SystemRandom().choice(chars) for x in xrange(16))
-
-
-def require_images():
-    """
-    Raises a DatacatsError if the images required to use Datacats don't exist.
-    """
-    if (not image_exists('datacats/web') or
-            not image_exists('datacats/solr') or
-            not image_exists('datacats/postgres')):
-        raise DatacatsError(
-            'You do not have the needed Docker images. Please run "datacats pull"')
+        if container_type in ['venv']:
+            return 'datacats_{}_{}'.format(container_type, self.name)
+        else:
+            return 'datacats_{}_{}_{}'.format(container_type, self.name, self.site_name)
 
 
 def posix_quote(s):
