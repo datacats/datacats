@@ -103,18 +103,21 @@ def main():
     except Exception:
             a,b, c = sys.exc_info()
             exc_info = "\n".join([line.rstrip() for line in traceback.format_exception(a,b,c)])
-
-            _error_exit(
-                DatacatsError(("Something that should not"
-                " have happened happened when attempting to run this command:\n"
+            user_message = ("Something that should not"
+                " have happened happened when attempting"
+                " to run this command:\n"
                 "     datacats {args}\n\n"
                 "It is seems to be a bug.\n"
-                "Please report this issue to us by creating an issue ticket at\n\n"
+                "Please report this issue to us by"
+                " creating an issue ticket at\n\n"
                 "    https://github.com/datacats/datacats/issues\n\n"
                 "so that we would be able to look into that "
                 "and fix the issue."
-            ).format(args=" ".join(sys.argv[1:])),
-            parent_exception=UndocumentedError(exc_info)))
+                ).format(args=" ".join(sys.argv[1:]))
+
+
+            _error_exit( DatacatsError(user_message,
+                parent_exception=UndocumentedError(exc_info)))
 
 
 def _error_exit(exception):
