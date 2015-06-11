@@ -92,6 +92,23 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
         raise
 
 
+def reset(environment, opts):
+    """Resets a site to the default state. This will re-initialize the
+database and recreate the administrator account.
+
+Usage:
+  datacats reset -s NAME ENVIRONMENT
+
+Options:
+  -s --site=NAME          The site to reset."""
+    # pylint: disable=unused-argument
+    print 'Re-initializing database...'
+    environment.start_postgres_and_solr()
+    environment.ckan_db_init()
+    adminpw = confirm_password()
+    environment.create_admin_set_password(adminpw)
+
+
 def init(opts):
     """Initialize a purged environment or copied environment directory
 

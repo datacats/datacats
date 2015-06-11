@@ -60,6 +60,7 @@ COMMANDS = {
     'stop': manage.stop,
     'migrate': migrate.migrate,
     'less': less.less,
+    'reset': create.reset,
 }
 
 
