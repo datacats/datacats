@@ -599,6 +599,12 @@ class Environment(object):
             rw_project=True,
             )
 
+    def paster_command(self, command):
+        self.run_command('/usr/lib/ckan/bin/paster --plugin=ckan {} '
+                         '-c /project/development.ini'.format(command),
+                         db_links=True,
+                         clean_up=True)
+
     def ckan_db_init(self, retry_seconds=DB_INIT_RETRY_SECONDS):
         """
         Run db init to create all ckan tables

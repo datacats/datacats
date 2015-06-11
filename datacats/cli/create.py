@@ -104,7 +104,7 @@ Options:
     # pylint: disable=unused-argument
     print 'Re-initializing database...'
     environment.start_postgres_and_solr()
-    environment.ckan_db_init()
+    environment.paster_command("db clean")
     adminpw = confirm_password()
     environment.create_admin_set_password(adminpw)
 
