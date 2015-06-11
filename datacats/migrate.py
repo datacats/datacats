@@ -203,8 +203,11 @@ def convert_environment(datadir, version, always_yes):
 
     if not always_yes:
         while inp != 'y' and inp != 'n':
-            inp = raw_input('This migration will change the format of your datadir.'
-                            ' Are you sure? (y/n) [n]: ')
+            inp = raw_input('''After this command, your environment will be converted to format version {}.
+This means that some files will be moved around and this environment directory will not load on versions of
+datacats which do not support this format version.
+
+Would you like to continue the migration? (y/n) [n]:''')
 
         if inp == 'n':
             sys.exit(1)
