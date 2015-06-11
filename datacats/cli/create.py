@@ -102,14 +102,22 @@ Usage:
 Options:
   -s --site=NAME          The site to reset."""
     # pylint: disable=unused-argument
-    print 'Re-initializing database...'
-    environment.start_postgres_and_solr()
-    environment.paster_command("db clean")
-    adminpw = confirm_password()
-    environment.create_admin_set_password(adminpw)
+    print 'Resetting...'
+    environment.stop_postgres_and_solr()
+    environment.stop_web()
+    environment.purge_data([opts['--site']], never_delete=True)
+    init({
+        'ENVIRONMENT_DIR': opts['ENVIRONMENT'],
+        '--site': opts['--site'],
+        'PORT': None,
+        '--syslog': None,
+        '--address': '127.0.0.1',
+        '--image-only': False,
+        '--no-sysadmin': False
+        }, no_install=True)
 
 
-def init(opts):
+def init(opts, no_install=False):
     """Initialize a purged environment or copied environment directory
 
 Usage:
@@ -169,7 +177,8 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         print
         raise
 
-    return finish_init(environment, start_web, create_sysadmin, address, log_syslog=log_syslog)
+    return finish_init(environment, start_web, create_sysadmin, address,
+                       log_syslog=log_syslog, do_install=not no_install)
 
 
 def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False,
