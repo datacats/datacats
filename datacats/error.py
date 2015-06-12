@@ -9,12 +9,12 @@ class DatacatsError(Exception):
             vals = {
                 "original": self.message,
                 "type_description": parent_exception.user_description,
-                "message": parent_exception.__str__(),
+                "message": str(parent_exception),
             }
-            self.message = "".join([colored.blue("{original}\n\n").__str__(),
+            self.message = "".join([str(colored.blue("{original}\n\n")),
                                     "~" * 30,
                                     "\n{type_description}:\n",
-                                    colored.yellow("{message}\n").__str__()]
+                                    str(colored.yellow("{message}\n"))]
                                     ).format(**vals)
 
         self.format_args = format_args
