@@ -394,14 +394,13 @@ class Environment(object):
     def source_complete(self):
         SOURCE_FILES = ['schema.xml', 'ckan', 'development.ini', 'who.ini']
 
-        return [self.target + '/' + f for f in SOURCE_FILES if not exists(f)]
+        return [self.target + '/' + f for f in SOURCE_FILES if not exists(self.target + '/' + f)]
 
     def require_data(self):
         """
         raise a DatacatsError if the datadir or volumes are missing or damaged
         """
         files = self.source_complete()
-        print files
         if files:
             raise DatacatsError('Missing files in source directory:\n' + '\n'.join(files))
         if not self.data_exists():
