@@ -504,17 +504,6 @@ class Environment(object):
         shutil.copy(
             self.target + '/ckan/ckan/config/solr/schema.xml',
             self.target)
-        # We need to do some updating of .datacats-environment
-        cp = SafeConfigParser()
-        if not cp.has_option('datacats', 'site_url'):
-            if is_boot2docker():
-                web_address = socket.gethostbyname(docker_host())
-            else:
-                web_address = self.address
-            cp.set('datacats', 'site_url', web_address)
-
-        with open(self.target + '/.datacats-environment', 'w') as f:
-            cp.write(f)
 
     def start_supporting_containers(self):
         """
@@ -670,11 +659,10 @@ class Environment(object):
         self.stop_ckan()
 
         port = self.port
-        command = None
 
         production = production or self.always_prod
-        if not production:
-            command = ['/scripts/web.sh']
+        override_site_url = self.address == '127.0.0.1' and not is_boot2docker()
+        command = ['/scripts/web.sh', str(production), str(override_site_url)]
 
         if address != '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify address on boot2docker.')
@@ -734,7 +722,11 @@ class Environment(object):
         if self.site_url:
             site_url = self.site_url
         else:
-            site_url = 'http://{0}:{1}/'.format(docker_host(), port)
+            if is_boot2docker():
+                web_address = socket.gethostbyname(docker_host())
+            else:
+                web_address = self.address
+            site_url = 'http://{}:{}'.format(web_address, port)
 
         if override_site_url:
             cp.set('app:main', 'ckan.site_url', site_url)
@@ -783,11 +775,11 @@ class Environment(object):
             run_container(
                 name=self._get_container_name('web'),
                 image='datacats/web',
-                rw={self.sitedir + '/files': '/var/www/storage'},
+                rw={self.sitedir + '/files': '/var/www/storage',
+                    self.sitedir + '/run/development.ini':
+                        '/project/development.ini'},
                 ro=dict({
                     self.target: '/project/',
-                    self.sitedir + '/run/development.ini':
-                        '/project/development.ini',
                     WEB: '/scripts/web.sh'}, **ro),
                 links=links,
                 volumes_from=volumes_from,

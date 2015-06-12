@@ -11,7 +11,18 @@ set -e
 trap 'kill $!' SIGUSR1
 
 while true; do
-	sudo -u www-data /usr/lib/ckan/bin/paster --plugin=ckan serve \
-		/project/development.ini --reload &
+	# fix our development.ini
+	if [ "$2" -eq "true" ]; then
+		python -c "from ConfigParser import SafeConfigParser;cp = SafeConfigParser();cp.read('development.ini');cp.set('app:main', 'ckan.site_url', '$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')'); cp.write(open('development.ini', 'w'))"
+	fi
+
+	# production
+	if [ "$1" -eq "true" ]; then
+		/usr/bin/apachectl -DFOREGROUND
+	else
+		sudo -u www-data /usr/lib/ckan/bin/paster --plugin=ckan serve \
+			/project/development.ini --reload &r
+	fi
+
 	wait && exit
 done
