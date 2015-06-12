@@ -958,8 +958,10 @@ class Environment(object):
             '-v', self.sitedir +
                 '/run/test.ini:/project/ckan/test-core.ini:ro',
             '--link', self._get_container_name('solr') + ':solr',
-            '--link', self._get_container_name('postgres') + ':db',
-            '--hostname', self.name,
+            '--link', self._get_container_name('postgres') + ':db']
+            + (['--link', self._get_container_name('datapusher') + ':datapusher']
+               if self.needs_datapusher() else []) +
+            ['--hostname', self.name,
             'datacats/web', '/scripts/shell.sh'] + command)
 
     def install_package_requirements(self, psrc, stream_output=None):
