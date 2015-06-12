@@ -11,6 +11,7 @@ import subprocess
 import shutil
 import json
 import time
+import socket
 from sha import sha
 from struct import unpack
 from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
@@ -503,6 +504,17 @@ class Environment(object):
         shutil.copy(
             self.target + '/ckan/ckan/config/solr/schema.xml',
             self.target)
+        # We need to do some updating of .datacats-environment
+        cp = SafeConfigParser()
+        if not cp.has_option('datacats', 'site_url'):
+            if is_boot2docker():
+                web_address = socket.gethostbyname(docker_host())
+            else:
+                web_address = self.address
+            cp.set('datacats', 'site_url', web_address)
+
+        with open(self.target + '/.datacats-environment', 'w') as f:
+            cp.write(f)
 
     def start_supporting_containers(self):
         """
