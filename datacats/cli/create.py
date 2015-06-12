@@ -92,7 +92,32 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
         raise
 
 
-def init(opts):
+def reset(environment, opts):
+    """Resets a site to the default state. This will re-initialize the
+database and recreate the administrator account.
+
+Usage:
+  datacats reset [-s NAME] ENVIRONMENT
+
+Options:
+  -s --site=NAME          The site to reset [default: primary]"""
+    # pylint: disable=unused-argument
+    print 'Resetting...'
+    environment.stop_postgres_and_solr()
+    environment.stop_web()
+    environment.purge_data([opts['--site']], never_delete=True)
+    init({
+        'ENVIRONMENT_DIR': opts['ENVIRONMENT'],
+        '--site': opts['--site'],
+        'PORT': None,
+        '--syslog': None,
+        '--address': '127.0.0.1',
+        '--image-only': False,
+        '--no-sysadmin': False
+        }, no_install=True)
+
+
+def init(opts, no_install=False):
     """Initialize a purged environment or copied environment directory
 
 Usage:
@@ -152,7 +177,8 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         print
         raise
 
-    return finish_init(environment, start_web, create_sysadmin, address, log_syslog=log_syslog)
+    return finish_init(environment, start_web, create_sysadmin, address,
+                       log_syslog=log_syslog, do_install=not no_install)
 
 
 def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False,
