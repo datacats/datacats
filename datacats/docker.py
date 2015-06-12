@@ -7,7 +7,7 @@
 from __future__ import absolute_import
 
 from os import environ, devnull
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning, InsecurePlatformWarning
 import json
 import subprocess
 import tempfile
@@ -80,6 +80,7 @@ def _get_docker():
             import warnings
             # It will print out messages to the user otherwise.
             warnings.filterwarnings("ignore", category=InsecureRequestWarning)
+            warnings.filterwarnings("ignore", category=InsecurePlatformWarning)
             _docker_kwargs['tls'].verify = False
 
         # Create the Docker client
