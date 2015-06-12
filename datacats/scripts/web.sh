@@ -10,10 +10,16 @@ set -e
 
 trap 'kill $!' SIGUSR1
 
+port=5000
+
+if [ "$1" = "true" ]; then
+	port=80
+fi
+
 while true; do
 	# fix our development.ini
 	if [ "$2" = "true" ]; then
-		python -c "from ConfigParser import SafeConfigParser;cp = SafeConfigParser();cp.read('development.ini');cp.set('app:main', 'ckan.site_url', '$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')'); cp.write(open('development.ini', 'w'))"
+		/scripts/adjust_devini.py "$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')" "$port"
 	fi
 
 	# production
@@ -21,7 +27,7 @@ while true; do
 		/usr/bin/apachectl -DFOREGROUND
 	else
 		sudo -u www-data /usr/lib/ckan/bin/paster --plugin=ckan serve \
-			/project/development.ini --reload &r
+			/project/development.ini --reload &
 	fi
 
 	wait && exit
