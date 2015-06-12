@@ -57,8 +57,8 @@ def _split_path(path):
 def _one_to_two(datadir):
     """After this command, your environment will be converted to format version {}.
 and will only work with datacats version exceeding and including 1.0.0.
-This means that some files will be moved around and this environment directory will not load on
-versions of datacats which do not support this format version.
+This migration is necessary to support multiple sites within the same environment.
+Your current site will be kept and will be named "primary".
 
 Would you like to continue the migration? (y/n) [n]:"""
     new_site_name = 'primary'
@@ -133,8 +133,9 @@ Would you like to continue the migration? (y/n) [n]:"""
 def _two_to_one(datadir):
     """After this command, your environment will be converted to format version {}
 and will not work with Datacats versions beyond and including 1.0.0.
-This means that some files will be moved around and this environment directory will not load on
-versions of datacats which do not support this format version.
+This format version doesn't support multiple sites, and after this only your
+"primary" site will be usable, though other sites will be maintained if you
+wish to do a migration back to a version which supports multisite.
 
 Would you like to continue the migration? (y/n) [n]:"""
     _, env_name = _split_path(datadir)
