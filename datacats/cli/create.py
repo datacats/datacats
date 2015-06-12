@@ -97,10 +97,10 @@ def reset(environment, opts):
 database and recreate the administrator account.
 
 Usage:
-  datacats reset -s NAME ENVIRONMENT
+  datacats reset [-s NAME] ENVIRONMENT
 
 Options:
-  -s --site=NAME          The site to reset."""
+  -s --site=NAME          The site to reset [default: primary]"""
     # pylint: disable=unused-argument
     print 'Resetting...'
     environment.stop_postgres_and_solr()
