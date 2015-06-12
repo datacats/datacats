@@ -28,7 +28,7 @@ from datacats.docker import (web_command, run_container, remove_container,
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
-    COMPILE_LESS)
+    COMPILE_LESS, INSTALL_POSTGIS)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.migrate import needs_format_conversion
 from datacats.password import generate_password
@@ -499,10 +499,7 @@ class Environment(object):
             self.target + '/ckan/ckan/config/solr/schema.xml',
             self.target)
 
-    def start_postgres_and_solr(self):
-        """
-        run the DB and search containers
-        """
+    def _pgdata_volumes_and_rw(self):
         # complicated because postgres needs hard links to
         # work on its data volume. see issue #5
         if is_boot2docker():
@@ -514,6 +511,15 @@ class Environment(object):
             rw = {self.sitedir + '/postgres': '/var/lib/postgresql/data'}
             volumes_from = None
 
+        return volumes_from, rw
+
+    def start_postgres_and_solr(self):
+        """
+        run the DB and search containers
+        """
+
+        volumes_from, rw = self._pgdata_volumes_and_rw()
+
         running = self.containers_running()
 
         if 'postgres' not in running or 'solr' not in running:
@@ -524,6 +530,7 @@ class Environment(object):
                 name=self._get_container_name('postgres'),
                 image='datacats/postgres',
                 environment=self.passwords,
+                ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
                 rw=rw,
                 volumes_from=volumes_from)
             run_container(
@@ -608,14 +615,27 @@ class Environment(object):
         started = time.time()
         while True:
             try:
+                volumes_from, rw = self._pgdata_volumes_and_rw()
+
                 self.run_command(
                     '/usr/lib/ckan/bin/paster --plugin=ckan db init '
                     '-c /project/development.ini',
                     db_links=True,
                     clean_up=True,
                     )
+                self.stop_postgres_and_solr()
+                container = run_container(
+                    name=self._get_container_name('postgres'),
+                    image='datacats/postgres',
+                    environment=self.passwords,
+                    ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
+                    rw=rw,
+                    volumes_from=volumes_from)
+                remove_container(container['Id'])
+                self.start_postgres_and_solr()
                 return
-            except WebCommandError:
+            except WebCommandError as e:
+                print e.message
                 if started + retry_seconds > time.time():
                     raise
             time.sleep(DB_INIT_RETRY_DELAY)
