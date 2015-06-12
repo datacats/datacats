@@ -391,10 +391,19 @@ class Environment(object):
             isdir(self.datadir + '/venv') and
             isdir(self.sitedir + '/data'))
 
+    def source_complete(self):
+        if (not exists(self.target + '/schema.xml')
+                or not isdir(self.target + '/ckan')
+                or not exists(self.target + '/development.ini')):
+            return False
+        return True
+
     def require_data(self):
         """
         raise a DatacatsError if the datadir or volumes are missing or damaged
         """
+        if not self.source_complete():
+            raise DatacatsError('Missing files in source directory.')
         if not self.data_exists():
             raise DatacatsError('Environment datadir missing. '
                                 'Try "datacats init".')
