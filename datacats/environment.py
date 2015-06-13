@@ -625,6 +625,7 @@ class Environment(object):
                     )
                 self.stop_postgres_and_solr()
                 container = run_container(
+                    command='/scripts/install_postgis.sh',
                     name=self._get_container_name('postgres'),
                     image='datacats/postgres',
                     environment=self.passwords,
