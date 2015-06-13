@@ -55,6 +55,12 @@ def _split_path(path):
 
 
 def _one_to_two(datadir):
+    """After this command, your environment will be converted to format version {}.
+and will only work with datacats version exceeding and including 1.0.0.
+This migration is necessary to support multiple sites within the same environment.
+Your current site will be kept and will be named "primary".
+
+Would you like to continue the migration? (y/n) [n]:"""
     new_site_name = 'primary'
 
     split = _split_path(datadir)
@@ -125,6 +131,13 @@ def _one_to_two(datadir):
 
 
 def _two_to_one(datadir):
+    """After this command, your environment will be converted to format version {}
+and will not work with Datacats versions beyond and including 1.0.0.
+This format version doesn't support multiple sites, and after this only your
+"primary" site will be usable, though other sites will be maintained if you
+wish to do a migration back to a version which supports multisite.
+
+Would you like to continue the migration? (y/n) [n]:"""
     _, env_name = _split_path(datadir)
 
     print 'Making sure that containers are stopped...'
@@ -194,6 +207,8 @@ def convert_environment(datadir, version, always_yes):
     require_images()
 
     inp = None
+    old_version = _get_current_format(datadir)
+    migration_func = migrations[(old_version, version)]
 
     if version > CURRENT_FORMAT_VERSION:
         raise DatacatsError('Cannot migrate to a version higher than the '
@@ -203,8 +218,7 @@ def convert_environment(datadir, version, always_yes):
 
     if not always_yes:
         while inp != 'y' and inp != 'n':
-            inp = raw_input('This migration will change the format of your datadir.'
-                            ' Are you sure? (y/n) [n]: ')
+            inp = raw_input(migration_func.__doc__.format(version))
 
         if inp == 'n':
             sys.exit(1)
@@ -213,13 +227,11 @@ def convert_environment(datadir, version, always_yes):
     lockfile.acquire()
 
     try:
-        old_version = _get_current_format(datadir)
-
         # FIXME: If we wanted to, we could find a set of conversions which
         # would bring us up to the one we want if there's no direct path.
         # This isn't necessary with just two formats, but it may be useful
         # at 3.
         # Call the appropriate conversion function
-        migrations[(old_version, version)](datadir)
+        migration_func(datadir)
     finally:
         lockfile.release()

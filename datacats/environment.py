@@ -29,7 +29,7 @@ from datacats.docker import (web_command, run_container, remove_container,
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
-    COMPILE_LESS, DATAPUSHER)
+    COMPILE_LESS, DATAPUSHER, INSTALL_POSTGIS)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.migrate import needs_format_conversion
 from datacats.password import generate_password
@@ -392,10 +392,18 @@ class Environment(object):
             isdir(self.datadir + '/venv') and
             isdir(self.sitedir + '/data'))
 
+    def source_complete(self):
+        SOURCE_FILES = ['schema.xml', 'ckan', 'development.ini', 'who.ini']
+
+        return [self.target + '/' + f for f in SOURCE_FILES if not exists(self.target + '/' + f)]
+
     def require_data(self):
         """
         raise a DatacatsError if the datadir or volumes are missing or damaged
         """
+        files = self.source_complete()
+        if files:
+            raise DatacatsError('Missing files in source directory:\n' + '\n'.join(files))
         if not self.data_exists():
             raise DatacatsError('Environment datadir missing. '
                                 'Try "datacats init".')
@@ -419,7 +427,9 @@ class Environment(object):
             # This should take care if the 'site' subdir if needed
             makedirs(self.sitedir, mode=0o700)
         except OSError:
-            raise DatacatsError('Site environment {} already exists.'.format(self.site_name))
+            raise DatacatsError(("Site directory {}"
+                " already exists.")
+                .format(self.name + "/" + self.site_name))
         # venv isn't site-specific, the rest are.
         makedirs(self.sitedir + '/search')
         if not is_boot2docker():
@@ -505,11 +515,7 @@ class Environment(object):
             self.target + '/ckan/ckan/config/solr/schema.xml',
             self.target)
 
-    def start_supporting_containers(self):
-        """
-        Start supporting containers (containers that are used by CKAN but don't host CKAN
-        or CKAN plugins)
-        """
+    def _pgdata_volumes_and_rw(self):
         # complicated because postgres needs hard links to
         # work on its data volume. see issue #5
         if is_boot2docker():
@@ -521,6 +527,13 @@ class Environment(object):
             rw = {self.sitedir + '/postgres': '/var/lib/postgresql/data'}
             volumes_from = None
 
+        return volumes_from, rw
+
+    def start_supporting_containers(self):
+        """
+        Start all supporting containers (containers required for CKAN to operate)
+        """
+        volumes_from, rw = self._pgdata_volumes_and_rw()
         self.stop_supporting_containers()
 
         run_container(
@@ -616,14 +629,28 @@ class Environment(object):
         started = time.time()
         while True:
             try:
+                volumes_from, rw = self._pgdata_volumes_and_rw()
+
                 self.run_command(
                     '/usr/lib/ckan/bin/paster --plugin=ckan db init '
                     '-c /project/development.ini',
                     db_links=True,
                     clean_up=True,
                     )
+                self.stop_supporting_containers()
+                container = run_container(
+                    command='/scripts/install_postgis.sh',
+                    name=self._get_container_name('postgres'),
+                    image='datacats/postgres',
+                    environment=self.passwords,
+                    ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
+                    rw=rw,
+                    volumes_from=volumes_from)
+                remove_container(container['Id'])
+                self.start_supporting_containers()
                 return
-            except WebCommandError:
+            except WebCommandError as e:
+                print e.message
                 if started + retry_seconds > time.time():
                     raise
             time.sleep(DB_INIT_RETRY_DELAY)
@@ -1050,14 +1077,9 @@ class Environment(object):
         else:
             links = None
 
-        try:
-            return web_command(command=command, ro=ro, rw=rw, links=links,
-                               volumes_from=volumes_from, clean_up=clean_up,
-                               commit=True, stream_output=stream_output)
-        except WebCommandError as e:
-            print ('Failed to run command %s.'
-                ' Logs are as follows:\n%s') % (e.command, e.logs)
-            raise
+        return web_command(command=command, ro=ro, rw=rw, links=links,
+                           volumes_from=volumes_from, clean_up=clean_up,
+                           commit=True, stream_output=stream_output)
 
     def purge_data(self, which_sites=None, never_delete=False):
         """

@@ -7,7 +7,7 @@
 from __future__ import absolute_import
 
 from os import environ, devnull
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning, InsecurePlatformWarning
 import json
 import subprocess
 import tempfile
@@ -78,6 +78,7 @@ def _get_docker():
             import warnings
             # It will print out messages to the user otherwise.
             warnings.filterwarnings("ignore", category=InsecureRequestWarning)
+            warnings.filterwarnings("ignore", category=InsecurePlatformWarning)
             _docker_kwargs['tls'].verify = False
 
         # Create the Docker client
@@ -134,6 +135,23 @@ def binds_to_volumes(volumes):
     for passing to create_container
     """
     return [v['bind'] for v in volumes.itervalues()]
+
+
+def exec_command(container_name, command, stdout=False, stderr=False, tty=False,
+                 detach=False, stream=False):
+    """
+    Executes a command in a running container.
+    :param container_name: The name of the container to execute in.
+    :param command: The command to run.
+    :param stdout: True to hook up stdout to the container's stdout
+    :param stderr: True to hook up stderr to the container's stderr
+    :param tty: True to allocate a tty
+    :param detach: True to detach from the current process
+    :param stream: True to return a generator of response data
+    :return:
+    """
+    c = _get_docker().exec_create(container_name, command, stdout, stderr, tty)
+    _get_docker().exec_start(c['Id'], detach, tty, stream)
 
 
 def web_command(command, ro=None, rw=None, links=None, stream_output=None,

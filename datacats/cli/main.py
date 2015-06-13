@@ -34,13 +34,16 @@ See 'datacats help COMMAND' for information about options and
 arguments available to each command.
 """
 
-import sys
-from docopt import docopt
 
+import sys
+import traceback
+from docopt import docopt
 from datacats.cli import create, manage, install, pull, purge, shell, deploy, migrate, less
-from datacats.environment import Environment, DatacatsError
+from datacats.environment import Environment
+from datacats.error import DatacatsError, UndocumentedError
 from datacats.userprofile import UserProfile
 from datacats.version import __version__
+
 
 COMMANDS = {
     'create': create.create,
@@ -60,6 +63,7 @@ COMMANDS = {
     'stop': manage.stop,
     'migrate': migrate.migrate,
     'less': less.less,
+    'reset': create.reset,
 }
 
 
@@ -76,6 +80,7 @@ def main():
     It parses the cli arguments for corresponding options
     and runs the corresponding command
     """
+    # pylint: disable=bare-except
     try:
         command_fn, opts = _parse_arguments(sys.argv[1:])
         # purge handles loading differently
@@ -98,12 +103,36 @@ def main():
         return command_fn(environment, opts, user_profile)
 
     except DatacatsError as e:
-        if sys.stdout.isatty():
-            # error message to have colors if stdout goes to shell
-            e.pretty_print()
-        else:
-            print e
-        sys.exit(1)
+        _error_exit(e)
+    except SystemExit:
+        # datacats --version raises SystemExit to quit
+        sys.exit(0)
+    except:
+        exc_info = "\n".join([line.rstrip()
+            for line in traceback.format_exception(*sys.exc_info())])
+        user_message = ("Something that should not"
+            " have happened happened when attempting"
+            " to run this command:\n"
+            "     datacats {args}\n\n"
+            "It is seems to be a bug.\n"
+            "Please report this issue to us by"
+            " creating an issue ticket at\n\n"
+            "    https://github.com/datacats/datacats/issues\n\n"
+            "so that we would be able to look into that "
+            "and fix the issue."
+            ).format(args=" ".join(sys.argv[1:]))
+
+        _error_exit(DatacatsError(user_message,
+            parent_exception=UndocumentedError(exc_info)))
+
+
+def _error_exit(exception):
+    if sys.stdout.isatty():
+        # error message to have colors if stdout goes to shell
+        exception.pretty_print()
+    else:
+        print exception
+    sys.exit(1)
 
 
 def _parse_arguments(args):
