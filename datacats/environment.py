@@ -391,10 +391,18 @@ class Environment(object):
             isdir(self.datadir + '/venv') and
             isdir(self.sitedir + '/data'))
 
+    def source_complete(self):
+        SOURCE_FILES = ['schema.xml', 'ckan', 'development.ini', 'who.ini']
+
+        return [self.target + '/' + f for f in SOURCE_FILES if not exists(self.target + '/' + f)]
+
     def require_data(self):
         """
         raise a DatacatsError if the datadir or volumes are missing or damaged
         """
+        files = self.source_complete()
+        if files:
+            raise DatacatsError('Missing files in source directory:\n' + '\n'.join(files))
         if not self.data_exists():
             raise DatacatsError('Environment datadir missing. '
                                 'Try "datacats init".')
@@ -418,7 +426,9 @@ class Environment(object):
             # This should take care if the 'site' subdir if needed
             makedirs(self.sitedir, mode=0o700)
         except OSError:
-            raise DatacatsError('Site environment {} already exists.'.format(self.site_name))
+            raise DatacatsError(("Site directory {}"
+                " already exists.")
+                .format(self.name + "/" + self.site_name))
         # venv isn't site-specific, the rest are.
         makedirs(self.sitedir + '/search')
         if not is_boot2docker():
@@ -1016,14 +1026,9 @@ class Environment(object):
         else:
             links = None
 
-        try:
-            return web_command(command=command, ro=ro, rw=rw, links=links,
-                               volumes_from=volumes_from, clean_up=clean_up,
-                               commit=True, stream_output=stream_output)
-        except WebCommandError as e:
-            print ('Failed to run command %s.'
-                ' Logs are as follows:\n%s') % (e.command, e.logs)
-            raise
+        return web_command(command=command, ro=ro, rw=rw, links=links,
+                           volumes_from=volumes_from, clean_up=clean_up,
+                           commit=True, stream_output=stream_output)
 
     def purge_data(self, which_sites=None, never_delete=False):
         """

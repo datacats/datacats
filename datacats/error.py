@@ -9,13 +9,13 @@ class DatacatsError(Exception):
             vals = {
                 "original": self.message,
                 "type_description": parent_exception.user_description,
-                "message": parent_exception.__str__(),
+                "message": str(parent_exception),
             }
-            self.message = "".join(["{original}\n\n",
+            self.message = "".join([str(colored.blue("{original}\n\n")),
                                     "~" * 30,
                                     "\n{type_description}:\n",
-                                    "{message}",
-                                    "~" * 30, "\n"]).format(**vals)
+                                    str(colored.yellow("{message}\n"))]
+                                    ).format(**vals)
 
         self.format_args = format_args
         super(DatacatsError, self).__init__(message, format_args)
@@ -29,15 +29,15 @@ class DatacatsError(Exception):
         """
         print colored.blue("-" * 40)
         print colored.red("datacats: problem was encountered:")
-        for line in self.message.format(*self.format_args).split('\n'):
-            print "    ", line
+        print self.message.format(*self.format_args)
         print colored.blue("-" * 40)
 
 
 class WebCommandError(Exception):
     user_description = "Docker container \"/web\" command failed"
 
-    def __init__(self, command, logs):
+    def __init__(self, command, container_id, logs):
+        # pylint: disable=unused-argument
         super(WebCommandError, self).__init__()
         self.command = command
         self.logs = logs
@@ -51,3 +51,7 @@ class WebCommandError(Exception):
 
 class PortAllocatedError(Exception):
     user_description = "Unable to allocate port"
+
+
+class UndocumentedError(Exception):
+    user_description = "Please quote this traceback when reporting this error"
