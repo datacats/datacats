@@ -47,7 +47,7 @@ class WebCommandError(Exception):
 
     def __str__(self):
         serialized_command = " ".join(self.command) \
-                if type(self.command) is list else \
+                if isinstance(self.command, list) else \
                 str(self.command)
 
         return ('    Command: {0}\n'
