@@ -231,3 +231,22 @@ Default: '.'
         print "Site not currently running"
     else:
         webbrowser.open(addr)
+
+
+def tweak(environment, opts):
+    """Commands operating on environment data
+
+Usage:
+  datacats tweak --install-postgis [ENVIRONMENT]
+
+Options:
+  --install-postgis    Install postgis in ckan database
+
+ENVIRONMENT may be an environment name or a path to an environment directory.
+Default: '.'
+"""
+
+    environment.require_data()
+    if opts['--install-postgis']:
+        print "Installing postgis"
+        environment.install_postgis_sql()

@@ -533,6 +533,7 @@ class Environment(object):
         running = self.containers_running()
 
         if 'postgres' not in running or 'solr' not in running:
+            # XXX: postgres entrypoint magic
             # users are created when data dir is blank so we must pass
             # all the user passwords as environment vars
             self.stop_postgres_and_solr()
@@ -639,6 +640,8 @@ class Environment(object):
                 if started + retry_seconds > time.time():
                     raise
             time.sleep(DB_INIT_RETRY_DELAY)
+
+    def install_postgis_sql(self):
         web_command(
             None,  # use entrypoint to override postgres createdb magic
             entrypoint='/scripts/install_postgis.sh',
@@ -646,7 +649,6 @@ class Environment(object):
             ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
             links={self._get_container_name('postgres'): 'db'},
             )
-        return
 
     def _generate_passwords(self):
         """

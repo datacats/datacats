@@ -17,8 +17,10 @@ The datacats commands available are:
   info        Display information about environment and running containers
   init        Initialize a purged environment or copied environment directory
   install     Install or reinstall Python packages within this environment
+  less        Recompile less files in an environment
   list        List all environments for this user
   logs        Display or follow container logs
+  migrate     Migrates an environment to the newest datadir format
   open        Open web browser window to this environment
   paster      Run a paster command from the current directory
   pull        Download or update required datacats docker images
@@ -27,8 +29,7 @@ The datacats commands available are:
   shell       Run a command or interactive shell within this environment
   start       Create containers and start serving environment
   stop        Stop serving environment and remove all its containers
-  migrate     Migrates an environment to the newest datadir format
-  less        Recompile less files in an environment
+  tweak       Commands operating on environment data
 
 See 'datacats help COMMAND' for information about options and
 arguments available to each command.
@@ -38,7 +39,8 @@ arguments available to each command.
 import sys
 import traceback
 from docopt import docopt
-from datacats.cli import create, manage, install, pull, purge, shell, deploy, migrate, less
+from datacats.cli import (create, manage, install, pull, purge, shell, deploy,
+    migrate, less)
 from datacats.environment import Environment
 from datacats.error import DatacatsError, UndocumentedError
 from datacats.userprofile import UserProfile
@@ -64,6 +66,7 @@ COMMANDS = {
     'migrate': migrate.migrate,
     'less': less.less,
     'reset': create.reset,
+    'tweak': manage.tweak,
 }
 
 
