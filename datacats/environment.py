@@ -540,7 +540,6 @@ class Environment(object):
                 name=self._get_container_name('postgres'),
                 image='datacats/postgres',
                 environment=self.passwords,
-                ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
                 rw=rw,
                 volumes_from=volumes_from)
             run_container(
@@ -622,6 +621,9 @@ class Environment(object):
 
         :param retry_seconds: how long to retry waiting for db to start
         """
+        # XXX workaround for not knowing how long we need to wait
+        # for postgres to be ready. fix this by changing the postgres
+        # entrypoint, or possibly running once with command=/bin/true
         started = time.time()
         while True:
             try:
@@ -633,23 +635,20 @@ class Environment(object):
                     db_links=True,
                     clean_up=True,
                     )
-                self.stop_postgres_and_solr()
-                container = run_container(
-                    command='/scripts/install_postgis.sh',
-                    name=self._get_container_name('postgres'),
-                    image='datacats/postgres',
-                    environment=self.passwords,
-                    ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
-                    rw=rw,
-                    volumes_from=volumes_from)
-                remove_container(container['Id'])
-                self.start_postgres_and_solr()
-                return
+                break
             except WebCommandError as e:
                 print e.message
                 if started + retry_seconds > time.time():
                     raise
             time.sleep(DB_INIT_RETRY_DELAY)
+        web_command(
+            None,  # use entrypoint to override postgres createdb magic
+            entrypoint='/scripts/install_postgis.sh',
+            image='datacats/postgres',
+            ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
+            links={self._get_container_name('postgres'): 'db'},
+            )
+        return
 
     def _generate_passwords(self):
         """
