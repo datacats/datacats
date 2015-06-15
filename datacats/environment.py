@@ -1114,7 +1114,7 @@ class Environment(object):
 
         datadirs = ['sites/' + datadir for datadir in datadirs]
 
-        if not self.sites:
+        if not self.sites and not never_delete:
             datadirs.append('venv')
 
         web_command(
