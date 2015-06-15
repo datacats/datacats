@@ -4,7 +4,10 @@ from clint.textui import colored
 class DatacatsError(Exception):
 
     def __init__(self, message, format_args=(), parent_exception=None):
-        self.message = message
+        try:
+            self.message = message.format(*format_args)
+        except (ValueError, KeyError):
+            self.message = message
         if parent_exception and hasattr(parent_exception, 'user_description'):
             vals = {
                 "original": self.message,
@@ -21,7 +24,7 @@ class DatacatsError(Exception):
         super(DatacatsError, self).__init__(message, format_args)
 
     def __str__(self):
-        return self.message.format(*self.format_args)
+        return self.message
 
     def pretty_print(self):
         """
@@ -29,7 +32,7 @@ class DatacatsError(Exception):
         """
         print colored.blue("-" * 40)
         print colored.red("datacats: problem was encountered:")
-        print self.message.format(*self.format_args)
+        print self.message
         print colored.blue("-" * 40)
 
 
@@ -43,10 +46,14 @@ class WebCommandError(Exception):
         self.logs = logs
 
     def __str__(self):
+        serialized_command = " ".join(self.command) \
+            if isinstance(self.command, list) else \
+            str(self.command)
+
         return ('    Command: {0}\n'
                 '    Docker Error Log:\n'
                 '    {1}\n'
-                ).format(" ".join(self.command), self.logs)
+                ).format(serialized_command, self.logs)
 
 
 class PortAllocatedError(Exception):
