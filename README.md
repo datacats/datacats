@@ -9,14 +9,8 @@ any platform, along with a command to deploy that exact environment to the cloud
 
 
 ## Install
+Please see detailed OS-specific [installation instructions in the docs](http://docs.datacats.com/guide.html#installation).
 
-OSX | Linux | Windows
---- | --- | ---
-1. [Install boot2docker](https://docs.docker.com/installation/mac/) | 1. [Install latest docker](https://docs.docker.com/installation/ubuntulinux/#docker-maintained-package-installation) | coming soon
-2. run `pip install datacats` | 2. run `pip install datacats` |
-3. run `datacats pull` | 3. run `datacats pull` |
-
-See the full docs at [docs.datacats.com](http://docs.datacats.com)
 
 ## Create a CKAN environment
 
