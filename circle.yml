@@ -21,6 +21,7 @@ test:
     - datacats purge -y site1
     - '[ "$(echo `datacats list`)" == "site2" ]'
     - datacats init site1 -n
+    - datacats reset -yn site1
     - datacats install site1
     - datacats init site1 -s two -n
     - datacats start -s two site1
