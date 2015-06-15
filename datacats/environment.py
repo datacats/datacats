@@ -234,6 +234,13 @@ class Environment(object):
             rw_venv=True,
             )
 
+    def install_extra(self):
+        self.user_run_script(
+            script=scripts.get_script_path('install_extra_packages.sh'),
+            args=[],
+            rw_venv=True
+        )
+
     def create_source(self, datapusher=True):
         """
         Populate ckan directory from preloaded image and copy
