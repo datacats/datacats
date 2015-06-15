@@ -98,9 +98,22 @@ That is it, you are all set!
 
 Install from source
 """""""""""""""""""""
-To pull the Docker images run::
+A more advanced option is to install datacats directly from the source code.
+
+This option may be needed if are considering contributing to the datacats development
+or would like to try the most recent (and potentially unstable) version.
+
+To install datacats directly from the `source code repository on Github`_,
+clone the source repo to your custom location and
+install datacats as a Python package from there: ::
+
+  git clone git@github.com:datacats/datacats.git
+  python setup.py develop
+
+You will still need to download the necessary Docker images as described above.
 
 
+.. _source code repository on Github: https://github.com/datacats/datacats
 
 Getting Started
 ---------------
