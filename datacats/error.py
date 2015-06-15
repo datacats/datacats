@@ -6,7 +6,7 @@ class DatacatsError(Exception):
     def __init__(self, message, format_args=(), parent_exception=None):
         try:
             self.message = message.format(format_args)
-        except:
+        except (ValueError, KeyError):
             self.message = message
         if parent_exception and hasattr(parent_exception, 'user_description'):
             vals = {
@@ -21,6 +21,7 @@ class DatacatsError(Exception):
                                     ).format(**vals)
 
         self.format_args = format_args
+        super(DatacatsError, self).__init__(message, format_args)
 
     def __str__(self):
         return self.message
