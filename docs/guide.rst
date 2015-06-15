@@ -34,12 +34,12 @@ Virtual Machine. Simply install VirtualBox or VMWare, create a Ubuntu VM (Virtua
 Install Docker
 """"""""""""""
 You will need to install Docker first.
-OS-specific detailed reference on how to do that is available at the
+Detailed OS-specific reference on how to do that is available at the
 `Installation Instructions section on Docker site`_ .
 
 .. _Installation Instructions section on Docker site: https://docs.docker.com/installation/#installation
 
-Here is the quick OS-specific summary:
+Here is the quick OS-specific summary that is sufficient in most cases:
 
 Linux
 #####
@@ -80,17 +80,26 @@ If you do not have ``pip`` installed, you can install it first by running: ::
 
     easy_install pip
 
+.. _`Download the necessary Docker containers`:
+
+
+Download the necessary Docker containers
+"""""""""""""""""""""
+
 As a last setup step, we need to pull the Docker images needed to
 create your environment. This only needs to happen **once**. Those images are
 then re-used for all subsequent environments you create.
 
-.. _`Download the necessary Docker containers`:
+To pull the Docker images just run::
 
-Download the necessary Docker containers
+    datacats pull
+
+That is it, you are all set!
+
+Install from source
 """""""""""""""""""""
 To pull the Docker images run::
 
-    datacats pull
 
 
 Getting Started
