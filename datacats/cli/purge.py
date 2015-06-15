@@ -7,6 +7,7 @@
 from shutil import rmtree
 
 from datacats.environment import Environment, DatacatsError
+from datacats.cli.util import y_or_n_prompt
 
 
 def purge(opts):
@@ -36,13 +37,7 @@ Default: '.'
     sites = [opts['--site']] if not opts['--delete-environment'] else environment.sites
 
     if not opts['--yes']:
-        inp = None
-        # Nothing (default, n), y and n are our valid inputs
-        while inp is None or inp.lower()[:1] not in ['y', 'n', '']:
-            inp = raw_input('datacats purge will delete all stored data. Are you sure? [n] (y/n): ')
-
-        if inp.lower()[:1] == 'n' or not inp:
-            raise DatacatsError('Aborting purge by user request.')
+        y_or_n_prompt('datacats purge will delete all stored data')
 
     environment.stop_ckan()
     environment.stop_supporting_containers()

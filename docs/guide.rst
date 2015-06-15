@@ -15,20 +15,52 @@ this project works, take a look at :doc:`docker`.
 
 .. _Docker: https://www.docker.com/
 
-Installation
+Install datacats
 ------------
+Getting datacats ready for work involves three parts:
+
+- `Install Docker`_
+- `Install datacats command line tool`_
+- `Download the necessary Docker containers`_
+
+datacats currently supports **Linux** and **OSX** (Apple computers) operating systems out of the box.
+
+Windows is not supported natively just yet even though we are working on it.
+For now, you can run datacats on Windows using a Linux
+Virtual Machine. Simply install VirtualBox or VMWare, create a Ubuntu VM (Virtual Machine), and install datacats on top of it.
+
+.. _Install Docker:
 
 Install Docker
 """"""""""""""
-You will need to install Docker first:
+You will need to install Docker first.
+OS-specific detailed reference on how to do that is available at the
+`Installation Instructions section on Docker site`_ .
+
+.. _Installation Instructions section on Docker site: https://docs.docker.com/installation/#installation
+
+Here is the quick OS-specific summary:
 
 Linux
 #####
-Follow the instructions over at the `Docker Docs`_. Make sure to install the
-Docker-maintained version of Docker, not the official Ubuntu-maintained version
-of Docker, which is out-of-date.
+Unfortunately, to date, some
+OS package installation tools (like apt-get on **Ubuntu**) still only offer obsolete
+versions of Docker by default which datacats does not support.
 
-.. _Docker Docs: https://docs.docker.com/installation/ubuntulinux/#docker-maintained-package-installation
+The surest way to install the most recent version of Docker
+is to use the official installation script from the Docker website.
+
+Open your shell and run the command: ::
+
+  wget -qO- https://get.docker.com/ | sh
+This command uses ``wget`` tool to download the script from the website and then runs it
+in a shell (``sh``).
+
+
+Another potential ground for complications is that Docker needs
+Linux kernel version 3.10 or higher.
+Updating your Linux distribution to the more recent version should address that.
+In Ubuntu, version Ubuntu Saucy 13.10 or higher is sufficient.
 
 OSX
 ###
@@ -36,13 +68,7 @@ You will need `boot2docker`_, the standard way to get Docker running on your Mac
 
 .. _boot2docker: https://docs.docker.com/installation/mac/
 
-Windows
-#######
-Native Windows support is coming soon. For now, you can run datacats inside any Linux
-Virtual Machine. Simply install VirtualBox or VMWare, create a Ubuntu VM and
-`install Docker`__ on it.
-
-__ `Docker Docs`_
+.. _`Install datacats command line tool`:
 
 Install datacats
 """""""""""""""""""""
@@ -58,6 +84,10 @@ As a last setup step, we need to pull the Docker images needed to
 create your environment. This only needs to happen **once**. Those images are
 then re-used for all subsequent environments you create.
 
+.. _`Download the necessary Docker containers`:
+
+Download the necessary Docker containers
+"""""""""""""""""""""
 To pull the Docker images run::
 
     datacats pull

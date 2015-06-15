@@ -12,6 +12,8 @@ from datacats.environment import Environment
 from datacats.cli.install import install_all
 from datacats.error import DatacatsError
 
+from datacats.cli.util import y_or_n_prompt
+
 
 def write(s):
     sys.stdout.write(s)
@@ -106,11 +108,16 @@ def reset(environment, opts):
 database and recreate the administrator account.
 
 Usage:
-  datacats reset [-s NAME] ENVIRONMENT
+  datacats reset [-s NAME] [ENVIRONMENT]
 
 Options:
-  -s --site=NAME          The site to reset [default: primary]"""
+  -s --site=NAME          The site to reset [default: primary]
+  -y --yes                Respond yes to all questions"""
     # pylint: disable=unused-argument
+    if not opts['--yes']:
+        y_or_n_prompt('Reset will remove all data related to the '
+                      'site {} and recreate the database'.format(opts['--site']))
+
     print 'Resetting...'
     environment.stop_postgres_and_solr()
     environment.stop_web()
