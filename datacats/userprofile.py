@@ -124,7 +124,7 @@ class UserProfile(object):
                 else user_unrecognized_error_message
             raise DatacatsError(user_error_message, parent_exception=e)
 
-    def create(self, environment, target_name, stream_output=None):
+    def create(self, environment, target_name):
         """
         Sends "create project" command to the remote server
         """
@@ -165,6 +165,7 @@ class UserProfile(object):
                 ],
                 environment, self,
                 include_project_dir=True,
+                stream_output=stream_output,
                 clean_up=True,
                 )
         except WebCommandError as e:
