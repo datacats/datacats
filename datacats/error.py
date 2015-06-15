@@ -46,10 +46,14 @@ class WebCommandError(Exception):
         self.logs = logs
 
     def __str__(self):
+        serialized_command = " ".join(self.command) \
+                if type(self.command) is list else \
+                str(self.command)
+
         return ('    Command: {0}\n'
                 '    Docker Error Log:\n'
                 '    {1}\n'
-                ).format(" ".join(self.command), self.logs)
+                ).format(serialized_command, self.logs)
 
 
 class PortAllocatedError(Exception):
