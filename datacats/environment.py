@@ -627,8 +627,6 @@ class Environment(object):
         started = time.time()
         while True:
             try:
-                volumes_from, rw = self._pgdata_volumes_and_rw()
-
                 self.run_command(
                     '/usr/lib/ckan/bin/paster --plugin=ckan db init '
                     '-c /project/development.ini',
