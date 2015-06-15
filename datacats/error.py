@@ -4,7 +4,10 @@ from clint.textui import colored
 class DatacatsError(Exception):
 
     def __init__(self, message, format_args=(), parent_exception=None):
-        self.message = message
+        try:
+            self.message = message.format(format_args)
+        except:
+            self.message = message
         if parent_exception and hasattr(parent_exception, 'user_description'):
             vals = {
                 "original": self.message,
@@ -18,10 +21,9 @@ class DatacatsError(Exception):
                                     ).format(**vals)
 
         self.format_args = format_args
-        super(DatacatsError, self).__init__(message, format_args)
 
     def __str__(self):
-        return self.message.format(*self.format_args)
+        return self.message
 
     def pretty_print(self):
         """
@@ -29,7 +31,7 @@ class DatacatsError(Exception):
         """
         print colored.blue("-" * 40)
         print colored.red("datacats: problem was encountered:")
-        print self.message.format(*self.format_args)
+        print self.message
         print colored.blue("-" * 40)
 
 
