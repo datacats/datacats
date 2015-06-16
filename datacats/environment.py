@@ -533,6 +533,7 @@ class Environment(object):
         running = self.containers_running()
 
         if 'postgres' not in running or 'solr' not in running:
+            # XXX: postgres entrypoint magic
             # users are created when data dir is blank so we must pass
             # all the user passwords as environment vars
             self.stop_postgres_and_solr()
@@ -540,7 +541,6 @@ class Environment(object):
                 name=self._get_container_name('postgres'),
                 image='datacats/postgres',
                 environment=self.passwords,
-                ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
                 rw=rw,
                 volumes_from=volumes_from)
             run_container(
@@ -622,34 +622,33 @@ class Environment(object):
 
         :param retry_seconds: how long to retry waiting for db to start
         """
+        # XXX workaround for not knowing how long we need to wait
+        # for postgres to be ready. fix this by changing the postgres
+        # entrypoint, or possibly running once with command=/bin/true
         started = time.time()
         while True:
             try:
-                volumes_from, rw = self._pgdata_volumes_and_rw()
-
                 self.run_command(
                     '/usr/lib/ckan/bin/paster --plugin=ckan db init '
                     '-c /project/development.ini',
                     db_links=True,
                     clean_up=True,
                     )
-                self.stop_postgres_and_solr()
-                container = run_container(
-                    command='/scripts/install_postgis.sh',
-                    name=self._get_container_name('postgres'),
-                    image='datacats/postgres',
-                    environment=self.passwords,
-                    ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
-                    rw=rw,
-                    volumes_from=volumes_from)
-                remove_container(container['Id'])
-                self.start_postgres_and_solr()
-                return
+                break
             except WebCommandError as e:
                 print e.message
                 if started + retry_seconds > time.time():
                     raise
             time.sleep(DB_INIT_RETRY_DELAY)
+
+    def install_postgis_sql(self):
+        web_command(
+            None,  # use entrypoint to override postgres createdb magic
+            entrypoint='/scripts/install_postgis.sh',
+            image='datacats/postgres',
+            ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
+            links={self._get_container_name('postgres'): 'db'},
+            )
 
     def _generate_passwords(self):
         """

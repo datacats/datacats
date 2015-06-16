@@ -78,8 +78,6 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
         if create_skin and making_full_environment:
             steps.append(environment.create_install_template_skin)
 
-        steps.append(environment.ckan_db_init)
-
         for fn in steps:
             fn()
             write('.')
@@ -198,6 +196,7 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
         install_all(environment, False, verbose=False)
 
     write('Initializing database')
+    environment.install_postgis_sql()
     environment.ckan_db_init()
     write('\n')
 
