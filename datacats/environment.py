@@ -374,7 +374,7 @@ class Environment(object):
         """
         if (not isdir(self.sitedir + '/files')
                 or not isdir(self.sitedir + '/run')
-                or not isdir(self.sitedir + '/search')):
+                or not isdir(self.sitedir + '/solr')):
             return False
         if is_boot2docker():
             return task.volume_containers_exist([
@@ -383,7 +383,7 @@ class Environment(object):
                 ])
         return (
             isdir(self.datadir + '/venv') and
-            isdir(self.sitedir + '/data'))
+            isdir(self.sitedir + '/postgres'))
 
     def source_complete(self):
         SOURCE_FILES = ['schema.xml', 'ckan', 'development.ini', 'who.ini']
@@ -421,11 +421,11 @@ class Environment(object):
                 " already exists.")
                 .format(self.name + "/" + self.site_name))
         # venv isn't site-specific, the rest are.
-        makedirs(self.sitedir + '/search')
+        makedirs(self.sitedir + '/solr')
         if not is_boot2docker():
             if not isdir(self.datadir + '/venv'):
                 makedirs(self.datadir + '/venv')
-            makedirs(self.sitedir + '/data')
+            makedirs(self.sitedir + '/postgres')
         makedirs(self.sitedir + '/files')
         makedirs(self.sitedir + '/run')
 
