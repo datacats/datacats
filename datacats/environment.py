@@ -379,7 +379,7 @@ class Environment(object):
         """
         raise a DatacatsError if the datadir or volumes are missing or damaged
         """
-        files = task.source_missing()
+        files = task.source_missing(self.target)
         if files:
             raise DatacatsError('Missing files in source directory:\n' +
                                 '\n'.join(files))
