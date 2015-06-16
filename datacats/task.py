@@ -25,7 +25,7 @@ def data_complete(datadir, sitedir, get_container_name):
         return all(docker.inspect_container(get_container_name(x))
                 for x in ('pgdata', 'venv'))
 
-    return path.isdir(datadir + '/venv') and path.isdir('/postgres')
+    return path.isdir(datadir + '/venv') and path.isdir(sitedir + '/postgres')
 
 
 def source_missing(srcdir):
