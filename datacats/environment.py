@@ -23,7 +23,7 @@ from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker,
                              data_only_container, docker_host,
-                             container_logs, remove_image, require_images,
+                             container_logs, require_images,
                              APIError)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
@@ -418,27 +418,13 @@ class Environment(object):
 
     def create_virtualenv(self):
         """
-        Populate venv directory from preloaded image
+        Populate venv from preloaded image
         """
-        if is_boot2docker():
-            data_only_container(self._get_container_name('venv'),
-                                ['/usr/lib/ckan'])
-            img_id = web_command(
-                '/bin/mv /usr/lib/ckan/ /usr/lib/ckan_original',
-                image=self._preload_image(),
-                commit=True,
-                )
-            web_command(
-                command='/bin/cp -a /usr/lib/ckan_original/. /usr/lib/ckan/.',
-                volumes_from=self._get_container_name('venv'),
-                image=img_id,
-                )
-            remove_image(img_id)
-        else:
-            web_command(
-                command='/bin/cp -a /usr/lib/ckan/. /usr/lib/ckan_target/.',
-                rw={self.datadir + '/venv': '/usr/lib/ckan_target'},
-                image=self._preload_image())
+        return task.create_virtualenv(
+            self.datadir,
+            self._preload_image(),
+            self._get_container_name,
+            )
 
     def clean_virtualenv(self):
         """
