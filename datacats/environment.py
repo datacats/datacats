@@ -372,18 +372,8 @@ class Environment(object):
         """
         Return True if all the expected datadir files are present
         """
-        if (not isdir(self.sitedir + '/files')
-                or not isdir(self.sitedir + '/run')
-                or not isdir(self.sitedir + '/solr')):
-            return False
-        if is_boot2docker():
-            return task.volume_containers_exist([
-                self._get_container_name('pgdata'),
-                self._get_container_name('venv'),
-                ])
-        return (
-            isdir(self.datadir + '/venv') and
-            isdir(self.sitedir + '/postgres'))
+        return task.data_complete(self.datadir, self.sitedir,
+            self._get_container_name)
 
     def source_complete(self):
         SOURCE_FILES = ['schema.xml', 'ckan', 'development.ini', 'who.ini']

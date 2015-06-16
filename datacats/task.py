@@ -5,15 +5,21 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from datacats import docker
+from os import path
 
-def volume_containers_exist(container_names):
+def data_complete(datadir, sitedir, get_container_name):
     """
-    Return True if we're not running boot2docker or if all container_names
-    are present
+    Return True if the directories and containers we're expecting
+    are present in datadir, sitedir and containers
     """
-    # We don't use data only containers on non-boot2docker
-    if not docker.is_boot2docker():
-        return True
+    if any(not path.isdir(sitedir + x)
+            for x in ('/files', '/run', '/solr'):
+        return False
 
-    # Inspect returns None if the container doesn't exist.
-    return all(docker.inspect_container(x) for x in container_names)
+    if docker.is_boot2docker():
+        # Inspect returns None if the container doesn't exist.
+        return all(docker.inspect_container(get_container_name(x))
+                for x in ('pgdata', 'venv')):
+
+    return path.isdir(datadir + '/venv') and path.isdir('/postgres')
+
