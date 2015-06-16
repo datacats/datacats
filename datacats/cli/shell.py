@@ -21,7 +21,7 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.require_data()
-    environment.start_postgres_and_solr()
+    environment.start_supporting_containers()
     return environment.interactive_shell(
         opts['COMMAND'],
         detach=opts['--detach']
@@ -44,7 +44,7 @@ specify the --plugin option. The --config option also need not be specified.
 """
     environment = Environment.load('.')
     environment.require_data()
-    environment.start_postgres_and_solr()
+    environment.start_supporting_containers()
 
     assert opts['COMMAND'][0] == '--'
     return environment.interactive_shell(

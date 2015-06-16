@@ -3,11 +3,8 @@ from clint.textui import colored
 
 class DatacatsError(Exception):
 
-    def __init__(self, message, format_args=(), parent_exception=None):
-        try:
-            self.message = message.format(*format_args)
-        except (ValueError, KeyError):
-            self.message = message
+    def __init__(self, message, parent_exception=None):
+        self.message = message
         if parent_exception and hasattr(parent_exception, 'user_description'):
             vals = {
                 "original": self.message,
@@ -20,8 +17,7 @@ class DatacatsError(Exception):
                                     str(colored.yellow("{message}\n"))]
                                     ).format(**vals)
 
-        self.format_args = format_args
-        super(DatacatsError, self).__init__(message, format_args)
+        super(DatacatsError, self).__init__(message)
 
     def __str__(self):
         return self.message
@@ -43,6 +39,7 @@ class WebCommandError(Exception):
         # pylint: disable=unused-argument
         super(WebCommandError, self).__init__()
         self.command = command
+        self.container_id = container_id
         self.logs = logs
 
     def __str__(self):

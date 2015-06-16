@@ -24,8 +24,8 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bin] [-s NAME] [--address=IP] [--syslog]
-                  [--ckan=CKAN_VERSION] ENVIRONMENT_DIR [PORT]
+  datacats create [-bin] [-s NAME] [--address=IP] [--syslog] [--ckan=CKAN_VERSION]
+                  [--no-datapusher] ENVIRONMENT_DIR [PORT]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
@@ -35,6 +35,7 @@ Options:
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME          Pick a site to create [default: primary]
   --syslog                Log to the syslog
+  --no-datapusher         Don't install/enable ckanext-datapusher
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
@@ -48,12 +49,13 @@ part of this path will be used as the environment name.
         site_name=opts['--site'],
         ckan_version=opts['--ckan'],
         address=opts['--address'],
-        log_syslog=opts['--syslog']
+        log_syslog=opts['--syslog'],
+        datapusher=not opts['--no-datapusher'],
         )
 
 
 def create_environment(environment_dir, port, ckan_version, create_skin, site_name,
-        start_web, create_sysadmin, address, log_syslog=False):
+        start_web, create_sysadmin, address, log_syslog=False, datapusher=True):
     # pylint: disable=unused-argument
     # FIXME: only 2.3 preload supported at the moment
     environment = Environment.new(environment_dir, '2.3', site_name, port=port)
@@ -65,27 +67,32 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
         write('Creating environment "{0}/{1}"'.format(environment.name, environment.site_name))
         steps = [
             lambda: environment.create_directories(making_full_environment),
-            environment.create_bash_profile] + ([environment.create_virtualenv,
-            environment.save,
-            environment.create_source,
-            environment.create_ckan_ini] if making_full_environment else []
-            ) + [environment.save_site, environment.start_postgres_and_solr,
-            environment.fix_storage_permissions,
-            lambda: environment.update_ckan_ini(skin=create_skin),
-            environment.fix_project_permissions,
+            environment.create_bash_profile
+            ] + \
+            ([
+                environment.create_virtualenv,
+                environment.save,
+                lambda: environment.create_source(datapusher),
+                environment.create_ckan_ini] if making_full_environment else []
+            ) + \
+            [
+                environment.save_site,
+                environment.start_supporting_containers,
+                environment.fix_storage_permissions,
+                lambda: environment.update_ckan_ini(skin=create_skin),
+                environment.fix_project_permissions,
             ]
 
         if create_skin and making_full_environment:
             steps.append(environment.create_install_template_skin)
-
-        steps.append(environment.ckan_db_init)
 
         for fn in steps:
             fn()
             write('.')
         write('\n')
 
-        return finish_init(environment, start_web, create_sysadmin, address, log_syslog=log_syslog)
+        return finish_init(environment, start_web, create_sysadmin, address,
+                           log_syslog=log_syslog)
     except:
         # Make sure that it doesn't get printed right after the dots
         # by printing a newline
@@ -111,8 +118,8 @@ Options:
                       'site {} and recreate the database'.format(opts['--site']))
 
     print 'Resetting...'
-    environment.stop_postgres_and_solr()
-    environment.stop_web()
+    environment.stop_supporting_containers()
+    environment.stop_ckan()
     environment.purge_data([opts['--site']], never_delete=True)
     init({
         'ENVIRONMENT_DIR': opts['ENVIRONMENT'],
@@ -172,7 +179,7 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
              environment.create_virtualenv
              ] if making_full_environment else []) + [
                  environment.save_site,
-                 environment.start_postgres_and_solr,
+                 environment.start_supporting_containers,
                  environment.fix_storage_permissions,
                  environment.fix_project_permissions,
             ]
@@ -198,11 +205,12 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
         install_all(environment, False, verbose=False)
 
     write('Initializing database')
+    environment.install_postgis_sql()
     environment.ckan_db_init()
     write('\n')
 
     if start_web:
-        environment.start_web(address=address, log_syslog=log_syslog)
+        environment.start_ckan(address=address, log_syslog=log_syslog)
         write('Starting web server at {0} ...\n'.format(
             environment.web_address()))
 
@@ -214,7 +222,7 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
             print
 
     if not start_web:
-        environment.stop_postgres_and_solr()
+        environment.stop_supporting_containers()
 
 
 def confirm_password():

@@ -53,8 +53,6 @@ def _get_docker():
     if not _docker:
         # First, check if boot2docker is powered on.
         try:
-            # Use an absolute path to avoid any funny business
-            # with the PATH.
             with open(devnull, 'w') as devnull_f:
                 status = subprocess.check_output(
                     ['boot2docker', 'status'],
@@ -156,9 +154,9 @@ def exec_command(container_name, command, stdout=False, stderr=False, tty=False,
     _get_docker().exec_start(c['Id'], detach, tty, stream)
 
 
-def web_command(command, ro=None, rw=None, links=None, stream_output=None,
+def web_command(command, ro=None, rw=None, links=None,
                 image='datacats/web', volumes_from=None, commit=False,
-                clean_up=False):
+                clean_up=False, stream_output=None, entrypoint=None):
     """
     Run a single command in a web image optionally preloaded with the ckan
     source and virtual envrionment.
@@ -172,6 +170,7 @@ def web_command(command, ro=None, rw=None, links=None, stream_output=None,
     :param commit: True to create a new image based on result
     :param clean_up: True to remove container even on error
     :param stream_output: file to write stderr+stdout from command
+    :param entrypoint: override entrypoint (script that runs command)
 
     :returns: image id if commit=True
     """
@@ -181,7 +180,8 @@ def web_command(command, ro=None, rw=None, links=None, stream_output=None,
         command=command,
         volumes=binds_to_volumes(binds),
         detach=False,
-        host_config=create_host_config(binds=binds))
+        host_config=create_host_config(binds=binds),
+        entrypoint=entrypoint)
     _get_docker().start(
         container=c['Id'],
         links=links,

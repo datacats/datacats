@@ -31,8 +31,8 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    environment.stop_web()
-    environment.stop_postgres_and_solr()
+    environment.stop_ckan()
+    environment.stop_supporting_containers()
 
 
 def start(environment, opts):
@@ -81,7 +81,7 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.require_data()
-    environment.stop_web()
+    environment.stop_ckan()
     if opts['PORT'] or opts['--address'] != '127.0.0.1':
         if opts['PORT']:
             environment.port = int(opts['PORT'])
@@ -89,10 +89,10 @@ Default: '.'
             environment.address = opts['--address']
         environment.save()
     if 'postgres' not in environment.containers_running():
-        environment.stop_postgres_and_solr()
-        environment.start_postgres_and_solr()
+        environment.stop_supporting_containers()
+        environment.start_supporting_containers()
 
-    environment.start_web(
+    environment.start_ckan(
         production=opts['--production'],
         address=opts['--address'],
         log_syslog=opts['--syslog'])
@@ -231,3 +231,22 @@ Default: '.'
         print "Site not currently running"
     else:
         webbrowser.open(addr)
+
+
+def tweak(environment, opts):
+    """Commands operating on environment data
+
+Usage:
+  datacats tweak --install-postgis [ENVIRONMENT]
+
+Options:
+  --install-postgis    Install postgis in ckan database
+
+ENVIRONMENT may be an environment name or a path to an environment directory.
+Default: '.'
+"""
+
+    environment.require_data()
+    if opts['--install-postgis']:
+        print "Installing postgis"
+        environment.install_postgis_sql()

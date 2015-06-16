@@ -14,7 +14,7 @@ IMAGES = [
     'datacats/web',
     'datacats/web:preload-2.3',
     'datacats/postgres',
-    'datacats/solr',
+    'datacats/solr'
     ]
 
 DEVEL_IMAGES = [
