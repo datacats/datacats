@@ -18,6 +18,7 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
 
 from lockfile import LockFile
 
+from datacats import task
 from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker,
@@ -356,13 +357,10 @@ class Environment(object):
         return environment
 
     def volumes_exist(self):
-        # We don't use data only containers on non-boot2docker
-        if not is_boot2docker():
-            return True
-
-        # Inspect returns None if the container doesn't exist.
-        return (inspect_container(self._get_container_name('pgdata')) and
-                inspect_container(self._get_container_name('venv')))
+        return task.volume_containers_exist([
+            self._get_container_name('pgdata'),
+            self._get_container_name('venv'),
+            ])
 
     def data_exists(self):
         """
