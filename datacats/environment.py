@@ -356,12 +356,6 @@ class Environment(object):
 
         return environment
 
-    def volumes_exist(self):
-        return task.volume_containers_exist([
-            self._get_container_name('pgdata'),
-            self._get_container_name('venv'),
-            ])
-
     def data_exists(self):
         """
         Return True if the datadir for this environment exists
@@ -383,7 +377,10 @@ class Environment(object):
                 or not isdir(self.sitedir + '/search')):
             return False
         if is_boot2docker():
-            return True
+            return task.volume_containers_exist([
+                self._get_container_name('pgdata'),
+                self._get_container_name('venv'),
+                ])
         return (
             isdir(self.datadir + '/venv') and
             isdir(self.sitedir + '/data'))
@@ -404,13 +401,10 @@ class Environment(object):
             raise DatacatsError('Environment datadir missing. '
                                 'Try "datacats init".')
         if not self.data_complete():
-            raise DatacatsError('Environment datadir damaged. '
-                                'Try "datacats purge" followed by'
-                                ' "datacats init".')
-        if not self.volumes_exist():
-            raise DatacatsError('Volume containers could not be found.\n'
+            raise DatacatsError('Environment datadir damaged or volumes '
+                                'missing. '
                                 'To reset and discard all data use '
-                                '"datacats purge" followed by "datacats init"')
+                                '"datacats reset"')
 
     def create_directories(self, create_project_dir=True):
         """
