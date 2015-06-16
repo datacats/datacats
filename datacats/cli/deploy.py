@@ -40,7 +40,7 @@ the environment name.
                             .format(target_name=target_name))
 
     if opts['--create']:
-        profile.create(environment, target_name, stdout)
+        profile.create(environment, target_name)
 
     profile.deploy(environment, target_name, stdout)
     print "Deployed source to http://{0}.datacats.io".format(target_name)

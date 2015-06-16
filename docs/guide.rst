@@ -34,12 +34,12 @@ Virtual Machine. Simply install VirtualBox or VMWare, create a Ubuntu VM (Virtua
 Install Docker
 """"""""""""""
 You will need to install Docker first.
-OS-specific detailed reference on how to do that is available at the
+Detailed OS-specific reference on how to do that is available at the
 `Installation Instructions section on Docker site`_ .
 
 .. _Installation Instructions section on Docker site: https://docs.docker.com/installation/#installation
 
-Here is the quick OS-specific summary:
+Here is the quick OS-specific summary that is sufficient in most cases:
 
 Linux
 #####
@@ -80,18 +80,40 @@ If you do not have ``pip`` installed, you can install it first by running: ::
 
     easy_install pip
 
+.. _`Download the necessary Docker containers`:
+
+
+Download the necessary Docker containers
+"""""""""""""""""""""
+
 As a last setup step, we need to pull the Docker images needed to
 create your environment. This only needs to happen **once**. Those images are
 then re-used for all subsequent environments you create.
 
-.. _`Download the necessary Docker containers`:
-
-Download the necessary Docker containers
-"""""""""""""""""""""
-To pull the Docker images run::
+To pull the Docker images just run::
 
     datacats pull
 
+That is it, you are all set!
+
+Install from source
+"""""""""""""""""""""
+A more advanced option is to install datacats directly from the source code.
+
+This option may be needed if are considering contributing to the datacats development
+or would like to try the most recent (and potentially unstable) version.
+
+To install datacats directly from the `source code repository on Github`_,
+clone the source repo to your custom location and
+install datacats as a Python package from there: ::
+
+  git clone git@github.com:datacats/datacats.git
+  python setup.py develop
+
+You will still need to download the necessary Docker images as described above.
+
+
+.. _source code repository on Github: https://github.com/datacats/datacats
 
 Getting Started
 ---------------

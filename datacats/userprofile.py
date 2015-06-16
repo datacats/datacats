@@ -149,7 +149,7 @@ class UserProfile(object):
         except WebCommandError:
             return False
 
-    def deploy(self, environment, target_name):
+    def deploy(self, environment, target_name, stream_output=None):
         """
         Return True if deployment was successful
         """
@@ -165,6 +165,7 @@ class UserProfile(object):
                 ],
                 environment, self,
                 include_project_dir=True,
+                stream_output=stream_output,
                 clean_up=True,
                 )
         except WebCommandError as e:
