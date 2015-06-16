@@ -53,8 +53,6 @@ def _get_docker():
     if not _docker:
         # First, check if boot2docker is powered on.
         try:
-            # Use an absolute path to avoid any funny business
-            # with the PATH.
             with open(devnull, 'w') as devnull_f:
                 status = subprocess.check_output(
                     ['boot2docker', 'status'],

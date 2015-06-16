@@ -39,8 +39,8 @@ Default: '.'
     if not opts['--yes']:
         y_or_n_prompt('datacats purge will delete all stored data')
 
-    environment.stop_web()
-    environment.stop_postgres_and_solr()
+    environment.stop_ckan()
+    environment.stop_supporting_containers()
 
     environment.purge_data(sites)
 

@@ -39,6 +39,7 @@ docker run -i --name datacats_preload_2 \
     /bin/bash -c \
     'cat > /project/ckan/ckan/public/base/css/main.debug.css' \
     < "$HERE/src/main.debug.css"
+
 docker rmi datacats/web:preload-2.3 || true
 docker commit datacats_preload_2 datacats/web:preload-2.3
 

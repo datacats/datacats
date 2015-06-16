@@ -39,6 +39,7 @@ class WebCommandError(Exception):
         # pylint: disable=unused-argument
         super(WebCommandError, self).__init__()
         self.command = command
+        self.container_id = container_id
         self.logs = logs
 
     def __str__(self):

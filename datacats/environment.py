@@ -11,6 +11,7 @@ import subprocess
 import shutil
 import json
 import time
+import socket
 from sha import sha
 from struct import unpack
 from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
@@ -28,7 +29,7 @@ from datacats.docker import (web_command, run_container, remove_container,
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
-    COMPILE_LESS, INSTALL_POSTGIS)
+    COMPILE_LESS, DATAPUSHER, INSTALL_POSTGIS)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.migrate import needs_format_conversion
 from datacats.password import generate_password
@@ -493,7 +494,7 @@ class Environment(object):
             rw_venv=True,
             )
 
-    def create_source(self):
+    def create_source(self, datapusher=True):
         """
         Populate ckan directory from preloaded image and copy
         who.ini and schema.xml info conf directory
@@ -502,6 +503,11 @@ class Environment(object):
             command='/bin/cp -a /project/ckan /project_target/ckan',
             rw={self.target: '/project_target'},
             image=self._preload_image())
+        if datapusher:
+            web_command(
+                command='/bin/cp -a /project/datapusher /project_target/datapusher',
+                rw={self.target: '/project_target'},
+                image=self._preload_image())
         shutil.copy(
             self.target + '/ckan/ckan/config/who.ini',
             self.target)
@@ -523,35 +529,34 @@ class Environment(object):
 
         return volumes_from, rw
 
-    def start_postgres_and_solr(self):
+    def start_supporting_containers(self):
         """
-        run the DB and search containers
+        Start all supporting containers (containers required for CKAN to operate)
         """
-
         volumes_from, rw = self._pgdata_volumes_and_rw()
+        self.stop_supporting_containers()
 
-        running = self.containers_running()
+        # users are created when data dir is blank so we must pass
+        # all the user passwords as environment vars
+        # XXX: postgres entrypoint magic
+        run_container(
+            name=self._get_container_name('postgres'),
+            image='datacats/postgres',
+            environment=self.passwords,
+            rw=rw,
+            volumes_from=volumes_from)
 
-        if 'postgres' not in running or 'solr' not in running:
-            # XXX: postgres entrypoint magic
-            # users are created when data dir is blank so we must pass
-            # all the user passwords as environment vars
-            self.stop_postgres_and_solr()
-            run_container(
-                name=self._get_container_name('postgres'),
-                image='datacats/postgres',
-                environment=self.passwords,
-                rw=rw,
-                volumes_from=volumes_from)
-            run_container(
-                name=self._get_container_name('solr'),
-                image='datacats/solr',
-                rw={self.sitedir + '/solr': '/var/lib/solr'},
-                ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
+        run_container(
+            name=self._get_container_name('solr'),
+            image='datacats/solr',
+            rw={self.sitedir + '/solr': '/var/lib/solr'},
+            ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
-    def stop_postgres_and_solr(self):
+    def stop_supporting_containers(self):
         """
-        stop and remove postgres and solr containers
+        Stop and remove supporting containers (containers that are used by CKAN but don't host
+        CKAN or CKAN plugins). This method should *only* be called after CKAN has been stopped
+        or behaviour is undefined.
         """
         remove_container(self._get_container_name('postgres'))
         remove_container(self._get_container_name('solr'))
@@ -586,9 +591,11 @@ class Environment(object):
             'sqlalchemy.url = postgresql://<hidden>',
             'ckan.datastore.read_url = postgresql://<hidden>',
             'ckan.datastore.write_url = postgresql://<hidden>',
+            'ckan.datapusher.url = http://datapusher:8800',
             'solr_url = http://solr:8080/solr',
             'ckan.storage_path = /var/www/storage',
-            'ckan.plugins = datastore resource_proxy text_view '
+            'ckan.plugins = datastore resource_proxy text_view ' +
+            ('datapusher ' if exists(self.target + '/datapusher') else '')
             + 'recline_grid_view recline_graph_view'
             + (' {0}_theme'.format(self.name) if skin else ''),
             'ckan.site_title = ' + self.name,
@@ -662,7 +669,15 @@ class Environment(object):
             'BEAKER_SESSION_SECRET': generate_password(),
             }
 
-    def start_web(self, production=False, address='127.0.0.1', log_syslog=False):
+    def needs_datapusher(self):
+        cp = SafeConfigParser()
+        try:
+            cp.read(self.target + '/development.ini')
+            return 'datapusher' in cp.get('app:main', 'ckan.plugins')
+        except ConfigParserError as e:
+            raise DatacatsError('Failed to read and parse development.ini: ' + str(e))
+
+    def start_ckan(self, production=False, address='127.0.0.1', log_syslog=False):
         """
         Start the apache server or paster serve
 
@@ -670,15 +685,18 @@ class Environment(object):
         :param address: On Linux, the address to serve from (can be 0.0.0.0 for
                         listening on all addresses)
         """
+        self.stop_ckan()
+
         port = self.port
-        command = None
 
         production = production or self.always_prod
-        if not production:
-            command = ['/scripts/web.sh']
+        override_site_url = self.address == '127.0.0.1' and not is_boot2docker()
+        command = ['/scripts/web.sh', str(production), str(override_site_url)]
 
         if address != '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify address on boot2docker.')
+
+        datapusher = self.needs_datapusher()
 
         # XXX nasty hack, remove this once we have a lessc command
         # for users (not just for building our preload image)
@@ -688,10 +706,27 @@ class Environment(object):
                 from shutil import copyfile
                 copyfile(css + '/main.css', css + '/main.debug.css')
 
+        ro = {
+            self.target: '/project',
+            DATAPUSHER: '/scripts/datapusher.sh'
+        }
+
+        if not is_boot2docker():
+            ro[self.datadir + '/venv'] = '/usr/lib/ckan'
+
+        if datapusher:
+            run_container(
+                self._get_container_name('datapusher'),
+                'datacats/web',
+                '/scripts/datapusher.sh',
+                ro=ro,
+                volumes_from=(self._get_container_name('venv') if is_boot2docker() else None))
+
         while True:
             self._create_run_ini(port, production)
             try:
-                self._run_web_container(port, command, address, log_syslog=log_syslog)
+                self._run_web_container(port, command, address, log_syslog=log_syslog,
+                                        datapusher=datapusher)
                 if not is_boot2docker():
                     self.address = address
             except PortAllocatedError:
@@ -716,7 +751,11 @@ class Environment(object):
         if self.site_url:
             site_url = self.site_url
         else:
-            site_url = 'http://{0}:{1}/'.format(docker_host(), port)
+            if is_boot2docker():
+                web_address = socket.gethostbyname(docker_host())
+            else:
+                web_address = self.address
+            site_url = 'http://{}:{}'.format(web_address, port)
 
         if override_site_url:
             cp.set('app:main', 'ckan.site_url', site_url)
@@ -738,7 +777,8 @@ class Environment(object):
         with open(self.sitedir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False):
+    def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False,
+                           datapusher=True):
         """
         Start web container on port with command
         """
@@ -748,18 +788,29 @@ class Environment(object):
         else:
             ro = {self.datadir + '/venv': '/usr/lib/ckan'}
             volumes_from = None
+
+        links = {
+            self._get_container_name('solr'): 'solr',
+            self._get_container_name('postgres'): 'db'
+        }
+
+        if datapusher:
+            if 'datapusher' not in self.containers_running():
+                raise DatacatsError(container_logs(self._get_container_name('datapusher'), "all",
+                                                   False, False))
+            links[self._get_container_name('datapusher')] = 'datapusher'
+
         try:
             run_container(
                 name=self._get_container_name('web'),
                 image='datacats/web',
-                rw={self.sitedir + '/files': '/var/www/storage'},
+                rw={self.sitedir + '/files': '/var/www/storage',
+                    self.sitedir + '/run/development.ini':
+                        '/project/development.ini'},
                 ro=dict({
                     self.target: '/project/',
-                    self.sitedir + '/run/development.ini':
-                        '/project/development.ini',
                     WEB: '/scripts/web.sh'}, **ro),
-                links={'datacats_solr_' + self.name + '_' + self.site_name: 'solr',
-                    'datacats_postgres_' + self.name + '_' + self.site_name: 'db'},
+                links=links,
                 volumes_from=volumes_from,
                 command=command,
                 port_bindings={
@@ -809,11 +860,12 @@ class Environment(object):
             raise DatacatsError('Too many instances running')
         return port
 
-    def stop_web(self):
+    def stop_ckan(self):
         """
         Stop and remove the web container
         """
         remove_container(self._get_container_name('web'), force=True)
+        remove_container(self._get_container_name('datapusher'), force=True)
 
     def _current_web_port(self):
         """
@@ -846,7 +898,7 @@ class Environment(object):
         for containers tracked by this project that are running
         """
         running = []
-        for n in ['web', 'postgres', 'solr']:
+        for n in ['web', 'postgres', 'solr', 'datapusher']:
             info = inspect_container(self._get_container_name(n))
             if info and not info['State']['Running']:
                 running.append(n + '(halted)')
@@ -939,8 +991,10 @@ class Environment(object):
             '-v', self.sitedir +
                 '/run/test.ini:/project/ckan/test-core.ini:ro',
             '--link', self._get_container_name('solr') + ':solr',
-            '--link', self._get_container_name('postgres') + ':db',
-            '--hostname', self.name,
+            '--link', self._get_container_name('postgres') + ':db']
+            + (['--link', self._get_container_name('datapusher') + ':datapusher']
+               if self.needs_datapusher() else []) +
+            ['--hostname', self.name,
             'datacats/web', '/scripts/shell.sh'] + command)
 
     def install_package_requirements(self, psrc, stream_output=None):
@@ -1127,10 +1181,10 @@ class Environment(object):
             out.append('no_proxy=' + posix_quote(no_proxy) + '\n')
             out.append('NO_PROXY=' + posix_quote(no_proxy) + '\n')
 
-        with open(self.datadir + '/run/proxy-environment', 'w') as f:
+        with open(self.sitedir + '/run/proxy-environment', 'w') as f:
             f.write("".join(out))
 
-        return {self.datadir + '/run/proxy-environment': '/etc/environment'}
+        return {self.sitedir + '/run/proxy-environment': '/etc/environment'}
 
     def _get_container_name(self, container_type):
         """
@@ -1142,6 +1196,7 @@ class Environment(object):
             - 'web'
             - 'pgdata'
             - 'lessc'
+            - 'datapusher'
         The name will be formatted appropriately with any prefixes and postfixes
         needed.
 
