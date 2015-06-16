@@ -23,3 +23,10 @@ def data_complete(datadir, sitedir, get_container_name):
 
     return path.isdir(datadir + '/venv') and path.isdir('/postgres')
 
+def source_missing(srcdir):
+    """
+    Return list of expected files missing from source directory srcdir
+    """
+    return [
+        x for x in ('schema.xml', 'ckan', 'development.ini', 'who.ini')
+        if not path.exists(srcdir + '/' + x)]
