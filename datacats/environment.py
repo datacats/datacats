@@ -534,23 +534,25 @@ class Environment(object):
         Start all supporting containers (containers required for CKAN to operate)
         """
         volumes_from, rw = self._pgdata_volumes_and_rw()
-        self.stop_supporting_containers()
 
-        # users are created when data dir is blank so we must pass
-        # all the user passwords as environment vars
-        # XXX: postgres entrypoint magic
-        run_container(
-            name=self._get_container_name('postgres'),
-            image='datacats/postgres',
-            environment=self.passwords,
-            rw=rw,
-            volumes_from=volumes_from)
+        running = self.containers_running()
 
-        run_container(
-            name=self._get_container_name('solr'),
-            image='datacats/solr',
-            rw={self.sitedir + '/solr': '/var/lib/solr'},
-            ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
+        if 'postgres' not in running or 'solr' not in running:
+            # users are created when data dir is blank so we must pass
+            # all the user passwords as environment vars
+            # XXX: postgres entrypoint magic
+            run_container(
+                name=self._get_container_name('postgres'),
+                image='datacats/postgres',
+                environment=self.passwords,
+                rw=rw,
+                volumes_from=volumes_from)
+
+            run_container(
+                name=self._get_container_name('solr'),
+                image='datacats/solr',
+                rw={self.sitedir + '/solr': '/var/lib/solr'},
+                ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
     def stop_supporting_containers(self):
         """
