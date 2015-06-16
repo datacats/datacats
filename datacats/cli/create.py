@@ -196,8 +196,8 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
         install_all(environment, False, verbose=False)
 
     write('Initializing database')
-    environment.ckan_db_init()
     environment.install_postgis_sql()
+    environment.ckan_db_init()
     write('\n')
 
     if start_web:
