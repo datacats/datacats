@@ -396,27 +396,8 @@ class Environment(object):
         """
         Call once for new projects to create the initial project directories.
         """
-        # It's possible that the datadir already exists (we're making a secondary site)
-        if not isdir(self.datadir):
-            makedirs(self.datadir, mode=0o700)
-        try:
-            # This should take care if the 'site' subdir if needed
-            makedirs(self.sitedir, mode=0o700)
-        except OSError:
-            raise DatacatsError(("Site directory {}"
-                " already exists.")
-                .format(self.name + "/" + self.site_name))
-        # venv isn't site-specific, the rest are.
-        makedirs(self.sitedir + '/solr')
-        if not is_boot2docker():
-            if not isdir(self.datadir + '/venv'):
-                makedirs(self.datadir + '/venv')
-            makedirs(self.sitedir + '/postgres')
-        makedirs(self.sitedir + '/files')
-        makedirs(self.sitedir + '/run')
-
-        if create_project_dir:
-            makedirs(self.target)
+        return task.create_directories(self.datadir, self.sitedir,
+            self.target if create_project_dir else None)
 
     def create_bash_profile(self):
         """
