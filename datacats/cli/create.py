@@ -120,8 +120,8 @@ Options:
                       'site {} and recreate the database'.format(opts['--site']))
 
     print 'Resetting...'
-    environment.stop_postgres_and_solr()
-    environment.stop_web()
+    environment.stop_supporting_containers()
+    environment.stop_ckan()
     environment.purge_data([opts['--site']], never_delete=True)
     init({
         'ENVIRONMENT_DIR': opts['ENVIRONMENT'],
