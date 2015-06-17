@@ -45,9 +45,8 @@ Default: '.'
     environment.purge_data(sites)
 
     if opts['--delete-environment']:
-        if not environment.target:
+        if environment.target:
+            rmtree(environment.target)
+        else:
             print 'Failed to load environment.',
             print 'Not deleting environment directory.'
-        else:
-            environment.fix_project_permissions()
-            rmtree(environment.target)
