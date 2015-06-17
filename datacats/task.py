@@ -29,7 +29,8 @@ def list_sites(datadir):
         return []
 
 
-def save_site(site_name, sitedir, srcdir, port, address, site_url, passwords):
+def save_new_site(site_name, sitedir, srcdir, port, address, site_url,
+        passwords):
     """
     Add a site's configuration to the source dir and site dir
     """
@@ -60,8 +61,8 @@ def save_site(site_name, sitedir, srcdir, port, address, site_url, passwords):
         cp.write(config)
 
 
-def save(name, datadir, srcdir, ckan_version, deploy_target=None,
-        always_prod=False):
+def save_new_environment(name, datadir, srcdir, ckan_version,
+        deploy_target=None, always_prod=False):
     """
     Save an environment's configuration to the source dir and data dir
     """

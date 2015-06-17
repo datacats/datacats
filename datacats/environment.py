@@ -92,7 +92,7 @@ class Environment(object):
         self._load_sites()
         self.sites.append(self.site_name)
 
-        task.save_site(self.site_name, self.sitedir, self.target, self.port,
+        task.save_new_site(self.site_name, self.sitedir, self.target, self.port,
             self.address, self.site_url, self.passwords)
 
     def save(self):
@@ -100,8 +100,8 @@ class Environment(object):
         Save environment settings into environment directory, overwriting
         any existing configuration and discarding site config
         """
-        task.save(self.name, self.datadir, self.target, self.ckan_version,
-            self.deploy_target, self.always_prod)
+        task.save_new_environment(self.name, self.datadir, self.target,
+            self.ckan_version, self.deploy_target, self.always_prod)
 
     def _save_srcdir_location(self):
         """
