@@ -4,6 +4,11 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
+"""
+This modle includes the implementations for many Environment methods
+separated from their configuration object to make them easier to test.
+"""
+
 import os
 from os import path
 
