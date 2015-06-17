@@ -4,7 +4,7 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
-from os.path import abspath, split as path_split, expanduser, isdir, exists, join
+from os.path import isdir, exists, join
 from os import makedirs, remove, environ
 import sys
 import subprocess
@@ -14,24 +14,18 @@ import time
 import socket
 from sha import sha
 from struct import unpack
-from ConfigParser import (SafeConfigParser, Error as ConfigParserError,
-                          NoOptionError, NoSectionError)
-
-from lockfile import LockFile
+from ConfigParser import (SafeConfigParser, Error as ConfigParserError)
 
 from datacats import task
-from datacats.validate import valid_name
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker,
                              data_only_container, docker_host,
-                             container_logs, require_images,
-                             APIError)
+                             container_logs, APIError)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
     COMPILE_LESS, DATAPUSHER, INSTALL_POSTGIS)
 from datacats.network import wait_for_service_available, ServiceTimeout
-from datacats.migrate import needs_format_conversion
 from datacats.password import generate_password
 from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
 
@@ -39,7 +33,6 @@ WEB_START_TIMEOUT_SECONDS = 30
 DB_INIT_RETRY_SECONDS = 30
 DB_INIT_RETRY_DELAY = 2
 DOCKER_EXE = 'docker'
-DEFAULT_REMOTE_SERVER_TARGET = 'datacats@command.datacats.com'
 
 
 class Environment(object):
@@ -103,13 +96,6 @@ class Environment(object):
         task.save_new_environment(self.name, self.datadir, self.target,
             self.ckan_version, self.deploy_target, self.always_prod)
 
-    def _save_srcdir_location(self):
-        """
-        Store the last place we've seen this environment so the user
-        can specify an environment by name
-        """
-        task.save_srcdir_location(self.datadir, self.target)
-
     @classmethod
     def new(cls, path, ckan_version, site_name, **kwargs):
         """
@@ -134,7 +120,7 @@ class Environment(object):
     @classmethod
     def load(cls, environment_name=None, site_name='primary', data_only=False):
         """
-        Return an Environment object based on an existing project.
+        Return an Environment object based on an existing environnment+site.
 
         :param environment_name: exising environment name, path or None to
             look in current or parent directories for project
@@ -144,124 +130,21 @@ class Environment(object):
         Raises DatacatsError if environment can't be found or if there is an
         error parsing the environment information.
         """
-        if environment_name is None:
-            environment_name = '.'
-        if site_name is not None and not valid_name(site_name):
-            raise DatacatsError('{} is not a valid site name.'.format(site_name))
+        srcdir, extension_dir, datadir = task.find_environment_dirs(
+            environment_name, data_only)
 
-        require_images()
-
-        extension_dir = 'ckan'
-        if valid_name(environment_name) and isdir(
-                expanduser('~/.datacats/' + environment_name)):
-            used_path = False
-            datadir = expanduser('~/.datacats/' + environment_name)
-            with open(datadir + '/project-dir') as pd:
-                wd = pd.read()
-            if not data_only and not exists(wd + '/.datacats-environment'):
-                raise DatacatsError(
-                    'Environment data found but environment directory is'
-                    ' missing. Try again from the new environment directory'
-                    ' location or remove the environment data with'
-                    ' "datacats purge"')
-        else:
-            used_path = True
-            wd = abspath(environment_name)
-            if not isdir(wd):
-                raise DatacatsError('No environment found with that name')
-
-            first_wd = wd
-            oldwd = None
-            while not exists(wd + '/.datacats-environment'):
-                oldwd = wd
-                wd, _ = path_split(wd)
-                if wd == oldwd:
-                    raise DatacatsError(
-                        'Environment not found in {0} or above', first_wd)
-
-            if oldwd:
-                _, extension_dir = path_split(oldwd)
-
-        if data_only and not used_path:
+        if datadir and data_only:
             return cls(environment_name, None, datadir, site_name)
 
-        cp = SafeConfigParser()
-        try:
-            cp.read([wd + '/.datacats-environment'])
-        except ConfigParserError:
-            raise DatacatsError('Error reading environment information')
+        (datadir, name, ckan_version, always_prod, deploy_target,
+            remote_server_key) = task.load_environment(srcdir, datadir)
 
-        site_section = 'site_' + site_name
-        name = cp.get('datacats', 'name')
-        datadir = expanduser('~/.datacats/' + name)
+        (port, address, site_url, passwords
+            ) = task.load_site(srcdir, datadir, site_name)
 
-        lockfile = LockFile(join(datadir, '.migration_lock'))
-
-        if lockfile.is_locked():
-            raise DatacatsError('Migration in progress, cannot continue.\n'
-                                'If you interrupted a migration, you should'
-                                ' attempt manual recovery or contact us by'
-                                ' filing an issue at http://github.com/datacats/'
-                                'datacats.\nAs a last resort, you could delete'
-                                ' all your stored data and create a new environment'
-                                ' by running "datacats purge" followed by'
-                                ' "datacats init".')
-
-        if needs_format_conversion(datadir):
-            raise DatacatsError('This environment uses an old format. You must'
-                                ' migrate to the new format. To do so, use the'
-                                ' "datacats migrate" command.')
-        ckan_version = cp.get('datacats', 'ckan_version')
-        try:
-            port = cp.getint(site_section, 'port')
-        except (NoOptionError, NoSectionError):
-            port = None
-        try:
-            address = cp.get(site_section, 'address')
-        except (NoOptionError, NoSectionError):
-            address = None
-        try:
-            site_url = cp.get(site_section, 'site_url')
-        except (NoOptionError, NoSectionError):
-            site_url = None
-        try:
-            always_prod = cp.getboolean('datacats', 'always_prod')
-        except NoOptionError:
-            always_prod = False
-
-        # if remote_server's custom ssh connection
-        # address is defined,
-        # we overwrite the default datacats.com one
-        try:
-            deploy_target = cp.get('deploy', 'remote_server_user') \
-                + "@" + cp.get('deploy', 'remote_server')
-        except (NoOptionError, NoSectionError):
-            deploy_target = DEFAULT_REMOTE_SERVER_TARGET
-
-        # if remote_server's ssh public key is given,
-        # we overwrite the default datacats.com one
-        try:
-            remote_server_key = cp.get('deploy', 'remote_server_key')
-        except (NoOptionError, NoSectionError):
-            remote_server_key = None
-
-        passwords = {}
-        try:
-            # backwards compatibility  FIXME: remove this
-            pw_options = cp.options('passwords')
-        except NoSectionError:
-            cp = SafeConfigParser()
-            cp.read(join(datadir, 'sites', site_name) + '/passwords.ini')
-            try:
-                pw_options = cp.options('passwords')
-            except NoSectionError:
-                pw_options = []
-
-        for n in pw_options:
-            passwords[n.upper()] = cp.get('passwords', n)
-
-        environment = cls(name, wd, datadir, site_name, ckan_version, port, deploy_target,
-                          site_url=site_url, always_prod=always_prod, address=address,
+        environment = cls(name, srcdir, datadir, site_name, ckan_version=ckan_version,
+                          port=port, deploy_target=deploy_target, site_url=site_url,
+                          always_prod=always_prod, address=address,
                           extension_dir=extension_dir,
                           remote_server_key=remote_server_key)
 
@@ -269,9 +152,6 @@ class Environment(object):
             environment.passwords = passwords
         else:
             environment._generate_passwords()
-
-        if not used_path:
-            environment._save_srcdir_location()
 
         environment._load_sites()
 

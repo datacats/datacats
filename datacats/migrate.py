@@ -235,3 +235,11 @@ def convert_environment(datadir, version, always_yes):
         migration_func(datadir)
     finally:
         lockfile.release()
+
+
+def is_locked(datadir):
+    """
+    Return True if this datadir is locked for migrations
+    """
+    lockfile = LockFile(datadir + '/.migration_lock')
+    return lockfile.is_locked()
