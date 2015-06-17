@@ -5,7 +5,7 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from os.path import abspath, split as path_split, expanduser, isdir, exists, join
-from os import makedirs, remove, environ, listdir
+from os import makedirs, remove, environ
 import sys
 import subprocess
 import shutil
@@ -73,7 +73,7 @@ class Environment(object):
     def _get_site_name(self):
         return self._site_name
 
-    site_name = property(fget=get_site_name, fset=set_site_name)
+    site_name = property(fget=_get_site_name, fset=_set_site_name)
 
     def _load_sites(self):
         """
