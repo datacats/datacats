@@ -9,7 +9,7 @@ export PGPASSWORD=${DB_ENV_POSTGRES_PASSWORD}
 
 # wait for postgres db to be available, immediately after creation
 # its entrypoint creates the cluster and dbs and this can take a moment
-for tries in 1 2 3 4 5; do
+for tries in $(seq 30); do
 	psql -c 'SELECT 1;' 2> /dev/null && break
 	sleep 0.3
 done
