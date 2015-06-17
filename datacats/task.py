@@ -11,6 +11,16 @@ from datacats import docker
 from datacats.error import DatacatsError
 
 
+def list_sites(datadir):
+    """
+    Return a list of the site names valid for this environment
+    """
+    try:
+        return os.listdir(datadir + '/sites')
+    except OSError:
+        return []
+
+
 def data_complete(datadir, sitedir, get_container_name):
     """
     Return True if the directories and containers we're expecting

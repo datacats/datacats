@@ -43,7 +43,6 @@ DEFAULT_REMOTE_SERVER_TARGET = 'datacats@command.datacats.com'
 
 
 class Environment(object):
-
     """
     DataCats environment settings object
 
@@ -67,11 +66,11 @@ class Environment(object):
         self.always_prod = always_prod
         self.sites = None
 
-    def set_site_name(self, site_name):
+    def _set_site_name(self, site_name):
         self._site_name = site_name
         self.sitedir = join(self.datadir, 'sites', site_name)
 
-    def get_site_name(self):
+    def _get_site_name(self):
         return self._site_name
 
     site_name = property(fget=get_site_name, fset=set_site_name)
@@ -82,13 +81,7 @@ class Environment(object):
         in self.sites. Also returns this list.
         """
         if not self.sites:
-            # get a list of all of the subdirectories. We'll call this the list
-            # of sites.
-            try:
-                self.sites = listdir(join(self.datadir, 'sites'))
-            except OSError:
-                self.sites = []
-
+            self.sites = task.list_sites(self.datadir)
         return self.sites
 
     def save_site(self):
