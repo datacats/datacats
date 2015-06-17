@@ -69,7 +69,7 @@ def create_virtualenv(datadir, preload_image, get_container_name):
     """
     Populate venv from preloaded image
     """
-    if not docker.is_boot2docker():
+    if docker.is_boot2docker():
         docker.data_only_container(
             get_container_name('venv'),
             ['/usr/lib/ckan'],
