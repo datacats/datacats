@@ -97,37 +97,18 @@ class Environment(object):
 
     def save(self):
         """
-        Save environment settings into environment directory
+        Save environment settings into environment directory, overwriting
+        any existing configuration and discarding site config
         """
-        cp = SafeConfigParser()
+        task.save(self.name, self.datadir, self.target, self.ckan_version,
+            self.deploy_target, self.always_prod)
 
-        with open(join(self.datadir, '.version'), 'w') as f:
-            # Version 2
-            f.write('2')
-
-        cp.add_section('datacats')
-        cp.set('datacats', 'name', self.name)
-        cp.set('datacats', 'ckan_version', self.ckan_version)
-
-        if self.deploy_target:
-            cp.add_section('deploy')
-            cp.set('deploy', 'target', self.deploy_target)
-
-        if self.always_prod:
-            cp.set('datacats', 'always_prod', 'true')
-
-        with open(self.target + '/.datacats-environment', 'w') as config:
-            cp.write(config)
-
-        self._update_saved_project_dir()
-
-    def _update_saved_project_dir(self):
+    def _save_srcdir_location(self):
         """
         Store the last place we've seen this environment so the user
         can specify an environment by name
         """
-        with open(self.datadir + '/project-dir', 'w') as pdir:
-            pdir.write(self.target)
+        task.save_srcdir_location(self.datadir, self.target)
 
     @classmethod
     def new(cls, path, ckan_version, site_name, **kwargs):
@@ -319,7 +300,7 @@ class Environment(object):
             environment._generate_passwords()
 
         if not used_path:
-            environment._update_saved_project_dir()
+            environment._save_srcdir_location()
 
         environment._load_sites()
 
