@@ -9,11 +9,13 @@ This modle includes the implementations for many Environment methods
 separated from their configuration object to make them easier to test.
 """
 
+# import modules not names inside so tests can mock functions
+# inside these modules more easily
 import os
 from os import path
 import ConfigParser
 
-from datacats import docker
+from datacats import docker, validate
 from datacats.error import DatacatsError
 
 
@@ -92,6 +94,46 @@ def save_srcdir_location(datadir, srcdir):
     # project-dir because backwards compatibility
     with open(datadir + '/project-dir', 'w') as pdir:
         pdir.write(srcdir)
+
+
+def new_environment_check(srcpath, site_name):
+    """
+    Check if a new environment or site can be created at the given path.
+
+    Returns (name, datadir, sitedir, srcdir) or raises DatacatsError
+    """
+    workdir, name = path.split(path.abspath(path.expanduser(srcpath)))
+
+    if not validate.valid_name(name):
+        raise DatacatsError('Please choose an environment name starting'
+                            ' with a letter and including only lowercase letters'
+                            ' and digits')
+    if not path.isdir(workdir):
+        raise DatacatsError('Parent directory for environment'
+                            ' does not exist')
+
+    docker.require_images()
+
+    datadir = path.expanduser('~/.datacats/' + name)
+    sitedir = datadir + '/sites/' + site_name
+    # We track through the datadir to the target if we are just making a
+    # site
+    if path.isdir(datadir):
+        with open(datadir + '/project-dir') as pd:
+            srcdir = pd.read()
+    else:
+        srcdir = workdir + '/' + name
+
+    if path.isdir(sitedir):
+        raise DatacatsError('Site data directory {0} already exists'.format(
+                            sitedir))
+    # This is the case where the data dir has been removed,
+    if path.isdir(srcdir) and not path.isdir(datadir):
+        raise DatacatsError('Environment directory exists, but data directory does not.\n'
+                            'If you simply want to recreate the data directory, run '
+                            '"datacats init" in the environment directory.')
+
+    return name, datadir, srcdir
 
 
 def data_complete(datadir, sitedir, get_container_name):

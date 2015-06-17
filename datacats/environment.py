@@ -120,43 +120,14 @@ class Environment(object):
         :params ckan_version: release of CKAN to install
         :params site_name: The name of the site to install database and solr \
                             eventually.
-        :params port: preferred port for local instance
+
+        For additional keyword arguments see the __init__ method.
 
         Raises DatcatsError if directories or project with same
         name already exits.
         """
-        workdir, name = path_split(abspath(expanduser(path)))
-
-        if not valid_name(name):
-            raise DatacatsError('Please choose an environment name starting'
-                                ' with a letter and including only lowercase letters'
-                                ' and digits')
-        if not isdir(workdir):
-            raise DatacatsError('Parent directory for environment'
-                                ' does not exist')
-
-        require_images()
-
-        datadir = expanduser('~/.datacats/' + name)
-        sitedir = join(datadir, site_name)
-        # We track through the datadir to the target if we are just making a
-        # site
-        if isdir(datadir):
-            with open(join(datadir, 'project-dir')) as pd:
-                target = pd.read()
-        else:
-            target = workdir + '/' + name
-
-        if isdir(sitedir):
-            raise DatacatsError('Site data directory {0} already exists',
-                                (sitedir,))
-        # This is the case where the data dir has been removed,
-        if isdir(target) and not isdir(datadir):
-            raise DatacatsError('Environment directory exists, but data directory does not.\n'
-                                'If you simply want to recreate the data directory, run '
-                                '"datacats init" in the environment directory.')
-
-        environment = cls(name, target, datadir, site_name, ckan_version, **kwargs)
+        name, datadir, srcdir = task.new_environment_check(path, site_name)
+        environment = cls(name, srcdir, datadir, site_name, ckan_version, **kwargs)
         environment._generate_passwords()
         return environment
 
