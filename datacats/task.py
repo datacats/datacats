@@ -414,3 +414,62 @@ def create_source(srcdir, image, datapusher=False):
     shutil.copy(
         srcdir + '/ckan/ckan/config/solr/schema.xml',
         srcdir)
+
+
+def start_supporting_containers(sitedir, srcdir, passwords,
+        get_container_name):
+    """
+    Start all supporting containers (containers required for CKAN to
+    operate) if they aren't already running.
+    """
+    if docker.is_boot2docker():
+        docker.data_only_container(get_container_name('pgdata'),
+            ['/var/lib/postgresql/data'])
+        rw = {}
+        volumes_from = get_container_name('pgdata')
+    else:
+        rw = {sitedir + '/postgres': '/var/lib/postgresql/data'}
+        volumes_from = None
+
+    running = containers_running(get_container_name)
+
+    if 'postgres' not in running or 'solr' not in running:
+        stop_supporting_containers(get_container_name)
+
+        # users are created when data dir is blank so we must pass
+        # all the user passwords as environment vars
+        # XXX: postgres entrypoint magic
+        docker.run_container(
+            name=get_container_name('postgres'),
+            image='datacats/postgres',
+            environment=passwords,
+            rw=rw,
+            volumes_from=volumes_from)
+
+        docker.run_container(
+            name=get_container_name('solr'),
+            image='datacats/solr',
+            rw={sitedir + '/solr': '/var/lib/solr'},
+            ro={srcdir + '/schema.xml': '/etc/solr/conf/schema.xml'})
+
+
+def stop_supporting_containers(get_container_name):
+    """
+    Stop postgres and solr containers
+    """
+    docker.remove_container(get_container_name('postgres'))
+    docker.remove_container(get_container_name('solr'))
+
+
+def containers_running(get_container_name):
+    """
+    Return a list of containers tracked by this environment that are running
+    """
+    running = []
+    for n in ['web', 'postgres', 'solr', 'datapusher']:
+        info = docker.inspect_container(get_container_name(n))
+        if info and not info['State']['Running']:
+            running.append(n + '(halted)')
+        elif info:
+            running.append(n)
+    return running

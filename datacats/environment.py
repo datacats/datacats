@@ -19,8 +19,7 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError)
 from datacats import task
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker,
-                             data_only_container, docker_host,
-                             container_logs, APIError)
+                             docker_host, container_logs, APIError)
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
@@ -242,47 +241,15 @@ class Environment(object):
         Populate ckan directory from preloaded image and copy
         who.ini and schema.xml info conf directory
         """
-        return task.create_source(self.target, self._preload_image(),
-            datapusher)
-
-    def _pgdata_volumes_and_rw(self):
-        # complicated because postgres needs hard links to
-        # work on its data volume. see issue #5
-        if is_boot2docker():
-            data_only_container(self._get_container_name('pgdata'),
-                                ['/var/lib/postgresql/data'])
-            rw = {}
-            volumes_from = self._get_container_name('pgdata')
-        else:
-            rw = {self.sitedir + '/postgres': '/var/lib/postgresql/data'}
-            volumes_from = None
-
-        return volumes_from, rw
+        task.create_source(self.target, self._preload_image(), datapusher)
 
     def start_supporting_containers(self):
         """
-        Start all supporting containers (containers required for CKAN to operate)
+        Start all supporting containers (containers required for CKAN to
+        operate) if they aren't already running.
         """
-        volumes_from, rw = self._pgdata_volumes_and_rw()
-
-        running = self.containers_running()
-
-        if 'postgres' not in running or 'solr' not in running:
-            # users are created when data dir is blank so we must pass
-            # all the user passwords as environment vars
-            # XXX: postgres entrypoint magic
-            run_container(
-                name=self._get_container_name('postgres'),
-                image='datacats/postgres',
-                environment=self.passwords,
-                rw=rw,
-                volumes_from=volumes_from)
-
-            run_container(
-                name=self._get_container_name('solr'),
-                image='datacats/solr',
-                rw={self.sitedir + '/solr': '/var/lib/solr'},
-                ro={self.target + '/schema.xml': '/etc/solr/conf/schema.xml'})
+        task.start_supporting_containers(self.sitedir, self.target,
+            self.passwords, self._get_container_name)
 
     def stop_supporting_containers(self):
         """
@@ -290,8 +257,7 @@ class Environment(object):
         CKAN or CKAN plugins). This method should *only* be called after CKAN has been stopped
         or behaviour is undefined.
         """
-        remove_container(self._get_container_name('postgres'))
-        remove_container(self._get_container_name('solr'))
+        task.stop_supporting_containers(self._get_container_name)
 
     def fix_storage_permissions(self):
         """
@@ -626,17 +592,9 @@ class Environment(object):
 
     def containers_running(self):
         """
-        Return a list including 0 or more of ['web', 'postgres', 'solr']
-        for containers tracked by this project that are running
+        Return a list of containers tracked by this environment that are running
         """
-        running = []
-        for n in ['web', 'postgres', 'solr', 'datapusher']:
-            info = inspect_container(self._get_container_name(n))
-            if info and not info['State']['Running']:
-                running.append(n + '(halted)')
-            elif info:
-                running.append(n)
-        return running
+        return task.containers_running(self._get_container_name)
 
     def web_address(self):
         """
