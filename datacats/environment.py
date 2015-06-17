@@ -89,36 +89,11 @@ class Environment(object):
         Save environment settings in the directory that need to be saved
         even when creating only a new sub-site env.
         """
-        cp = SafeConfigParser()
-
-        cp.read([self.target + '/.datacats-environment'])
-
         self._load_sites()
-
         self.sites.append(self.site_name)
 
-        section_name = 'site_' + self.site_name
-
-        cp.add_section(section_name)
-        cp.set(section_name, 'port', str(self.port))
-        cp.set(section_name, 'address', self.address or '127.0.0.1')
-
-        if self.site_url:
-            cp.set(section_name, 'site_url', self.site_url)
-
-        with open(self.target + '/.datacats-environment', 'w') as config:
-            cp.write(config)
-
-        # save passwords to datadir
-        cp = SafeConfigParser()
-
-        cp.add_section('passwords')
-        for n in sorted(self.passwords):
-            cp.set('passwords', n.lower(), self.passwords[n])
-
-        # Write to the sitedir so we maintain separate passwords.
-        with open(self.sitedir + '/passwords.ini', 'w') as config:
-            cp.write(config)
+        task.save_site(self.site_name, self.sitedir, self.target, self.port,
+            self.address, self.site_url, self.passwords)
 
     def save(self):
         """

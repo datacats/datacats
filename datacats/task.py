@@ -11,6 +11,7 @@ separated from their configuration object to make them easier to test.
 
 import os
 from os import path
+import ConfigParser
 
 from datacats import docker
 from datacats.error import DatacatsError
@@ -24,6 +25,37 @@ def list_sites(datadir):
         return os.listdir(datadir + '/sites')
     except OSError:
         return []
+
+
+def save_site(site_name, sitedir, srcdir, port, address, site_url, passwords):
+    """
+    Add a site's configuration to the source dir and site dir
+    """
+    cp = ConfigParser.SafeConfigParser()
+    cp.read([srcdir + '/.datacats-environment'])
+
+    section_name = 'site_' + site_name
+
+    cp.add_section(section_name)
+    cp.set(section_name, 'port', str(port))
+    cp.set(section_name, 'address', address or '127.0.0.1')
+
+    if site_url:
+        cp.set(section_name, 'site_url', site_url)
+
+    with open(srcdir + '/.datacats-environment', 'w') as config:
+        cp.write(config)
+
+    # save passwords to datadir
+    cp = ConfigParser.SafeConfigParser()
+
+    cp.add_section('passwords')
+    for n in sorted(passwords):
+        cp.set('passwords', n.lower(), passwords[n])
+
+    # Write to the sitedir so we maintain separate passwords.
+    with open(sitedir + '/passwords.ini', 'w') as config:
+        cp.write(config)
 
 
 def data_complete(datadir, sitedir, get_container_name):
