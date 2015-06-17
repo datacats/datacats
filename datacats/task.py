@@ -365,55 +365,70 @@ def create_directories(datadir, sitedir, srcdir=None):
         os.makedirs(srcdir)
 
 
-def create_virtualenv(datadir, preload_image, get_container_name):
+def create_virtualenv(srcdir, datadir, preload_image, get_container_name):
     """
     Populate venv from preloaded image
     """
-    if docker.is_boot2docker():
-        docker.data_only_container(
-            get_container_name('venv'),
-            ['/usr/lib/ckan'],
-            )
-        img_id = docker.web_command(
-            '/bin/mv /usr/lib/ckan/ /usr/lib/ckan_original',
-            image=preload_image,
-            commit=True,
-            )
+    try:
+        if docker.is_boot2docker():
+            docker.data_only_container(
+                get_container_name('venv'),
+                ['/usr/lib/ckan'],
+                )
+            img_id = docker.web_command(
+                '/bin/mv /usr/lib/ckan/ /usr/lib/ckan_original',
+                image=preload_image,
+                commit=True,
+                )
+            docker.web_command(
+                command='/bin/cp -a /usr/lib/ckan_original/. /usr/lib/ckan/.',
+                volumes_from=get_container_name('venv'),
+                image=img_id,
+                )
+            docker.remove_image(img_id)
+            return
+
         docker.web_command(
-            command='/bin/cp -a /usr/lib/ckan_original/. /usr/lib/ckan/.',
-            volumes_from=get_container_name('venv'),
-            image=img_id,
+            command='/bin/cp -a /usr/lib/ckan/. /usr/lib/ckan_target/.',
+            rw={datadir + '/venv': '/usr/lib/ckan_target'},
+            image=preload_image,
             )
-        docker.remove_image(img_id)
-        return
+    finally:
+        # fix venv permissions
+        docker.web_command(
+            command='/bin/chown -R --reference=/project /usr/lib/ckan',
+            rw={datadir + '/venv': '/usr/lib/ckan/'},
+            ro={srcdir: '/project'},
+            )
 
-    docker.web_command(
-        command='/bin/cp -a /usr/lib/ckan/. /usr/lib/ckan_target/.',
-        rw={datadir + '/venv': '/usr/lib/ckan_target'},
-        image=preload_image,
-        )
 
-
-def create_source(srcdir, image, datapusher=False):
+def create_source(srcdir, preload_image, datapusher=False):
     """
     Copy ckan source, datapusher source (optional), who.ini and schema.xml
     from preload image into srcdir
     """
-    docker.web_command(
-        command='/bin/cp -a /project/ckan /project_target/ckan',
-        rw={srcdir: '/project_target'},
-        image=image)
-    if datapusher:
+    try:
         docker.web_command(
-            command='/bin/cp -a /project/datapusher /project_target/datapusher',
+            command='/bin/cp -a /project/ckan /project_target/ckan',
             rw={srcdir: '/project_target'},
-            image=image)
-    shutil.copy(
-        srcdir + '/ckan/ckan/config/who.ini',
-        srcdir)
-    shutil.copy(
-        srcdir + '/ckan/ckan/config/solr/schema.xml',
-        srcdir)
+            image=preload_image)
+        if datapusher:
+            docker.web_command(
+                command='/bin/cp -a /project/datapusher /project_target/datapusher',
+                rw={srcdir: '/project_target'},
+                image=preload_image)
+        shutil.copy(
+            srcdir + '/ckan/ckan/config/who.ini',
+            srcdir)
+        shutil.copy(
+            srcdir + '/ckan/ckan/config/solr/schema.xml',
+            srcdir)
+    finally:
+        # fix srcdir permissions
+        docker.web_command(
+            command='/bin/chown -R --reference=/project /project',
+            rw={srcdir: '/project'},
+            )
 
 
 def start_supporting_containers(sitedir, srcdir, passwords,

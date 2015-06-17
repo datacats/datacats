@@ -219,11 +219,8 @@ class Environment(object):
         """
         Populate venv from preloaded image
         """
-        return task.create_virtualenv(
-            self.datadir,
-            self._preload_image(),
-            self._get_container_name,
-            )
+        return task.create_virtualenv(self.target, self.datadir,
+            self._preload_image(), self._get_container_name)
 
     def clean_virtualenv(self):
         """
@@ -308,18 +305,6 @@ class Environment(object):
         """
         ckan_extension_template(self.name, self.target)
         self.install_package_develop('ckanext-' + self.name + 'theme')
-
-    def fix_project_permissions(self):
-        """
-        Reset owner of project files to the host user so they can edit,
-        move and delete them freely.
-        """
-        self.run_command(
-            command='/bin/chown -R --reference=/project'
-            ' /usr/lib/ckan /project',
-            rw_venv=True,
-            rw_project=True,
-            )
 
     def ckan_db_init(self, retry_seconds=DB_INIT_RETRY_SECONDS):
         """
