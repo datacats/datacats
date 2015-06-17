@@ -14,6 +14,7 @@ separated from their configuration object to make them easier to test.
 import os
 from os import path
 import ConfigParser
+import shutil
 
 from datacats import docker, validate, migrate
 from datacats.error import DatacatsError
@@ -391,3 +392,25 @@ def create_virtualenv(datadir, preload_image, get_container_name):
         rw={datadir + '/venv': '/usr/lib/ckan_target'},
         image=preload_image,
         )
+
+
+def create_source(srcdir, image, datapusher=False):
+    """
+    Copy ckan source, datapusher source (optional), who.ini and schema.xml
+    from preload image into srcdir
+    """
+    docker.web_command(
+        command='/bin/cp -a /project/ckan /project_target/ckan',
+        rw={srcdir: '/project_target'},
+        image=image)
+    if datapusher:
+        docker.web_command(
+            command='/bin/cp -a /project/datapusher /project_target/datapusher',
+            rw={srcdir: '/project_target'},
+            image=image)
+    shutil.copy(
+        srcdir + '/ckan/ckan/config/who.ini',
+        srcdir)
+    shutil.copy(
+        srcdir + '/ckan/ckan/config/solr/schema.xml',
+        srcdir)

@@ -154,7 +154,6 @@ class Environment(object):
             environment._generate_passwords()
 
         environment._load_sites()
-
         return environment
 
     def data_exists(self):
@@ -243,21 +242,8 @@ class Environment(object):
         Populate ckan directory from preloaded image and copy
         who.ini and schema.xml info conf directory
         """
-        web_command(
-            command='/bin/cp -a /project/ckan /project_target/ckan',
-            rw={self.target: '/project_target'},
-            image=self._preload_image())
-        if datapusher:
-            web_command(
-                command='/bin/cp -a /project/datapusher /project_target/datapusher',
-                rw={self.target: '/project_target'},
-                image=self._preload_image())
-        shutil.copy(
-            self.target + '/ckan/ckan/config/who.ini',
-            self.target)
-        shutil.copy(
-            self.target + '/ckan/ckan/config/solr/schema.xml',
-            self.target)
+        return task.create_source(self.target, self._preload_image(),
+            datapusher)
 
     def _pgdata_volumes_and_rw(self):
         # complicated because postgres needs hard links to
