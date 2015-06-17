@@ -74,8 +74,8 @@ Would you like to continue the migration? (y/n) [n]:"""
 
     print 'Doing conversion...'
     # Begin the actual conversion
-    to_move = (['files', 'passwords.ini', 'run', 'solr', 'search'] +
-               (['postgres', 'data'] if not is_boot2docker() else []))
+    to_move = (['files', 'passwords.ini', 'run', 'solr'] +
+               (['postgres'] if not is_boot2docker() else []))
     # Make a primary site
     site_path = path_join(datadir, 'sites', new_site_name)
     if not exists(site_path):
@@ -151,8 +151,8 @@ Would you like to continue the migration? (y/n) [n]:"""
     if exists(path_join(datadir, '.version')):
         os.remove(path_join(datadir, '.version'))
 
-    to_move = (['files', 'passwords.ini', 'run', 'solr', 'search'] +
-               (['postgres', 'data'] if not is_boot2docker() else []))
+    to_move = (['files', 'passwords.ini', 'run', 'solr'] +
+               (['postgres'] if not is_boot2docker() else []))
 
     web_command(
         command=['/scripts/migrate.sh',
