@@ -8,6 +8,7 @@ from shutil import rmtree
 
 from datacats.environment import Environment, DatacatsError
 from datacats.cli.util import y_or_n_prompt
+from datacats.error import DatacatsError
 
 
 def purge(opts):
@@ -48,5 +49,6 @@ Default: '.'
         if environment.target:
             rmtree(environment.target)
         else:
-            print 'Failed to load environment.',
-            print 'Not deleting environment directory.'
+            DatacatsError(("Unable to find the environment source"
+            " directory so that it can be deleted.\n"
+            "Chances are it's because it already does not exist"))
