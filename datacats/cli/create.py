@@ -199,7 +199,7 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         raise
 
     return finish_init(environment, start_web, create_sysadmin, address,
-                       log_syslog=log_syslog, do_install=not no_install)
+                       log_syslog=log_syslog, do_install=not no_install, quiet=quiet)
 
 
 def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False,
