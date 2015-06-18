@@ -80,7 +80,6 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
                 environment.start_supporting_containers,
                 environment.fix_storage_permissions,
                 lambda: environment.update_ckan_ini(skin=create_skin),
-                environment.fix_project_permissions,
             ]
 
         if create_skin and making_full_environment:
@@ -181,7 +180,6 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
                  environment.save_site,
                  environment.start_supporting_containers,
                  environment.fix_storage_permissions,
-                 environment.fix_project_permissions,
             ]
 
         for fn in steps:
