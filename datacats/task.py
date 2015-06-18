@@ -394,10 +394,13 @@ def create_virtualenv(srcdir, datadir, preload_image, get_container_name):
             image=preload_image,
             )
     finally:
+        rw = {datadir + '/venv'} if not docker.is_boot2docker() else {}
+        volumes_from = get_container_name('venv') if docker.is_boot2docker() else None
         # fix venv permissions
         docker.web_command(
             command='/bin/chown -R --reference=/project /usr/lib/ckan',
-            rw={datadir + '/venv': '/usr/lib/ckan/'},
+            rw=rw,
+            volumes_from=volumes_from,
             ro={srcdir: '/project'},
             )
 
