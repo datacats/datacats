@@ -43,7 +43,7 @@ Default: '.'
             '--syslog': False})
 
 
-def install_all(environment, clean, verbose=False):
+def install_all(environment, clean, verbose=False, quiet=False):
     logs = check_connectivity()
     if logs.strip():
         raise DatacatsError(logs)
@@ -72,17 +72,17 @@ def install_all(environment, clean, verbose=False):
     for s in ['ckan'] + sorted(srcdirs):
         if verbose:
             print colored.yellow('Installing ' + s + '\n')
-        else:
+        elif not quiet:
             print 'Installing ' + s
-        environment.install_package_develop(s, sys.stdout if verbose else None)
-        if verbose:
+        environment.install_package_develop(s, sys.stdout if verbose and not quiet else None)
+        if verbose and not quiet:
             print
     for s in ['ckan'] + sorted(reqdirs):
         if verbose:
             print colored.yellow('Installing ' + s + ' requirements' + '\n')
-        else:
+        elif not quiet:
             print 'Installing ' + s + ' requirements'
-        environment.install_package_requirements(s, sys.stdout if verbose else None)
+        environment.install_package_requirements(s, sys.stdout if verbose and not quiet else None)
         if verbose:
             print
 
