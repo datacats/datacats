@@ -55,7 +55,7 @@ part of this path will be used as the environment name.
 
 
 def create_environment(environment_dir, port, ckan_version, create_skin, site_name,
-        start_web, create_sysadmin, address, log_syslog=False, datapusher=True):
+        start_web, create_sysadmin, address, log_syslog=False, datapusher=True, quiet=False):
     # pylint: disable=unused-argument
     # FIXME: only 2.3 preload supported at the moment
     environment = Environment.new(environment_dir, '2.3', site_name, port=port)
@@ -64,7 +64,8 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
         # There are a lot of steps we can/must skip if we're making a sub-site only
         making_full_environment = not environment.data_exists()
 
-        write('Creating environment "{0}/{1}"'.format(environment.name, environment.site_name))
+        if not quiet:
+            write('Creating environment "{0}/{1}"'.format(environment.name, environment.site_name))
         steps = [
             lambda: environment.create_directories(making_full_environment),
             environment.create_bash_profile
@@ -87,8 +88,10 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
 
         for fn in steps:
             fn()
-            write('.')
-        write('\n')
+            if not quiet:
+                write('.')
+        if not quiet:
+            write('\n')
 
         return finish_init(environment, start_web, create_sysadmin, address,
                            log_syslog=log_syslog)
@@ -96,7 +99,8 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
         # Make sure that it doesn't get printed right after the dots
         # by printing a newline
         # i.e. Creating environment 'hello'.....ERROR MESSAGE
-        print
+        if not quiet:
+            print
         raise
 
 
@@ -131,7 +135,7 @@ Options:
         }, no_install=True)
 
 
-def init(opts, no_install=False):
+def init(opts, no_install=False, quiet=False):
     """Initialize a purged environment or copied environment directory
 
 Usage:
@@ -169,9 +173,10 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         # There are a couple of steps we can/must skip if we're making a sub-site only
         making_full_environment = not environment.data_exists()
 
-        write('Creating environment {0}/{1} '
-              'from existing environment directory "{0}"'
-              .format(environment.name, environment.site_name))
+        if not quiet:
+            write('Creating environment {0}/{1} '
+                  'from existing environment directory "{0}"'
+                  .format(environment.name, environment.site_name))
         steps = [
             lambda: environment.create_directories(create_project_dir=False)] + ([
              environment.save,
@@ -184,10 +189,13 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 
         for fn in steps:
             fn()
-            write('.')
-        write('\n')
+            if not quiet:
+                write('.')
+        if not quiet:
+            write('\n')
     except:
-        print
+        if not quiet:
+            print
         raise
 
     return finish_init(environment, start_web, create_sysadmin, address,
@@ -195,22 +203,25 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 
 
 def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False,
-                do_install=True):
+                do_install=True, quiet=False):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """
     if do_install:
-        install_all(environment, False, verbose=False)
+        install_all(environment, False, verbose=False, quiet=quiet)
 
-    write('Initializing database')
+    if not quiet:
+        write('Initializing database')
     environment.install_postgis_sql()
     environment.ckan_db_init()
-    write('\n')
+    if not quiet:
+        write('\n')
 
     if start_web:
         environment.start_ckan(address=address, log_syslog=log_syslog)
-        write('Starting web server at {0} ...\n'.format(
-            environment.web_address()))
+        if not quiet:
+            write('Starting web server at {0} ...\n'.format(
+                environment.web_address()))
 
     if create_sysadmin:
         try:
