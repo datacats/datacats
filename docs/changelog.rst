@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+0.11.2
+------
+
+- fix for a second deployment regression
+
 0.11.1
 ------
 
