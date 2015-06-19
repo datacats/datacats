@@ -39,7 +39,7 @@ def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
-  datacats start [-bp] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats start [-b] [-p|--no-reload] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
   datacats start -r [-b] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT]
 
 Options:
@@ -47,8 +47,9 @@ Options:
   -b --background    Don't wait for response from web server
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
-  -s --site=NAME    Specify a site to start [default: primary]
+  -s --site=NAME     Specify a site to start [default: primary]
   --syslog           Log to the syslog
+  --no-reload        Do not automatically reload templates and .py files on change
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -66,7 +67,7 @@ def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
-  datacats reload [-bp] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats reload [-b] [-p|--no-reload] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT [PORT]]
   datacats reload -r [-b] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT]
 
 Options:
@@ -74,7 +75,8 @@ Options:
   -b --background    Don't wait for response from web server
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
-  -s --site=NAME    Specify a site to reload [default: primary]
+  -s --site=NAME     Specify a site to reload [default: primary]
+  --no-reload        Do not automatically reload templates and .py files on change
   --syslog           Log to the syslog
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
@@ -95,6 +97,7 @@ Default: '.'
     environment.start_ckan(
         production=opts['--production'],
         address=opts['--address'],
+        paster_reload=not opts['--no-reload'],
         log_syslog=opts['--syslog'])
     write('Starting web server at {0} ...'.format(environment.web_address()))
     if opts['--background']:

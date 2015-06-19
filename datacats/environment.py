@@ -325,8 +325,7 @@ class Environment(object):
                     clean_up=True,
                     )
                 break
-            except WebCommandError as e:
-                print e.message
+            except WebCommandError:
                 if started + retry_seconds > time.time():
                     raise
             time.sleep(DB_INIT_RETRY_DELAY)
@@ -360,13 +359,15 @@ class Environment(object):
         except ConfigParserError as e:
             raise DatacatsError('Failed to read and parse development.ini: ' + str(e))
 
-    def start_ckan(self, production=False, address='127.0.0.1', log_syslog=False):
+    def start_ckan(self, production=False, address='127.0.0.1', log_syslog=False,
+                   paster_reload=True):
         """
         Start the apache server or paster serve
 
         :param production: True for apache, False for paster serve + debug on
         :param address: On Linux, the address to serve from (can be 0.0.0.0 for
                         listening on all addresses)
+        :param paster_reload: Instruct paster to watch for file changes
         """
         self.stop_ckan()
 
@@ -374,7 +375,7 @@ class Environment(object):
 
         production = production or self.always_prod
         override_site_url = self.address == '127.0.0.1' and not is_boot2docker()
-        command = ['/scripts/web.sh', str(production), str(override_site_url)]
+        command = ['/scripts/web.sh', str(production), str(override_site_url), str(paster_reload)]
 
         if address != '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify address on boot2docker.')
