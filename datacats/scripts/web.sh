@@ -24,7 +24,7 @@ while true; do
 
 	# production
 	if [ "$1" = "True" ]; then
-		/usr/bin/apachectl -DFOREGROUND
+		/usr/sbin/apachectl -DFOREGROUND
         elif [ "$3" == "True" ]; then
 		sudo -u www-data /usr/lib/ckan/bin/paster --plugin=ckan serve \
 			/project/development.ini --reload &

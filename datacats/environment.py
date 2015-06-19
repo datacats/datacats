@@ -23,7 +23,7 @@ from datacats.docker import (web_command, run_container, remove_container,
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
-    COMPILE_LESS, DATAPUSHER, INSTALL_POSTGIS)
+    COMPILE_LESS, DATAPUSHER, INSTALL_POSTGIS, ADJUST_DEVINI)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.password import generate_password
 from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
@@ -493,7 +493,8 @@ class Environment(object):
                         '/project/development.ini'},
                 ro=dict({
                     self.target: '/project/',
-                    WEB: '/scripts/web.sh'}, **ro),
+                    WEB: '/scripts/web.sh',
+                    ADJUST_DEVINI: '/scripts/adjust_devini.py'}, **ro),
                 links=links,
                 volumes_from=volumes_from,
                 command=command,
