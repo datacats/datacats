@@ -45,11 +45,11 @@ Usage:
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
+  --no-reload        Do not automatically reload templates and .py files on change
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
   -s --site=NAME     Specify a site to start [default: primary]
   --syslog           Log to the syslog
-  --no-reload        Do not automatically reload templates and .py files on change
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -73,10 +73,10 @@ Usage:
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
+  --no-reload        Do not automatically reload templates and .py files on change
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
   -s --site=NAME     Specify a site to reload [default: primary]
-  --no-reload        Do not automatically reload templates and .py files on change
   --syslog           Log to the syslog
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
