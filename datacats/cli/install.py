@@ -40,7 +40,8 @@ Default: '.'
             'PORT': None,
             '--background': False,
             '--address': opts['--address'],
-            '--syslog': False})
+            '--syslog': False,
+            '--no-reload': False})
 
 
 def install_all(environment, clean, verbose=False, quiet=False):
