@@ -137,23 +137,6 @@ def binds_to_volumes(volumes):
     return [v['bind'] for v in volumes.itervalues()]
 
 
-def exec_command(container_name, command, stdout=False, stderr=False, tty=False,
-                 detach=False, stream=False):
-    """
-    Executes a command in a running container.
-    :param container_name: The name of the container to execute in.
-    :param command: The command to run.
-    :param stdout: True to hook up stdout to the container's stdout
-    :param stderr: True to hook up stderr to the container's stderr
-    :param tty: True to allocate a tty
-    :param detach: True to detach from the current process
-    :param stream: True to return a generator of response data
-    :return:
-    """
-    c = _get_docker().exec_create(container_name, command, stdout, stderr, tty)
-    _get_docker().exec_start(c['Id'], detach, tty, stream)
-
-
 def web_command(command, ro=None, rw=None, links=None,
                 image='datacats/web', volumes_from=None, commit=False,
                 clean_up=False, stream_output=None, entrypoint=None):
