@@ -18,16 +18,20 @@ fi
 
 while true; do
 	# fix our development.ini
-	if [ "$2" = "true" ]; then
+	if [ "$2" = "True" ]; then
 		/scripts/adjust_devini.py "$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')" "$port"
 	fi
 
 	# production
-	if [ "$1" = "true" ]; then
-		/usr/bin/apachectl -DFOREGROUND
-	else
+	if [ "$1" = "True" ]; then
+		/usr/sbin/apachectl -DFOREGROUND
+	elif [ "$3" == "True" ]; then
 		sudo -u www-data /usr/lib/ckan/bin/paster --plugin=ckan serve \
 			/project/development.ini --reload &
+	else
+		# Don't reload
+		sudo -u www-data /usr/lib/ckan/bin/paster --plugin=ckan serve \
+			/project/development.ini &
 	fi
 
 	wait && exit

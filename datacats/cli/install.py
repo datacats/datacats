@@ -36,11 +36,13 @@ Default: '.'
     if 'web' in environment.containers_running():
         # FIXME: reload without changing debug setting?
         manage.reload_(environment, {
+            '--address': opts['--address'],
+            '--background': False,
+            '--no-reload': False,
             '--production': False,
             'PORT': None,
-            '--background': False,
-            '--address': opts['--address'],
-            '--syslog': False})
+            '--syslog': False,
+            })
 
 
 def install_all(environment, clean, verbose=False, quiet=False):
