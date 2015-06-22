@@ -26,4 +26,5 @@ Default: '.'
         pull_image(LESSC_IMAGE)
 
     print 'Converting .less files to .css...'
-    environment.compile_less()
+    for log in environment.compile_less():
+        print log
