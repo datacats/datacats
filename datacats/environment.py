@@ -23,7 +23,8 @@ from datacats.docker import (web_command, run_container, remove_container,
 from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
-    COMPILE_LESS, DATAPUSHER, INSTALL_POSTGIS, ADJUST_DEVINI)
+    COMPILE_LESS, DATAPUSHER, INSTALL_POSTGIS, ADJUST_DEVINI,
+    UPDATE_ADD_ADMIN)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.password import generate_password
 from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
@@ -595,7 +596,7 @@ class Environment(object):
             address if address and not is_boot2docker() else docker_host(),
             port)
 
-    def create_admin_set_password(self, password):
+    def create_admin_or_set_password(self, password):
         """
         create 'admin' account with given password
         """
@@ -607,11 +608,12 @@ class Environment(object):
                 'sysadmin': True},
                 out)
         self.run_command(
-            command=['/bin/bash', '-c', '/usr/lib/ckan/bin/ckanapi '
-                     'action user_create -i -c /project/development.ini '
-                     '< /input/admin.json'],
+            command=['/scripts/update_add_admin.sh'],
             db_links=True,
-            ro={self.sitedir + '/run/admin.json': '/input/admin.json'},
+            ro={
+                UPDATE_ADD_ADMIN: '/scripts/update_add_admin.sh',
+                self.sitedir + '/run/admin.json': '/input/admin.json'
+               },
             )
         remove(self.sitedir + '/run/admin.json')
 
