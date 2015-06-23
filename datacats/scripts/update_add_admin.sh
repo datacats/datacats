@@ -1,12 +1,11 @@
 #!/bin/bash
 # This expects /input/admin.json to be the generated admin.json file
 
+. /usr/lib/ckan/bin/activate
+
 if /usr/lib/ckan/bin/ckanapi action user_show -c /project/development.ini id=admin; then
-    # Generate a file with info on the user and add a password w/ Python
-    /usr/lib/ckan/bin/ckanapi action user_show id=admin -c /project/development.ini > info.json
-    python -c "from json import dump, load;obj=load(open('info.json'));obj['password'] = load(open('/input/admin.json'))['password'];dump(obj, open('info.json', 'w'))"
-    # Actually update the user
-    /usr/lib/ckan/bin/ckanapi action user_update -i -c /project/development.ini < info.json
+    # Step 1: Grab the user's current info, step 2: add new pw, step 3: apply new info
+    ckanapi action user_show id=admin -c /project/development.ini | python -c "from sys import stdin, stdout;from json import load, dump;obj = load(stdin);obj['password'] = load(open('/input/admin.json'))['password'];dump(obj, stdout)" | ckanapi action user_update -i -c /project/development.ini 
 else
     /usr/lib/ckan/bin/ckanapi action user_create -i -c /project/development.ini < /input/admin.json
 fi
