@@ -596,7 +596,7 @@ class Environment(object):
             address if address and not is_boot2docker() else docker_host(),
             port)
 
-    def create_admin_or_set_password(self, password):
+    def create_admin_set_password(self, password):
         """
         create 'admin' account with given password
         """
