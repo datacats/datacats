@@ -608,7 +608,8 @@ class Environment(object):
                 'sysadmin': True},
                 out)
         self.user_run_script(
-            command=['/scripts/update_add_admin.sh'],
+            script='/scripts/update_add_admin.sh',
+            args=[],
             db_links=True,
             ro={
                 UPDATE_ADD_ADMIN: '/scripts/update_add_admin.sh',
