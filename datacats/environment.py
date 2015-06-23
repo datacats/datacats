@@ -824,6 +824,8 @@ class Environment(object):
             name=self._get_container_name('lessc'), image='datacats/lessc',
             rw={self.target: '/project/target'},
             ro={COMPILE_LESS: '/project/compile_less.sh'})
+        for log in container_logs(c['Id'], "all", True, False):
+            yield log
         remove_container(c)
 
     def _proxy_settings(self):
