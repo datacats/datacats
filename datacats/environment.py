@@ -607,7 +607,7 @@ class Environment(object):
                 'password': password,
                 'sysadmin': True},
                 out)
-        self.run_command(
+        self.user_run_script(
             command=['/scripts/update_add_admin.sh'],
             db_links=True,
             ro={
