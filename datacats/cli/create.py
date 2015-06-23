@@ -226,7 +226,7 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
     if create_sysadmin:
         try:
             adminpw = confirm_password()
-            environment.create_admin_or_set_password(adminpw)
+            environment.create_admin_set_password(adminpw)
         except KeyboardInterrupt:
             print
 
