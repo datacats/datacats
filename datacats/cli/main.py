@@ -26,6 +26,7 @@ The datacats commands available are:
   pull        Download or update required datacats docker images
   purge       Purge environment database and uploaded files
   reload      Reload environment source and configuration
+  reset       Resets a site to the default state
   shell       Run a command or interactive shell within this environment
   start       Create containers and start serving environment
   stop        Stop serving environment and remove all its containers
