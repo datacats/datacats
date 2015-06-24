@@ -35,15 +35,19 @@ def main():
     opts = docopt(__doc__, version=__version__)
     environment = Environment.load(opts['ENVIRONMENT'] or '.')
     env_path = environment.target
-    less_path = path_join(env_path, 'ckan', 'ckan', 'public', 'base', 'less')
+    less_paths = [
+        path_join(env_path, 'ckan', 'ckan', 'public', 'base', 'less'),
+        path_join(env_path, 'ckan', 'ckan', 'public', 'base', 'vendor')
+    ]
 
-    if not env_path or not exists(less_path):
+    if not env_path or not all(exists(less_path) for less_path in less_paths):
         print 'No source code to watch found'
         return
 
     observer = Observer()
     event_handler = LessCompileEventHandler(environment)
-    observer.schedule(event_handler, less_path, recursive=True)
+    for less_path in less_paths:
+        observer.schedule(event_handler, less_path, recursive=True)
     observer.start()
 
     # HACK: We make it so that the OS doesn't consult us and just kills us.

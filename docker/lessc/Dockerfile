@@ -17,4 +17,4 @@ RUN npm install -g less@1.7.5
 # lessc command line tool depends on nodejs being installed as 'node' on the PATH.
 RUN ln -s /usr/bin/nodejs /usr/bin/node
 
-CMD ["/project/compile_less.sh", "/project/target/ckan/ckan/public/base/less/main.less", "/project/target/ckan/ckan/public/base/css/main.debug.css"]
+CMD ["/project/compile_less.sh"]
