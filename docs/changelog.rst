@@ -1,6 +1,28 @@
 Change Log
 ==========
 
+1.0.0
+-----
+
+2015-06-24
+
+- new support for multiple sites (DBs, files etc.) per environment
+- new support for datapusher
+- new support for ckanext-spatial
+- new migrate command: migrate data directory formats between
+  pre-multisite and post-multisite versions of datacats
+- new reset command: reset DBs, files etc. to a default post-create
+  state for a site
+- init, create: now add postgis SQL to new DBs created
+- create: now includes datapusher in the source directory by default
+- tweak: new command can add postgis SQL to existing DBs
+- lessc now streams output to show errors
+- start, reload: new --no-watch option to prevent automatic paster
+  reload on file changes, useful when testing updates to static files
+- create, init, logs, open, paster, purge, reload, reset, shell,
+  start, stop: new --site option to specify site
+- bigger, shinier tracebacks and error messages
+
 0.11.2
 ------
 
