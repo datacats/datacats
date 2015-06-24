@@ -39,13 +39,13 @@ def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
-  datacats start [-b] [-p|--no-reload] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats start [-b] [-p|--no-watch] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
   datacats start -r [-b] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
-  --no-reload        Do not automatically reload templates and .py files on change
+  --no-watch         Do not automatically reload templates and .py files on change
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
   -s --site=NAME     Specify a site to start [default: primary]
@@ -67,13 +67,13 @@ def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
-  datacats reload [-b] [-p|--no-reload] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats reload [-b] [-p|--no-watch] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT [PORT]]
   datacats reload -r [-b] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
-  --no-reload        Do not automatically reload templates and .py files on change
+  --no-watch         Do not automatically reload templates and .py files on change
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
   -s --site=NAME     Specify a site to reload [default: primary]
@@ -97,7 +97,7 @@ Default: '.'
     environment.start_ckan(
         production=opts['--production'],
         address=opts['--address'],
-        paster_reload=not opts['--no-reload'],
+        paster_reload=not opts['--no-watch'],
         log_syslog=opts['--syslog'])
     write('Starting web server at {0} ...'.format(environment.web_address()))
     if opts['--background']:
