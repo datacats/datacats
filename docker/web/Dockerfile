@@ -33,6 +33,8 @@ ADD ports.conf /etc/apache2/ports.conf
 RUN a2ensite ckan_default
 RUN a2dissite 000-default
 
+RUN mkdir -p /var/www/storage
+RUN chown -R www-data:www-data /var/www/
 RUN usermod -u 1000 -d /var/www/storage www-data
 
 CMD ["/usr/sbin/apachectl", "-DFOREGROUND"]
