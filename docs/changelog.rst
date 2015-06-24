@@ -4,15 +4,21 @@ Change Log
 0.11.2
 ------
 
+2015-06-19
+
 - fix for a second deployment regression
 
 0.11.1
 ------
 
+2015-06-15
+
 - fix for a deployment regression
 
 0.11.0
 ------
+
+2015-06-05
 
 - workaround for common TLS error with boot2docker and recent openssl
 - less: new command to compile less files to css
@@ -28,6 +34,8 @@ Change Log
 
 0.10.0
 ------
+
+2015-05-19
 
 - create/start/reload --address=IP: choose the IP address to bind
   for serving ckan. allows use of datacats to serve public sites directly
@@ -45,20 +53,28 @@ Change Log
 0.9.3
 -----
 
+2015-05-12
+
 - fix for ConnectionError on OSX for some users
 
 0.9.2
 -----
+
+2015-05-06
 
 - fix for deploy with docker 1.6
 
 0.9.1
 -----
 
+2015-05-05
+
 - fix for shell command when containers already running
 
 0.9
 ---
+
+2015-05-05
 
 - install --clean: install dependencies to an empty virtualenv
   to support running datacats with older ckan versions (local only)
@@ -75,6 +91,8 @@ Change Log
 0.8
 ---
 
+2015-03-27
+
 - create, init: fix for race between db creation and init
 - create, init, start, reload: fix for automatic port selection
 - install, start, reload, open, shell, paster:
@@ -90,5 +108,7 @@ Change Log
 
 0.7
 ---
+
+2015-03-15
 
 - initial public release
