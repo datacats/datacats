@@ -38,7 +38,7 @@ Default: '.'
         manage.reload_(environment, {
             '--address': opts['--address'],
             '--background': False,
-            '--no-reload': False,
+            '--no-watch': False,
             '--production': False,
             'PORT': None,
             '--syslog': False,
