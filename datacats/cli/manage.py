@@ -178,10 +178,11 @@ def logs(environment, opts):
     """Display or follow container logs
 
 Usage:
-  datacats logs [--postgres | --solr] [-s NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
-  datacats logs -f [--postgres | --solr] [-s NAME] [-r] [ENVIRONMENT]
+  datacats logs [--postgres | --solr | --datapusher] [-s NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
+  datacats logs -f [--postgres | --solr | --datapusher] [-s NAME] [-r] [ENVIRONMENT]
 
 Options:
+  --datapusher       Show logs for datapusher instead of web logs
   --postgres         Show postgres database logs instead of web logs
   -f --follow        Follow logs instead of exiting immediately
   -r --remote        Retrieve logs from DataCats.com cloud instance
@@ -198,6 +199,8 @@ Default: '.'
         container = 'solr'
     if opts['--postgres']:
         container = 'postgres'
+    if opts['--datapusher']:
+        container = 'datapusher'
     tail = opts['--tail']
     if tail != 'all':
         tail = int(tail)
