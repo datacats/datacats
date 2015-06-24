@@ -6,7 +6,7 @@
 
 from __future__ import absolute_import
 
-from datacats import task
+from datacats import scripts
 from os import environ, devnull
 from requests.packages.urllib3.exceptions import InsecureRequestWarning, InsecurePlatformWarning
 import json
@@ -212,12 +212,12 @@ def remote_server_command(command, environment, user_profile, **kwargs):
         temp.seek(0)
         known_hosts = temp.name
     else:
-        known_hosts = task.get_script_path('known_hosts')
+        known_hosts = scripts.get_script_path('known_hosts')
 
     binds = {
         user_profile.profiledir + '/id_rsa': '/root/.ssh/id_rsa',
         known_hosts: '/root/.ssh/known_hosts',
-        task.get_script_path('ssh_config'): '/etc/ssh/ssh_config'
+        scripts.get_script_path('ssh_config'): '/etc/ssh/ssh_config'
     }
 
     if kwargs.get("include_project_dir", None):
@@ -363,7 +363,7 @@ def collect_logs(name):
 
 def check_connectivity():
     c = run_container(None, 'datacats/web', '/project/check_connectivity.sh',
-                      ro={task.get_script_path('check_connectivity.sh'):
+                      ro={scripts.get_script_path('check_connectivity.sh'):
                           '/project/check_connectivity.sh'},
                       detach=False)
     return collect_logs(c['Id'])
