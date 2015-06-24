@@ -479,6 +479,18 @@ def stop_supporting_containers(get_container_name):
     docker.remove_container(get_container_name('solr'))
 
 
+SCRIPTS_DIR = path.dirname(path.abspath(__file__)) + '/scripts'
+
+
+def get_script_path(script):
+    """
+    Gets the path to a shell script.
+
+    :param script: The relative name of the shell script to get (i.e. web.sh)
+    """
+    return path.join(SCRIPTS_DIR, script)
+
+
 def containers_running(get_container_name):
     """
     Return a list of containers tracked by this environment that are running

@@ -11,10 +11,10 @@ import sys
 
 from lockfile import LockFile
 
+from datacats import task
 from datacats.docker import (is_boot2docker, remove_container,
                              rename_container, web_command,
                              inspect_container, require_images)
-from datacats.scripts import MIGRATE
 from datacats.password import generate_password
 from datacats.error import DatacatsError
 
@@ -86,7 +86,7 @@ Would you like to continue the migration? (y/n) [n]:"""
                  '/project/data',
                  '/project/data/sites/' + new_site_name] +
         to_move,
-        ro={MIGRATE: '/scripts/migrate.sh'},
+        ro={task.get_script_path('migrate.sh'): '/scripts/migrate.sh'},
         rw={datadir: '/project/data'},
         clean_up=True
         )
@@ -158,7 +158,7 @@ Would you like to continue the migration? (y/n) [n]:"""
         command=['/scripts/migrate.sh',
                  '/project/data/sites/primary',
                  '/project/data'] + to_move,
-        ro={MIGRATE: '/scripts/migrate.sh'},
+        ro={task.get_script_path('migrate.sh'): '/scripts/migrate.sh'},
         rw={datadir: '/project/data'}
     )
 
