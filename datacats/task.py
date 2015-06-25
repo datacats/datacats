@@ -440,7 +440,7 @@ def create_source(srcdir, preload_image, datapusher=False):
 
 
 # Maps container extra names to actual names
-EXTRA_CONTAINER_MAPPING = {'redis': 'redis'}
+EXTRA_IMAGE_MAPPING = {'redis': 'redis'}
 
 
 def start_supporting_containers(sitedir, srcdir, passwords,
@@ -488,7 +488,7 @@ def start_supporting_containers(sitedir, srcdir, passwords,
             # implementation.
             docker.run_container(
                 name=get_container_name(container),
-                image=EXTRA_CONTAINER_MAPPING[container],
+                image=EXTRA_IMAGE_MAPPING[container],
                 ro={
                     sitedir: '/datadir',
                     srcdir: '/project'

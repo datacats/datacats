@@ -11,7 +11,7 @@ import sys
 
 from datacats.error import DatacatsError
 from datacats.cli.util import require_extra_image
-from datacats.task import EXTRA_CONTAINER_MAPPING
+from datacats.task import EXTRA_IMAGE_MAPPING
 
 
 def write(s):
@@ -94,7 +94,7 @@ Default: '.'
         environment.save()
 
     for container in environment.extra_containers:
-        require_extra_image(EXTRA_CONTAINER_MAPPING[container])
+        require_extra_image(EXTRA_IMAGE_MAPPING[container])
 
     environment.stop_supporting_containers()
     environment.start_supporting_containers()

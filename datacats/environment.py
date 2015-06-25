@@ -484,6 +484,9 @@ class Environment(object):
             self._get_container_name('postgres'): 'db'
         }
 
+        links.update({self._get_container_name(container): container
+                      for container in self.extra_containers})
+
         if datapusher:
             if 'datapusher' not in self.containers_running():
                 raise DatacatsError(container_logs(self._get_container_name('datapusher'), "all",
