@@ -243,10 +243,11 @@ def tweak(environment, opts):
     """Commands operating on environment data
 
 Usage:
-  datacats tweak --install-postgis [ENVIRONMENT]
+  datacats tweak [-s NAME] --install-postgis [ENVIRONMENT]
 
 Options:
   --install-postgis    Install postgis in ckan database
+  -s --site=NAME       Choose a site to tweak [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
