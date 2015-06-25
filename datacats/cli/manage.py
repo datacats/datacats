@@ -10,6 +10,7 @@ import webbrowser
 import sys
 
 from datacats.error import DatacatsError
+from datacats.cli.util import confirm_password
 
 
 def write(s):
@@ -243,11 +244,12 @@ def tweak(environment, opts):
     """Commands operating on environment data
 
 Usage:
-  datacats tweak [-s NAME] --install-postgis [ENVIRONMENT]
+  datacats tweak [-s NAME] [--install-postgis|--admin-password] [ENVIRONMENT]
 
 Options:
   --install-postgis    Install postgis in ckan database
   -s --site=NAME       Choose a site to tweak [default: primary]
+  -p --admin-password  Prompt to change the admin password
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -257,3 +259,5 @@ Default: '.'
     if opts['--install-postgis']:
         print "Installing postgis"
         environment.install_postgis_sql()
+    if opts['--admin-password']:
+        environment.create_admin_set_password(confirm_password())
