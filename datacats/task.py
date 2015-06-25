@@ -444,7 +444,7 @@ EXTRA_IMAGE_MAPPING = {'redis': 'redis'}
 
 
 def start_supporting_containers(sitedir, srcdir, passwords,
-        extra_containers, get_container_name):
+        get_container_name, extra_containers):
     """
     Start all supporting containers (containers required for CKAN to
     operate) if they aren't already running, along with some extra
@@ -464,7 +464,7 @@ def start_supporting_containers(sitedir, srcdir, passwords,
     needed = set(extra_containers).union({'postgres', 'solr'})
 
     if not needed.issubset(running):
-        stop_supporting_containers(extra_containers, get_container_name)
+        stop_supporting_containers(get_container_name, extra_containers)
 
         # users are created when data dir is blank so we must pass
         # all the user passwords as environment vars
@@ -496,7 +496,7 @@ def start_supporting_containers(sitedir, srcdir, passwords,
             )
 
 
-def stop_supporting_containers(extra_containers, get_container_name):
+def stop_supporting_containers(get_container_name, extra_containers):
     """
     Stop postgres and solr containers, along with any specified extra containers
     """

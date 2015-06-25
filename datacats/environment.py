@@ -252,7 +252,7 @@ class Environment(object):
         operate) if they aren't already running.
         """
         task.start_supporting_containers(self.sitedir, self.target,
-            self.passwords, self.extra_containers, self._get_container_name)
+            self.passwords, self._get_container_name, self.extra_containers)
 
     def stop_supporting_containers(self):
         """
@@ -260,7 +260,7 @@ class Environment(object):
         CKAN or CKAN plugins). This method should *only* be called after CKAN has been stopped
         or behaviour is undefined.
         """
-        task.stop_supporting_containers(self.extra_containers, self._get_container_name)
+        task.stop_supporting_containers(self._get_container_name, self.extra_containers)
 
     def fix_storage_permissions(self):
         """
