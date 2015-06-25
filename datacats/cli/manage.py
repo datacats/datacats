@@ -10,6 +10,8 @@ import webbrowser
 import sys
 
 from datacats.error import DatacatsError
+from datacats.cli.util import require_extra_image
+from datacats.task import EXTRA_CONTAINER_MAPPING
 
 
 def write(s):
@@ -90,9 +92,12 @@ Default: '.'
         if opts['--address'] != '127.0.0.1':
             environment.address = opts['--address']
         environment.save()
-    if 'postgres' not in environment.containers_running():
-        environment.stop_supporting_containers()
-        environment.start_supporting_containers()
+
+    for container in environment.extra_containers:
+        require_extra_image(EXTRA_CONTAINER_MAPPING[container])
+
+    environment.stop_supporting_containers()
+    environment.start_supporting_containers()
 
     environment.start_ckan(
         production=opts['--production'],
@@ -240,10 +245,11 @@ def tweak(environment, opts):
     """Commands operating on environment data
 
 Usage:
-  datacats tweak --install-postgis [ENVIRONMENT]
+  datacats tweak [--add-redis|--install-postgis] [ENVIRONMENT]
 
 Options:
   --install-postgis    Install postgis in ckan database
+  --add-redis          Adds redis next time this environment reloads
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -253,3 +259,6 @@ Default: '.'
     if opts['--install-postgis']:
         print "Installing postgis"
         environment.install_postgis_sql()
+    if opts['--add-redis']:
+        # Let the user know if they are trying to add it and it is already there
+        environment.add_extra_container('redis', error_on_exists=True)

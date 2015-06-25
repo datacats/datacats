@@ -206,6 +206,11 @@ def load_environment(srcdir, datadir=None):
     except ConfigParser.NoOptionError:
         always_prod = False
 
+    try:
+        extra_containers = cp.get('datacats', 'extra_containers').split(' ')
+    except ConfigParser.NoOptionError:
+        extra_containers = ()
+
     # if remote_server's custom ssh connection
     # address is defined,
     # we overwrite the default datacats.com one
@@ -223,7 +228,7 @@ def load_environment(srcdir, datadir=None):
         remote_server_key = None
 
     return (datadir, name, ckan_version, always_prod, deploy_target,
-        remote_server_key)
+        remote_server_key, extra_containers)
 
 
 def load_site(srcdir, datadir, site_name=None):
@@ -434,11 +439,16 @@ def create_source(srcdir, preload_image, datapusher=False):
             )
 
 
+# Maps container extra names to actual names
+EXTRA_CONTAINER_MAPPING = {'redis': 'redis'}
+
+
 def start_supporting_containers(sitedir, srcdir, passwords,
-        get_container_name):
+        extra_containers, get_container_name):
     """
     Start all supporting containers (containers required for CKAN to
-    operate) if they aren't already running.
+    operate) if they aren't already running, along with some extra
+    containers specified by the user
     """
     if docker.is_boot2docker():
         docker.data_only_container(get_container_name('pgdata'),
@@ -449,10 +459,12 @@ def start_supporting_containers(sitedir, srcdir, passwords,
         rw = {sitedir + '/postgres': '/var/lib/postgresql/data'}
         volumes_from = None
 
-    running = containers_running(get_container_name)
+    running = set(containers_running(get_container_name))
 
-    if 'postgres' not in running or 'solr' not in running:
-        stop_supporting_containers(get_container_name)
+    needed = set(extra_containers).union({'postgres', 'solr'})
+
+    if not needed.issubset(running):
+        stop_supporting_containers(extra_containers, get_container_name)
 
         # users are created when data dir is blank so we must pass
         # all the user passwords as environment vars
@@ -470,13 +482,28 @@ def start_supporting_containers(sitedir, srcdir, passwords,
             rw={sitedir + '/solr': '/var/lib/solr'},
             ro={srcdir + '/schema.xml': '/etc/solr/conf/schema.xml'})
 
+        for container in extra_containers:
+            # We don't know a whole lot about the extra containers so we're just gonna have to
+            # mount /project and /datadir r/o even if they're not needed for ease of
+            # implementation.
+            docker.run_container(
+                name=get_container_name(container),
+                image=EXTRA_CONTAINER_MAPPING[container],
+                ro={
+                    sitedir: '/datadir',
+                    srcdir: '/project'
+                }
+            )
 
-def stop_supporting_containers(get_container_name):
+
+def stop_supporting_containers(extra_containers, get_container_name):
     """
-    Stop postgres and solr containers
+    Stop postgres and solr containers, along with any specified extra containers
     """
     docker.remove_container(get_container_name('postgres'))
     docker.remove_container(get_container_name('solr'))
+    for container in extra_containers:
+        docker.remove_container(get_container_name(container))
 
 
 def containers_running(get_container_name):
