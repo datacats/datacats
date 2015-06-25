@@ -245,7 +245,8 @@ def tweak(environment, opts):
     """Commands operating on environment data
 
 Usage:
-  datacats tweak [--add-redis|--install-postgis] [ENVIRONMENT]
+  datacats tweak --install-postgis [ENVIRONMENT]
+  datacats tweak --add-redis [ENVIRONMENT]
 
 Options:
   --install-postgis    Install postgis in ckan database
