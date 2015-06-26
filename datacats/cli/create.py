@@ -29,7 +29,7 @@ Usage:
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
-  --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION, defaults to 2.3
+  --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION [default: 2.3]
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
@@ -56,9 +56,7 @@ part of this path will be used as the environment name.
 
 def create_environment(environment_dir, port, ckan_version, create_skin, site_name,
         start_web, create_sysadmin, address, log_syslog=False, datapusher=True, quiet=False):
-    # pylint: disable=unused-argument
-    # FIXME: only 2.3 preload supported at the moment
-    environment = Environment.new(environment_dir, '2.3', site_name, port=port)
+    environment = Environment.new(environment_dir, ckan_version, site_name, port=port)
 
     try:
         # There are a lot of steps we can/must skip if we're making a sub-site only

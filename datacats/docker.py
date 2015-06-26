@@ -397,6 +397,10 @@ def remove_image(image, force=False, noprune=False):
     _get_docker().remove_image(image, force=force, noprune=noprune)
 
 
+def get_tags(image):
+    return [i['RepoTags'][0].split(':')[1] for i in _get_docker().images(image)]
+
+
 def require_images():
     """
     Raises a DatacatsError if the images required to use Datacats don't exist.

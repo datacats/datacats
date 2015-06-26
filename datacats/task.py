@@ -271,7 +271,7 @@ def load_site(srcdir, datadir, site_name=None):
     return port, address, site_url, passwords
 
 
-def new_environment_check(srcpath, site_name):
+def new_environment_check(srcpath, site_name, ckan_version):
     """
     Check if a new environment or site can be created at the given path.
 
@@ -298,6 +298,13 @@ def new_environment_check(srcpath, site_name):
             srcdir = pd.read()
     else:
         srcdir = workdir + '/' + name
+
+    # Get all the versions from the tags
+    versions = [tag.split('-')[1] for tag in docker.get_tags('datacats/web') if tag != 'latest']
+
+    if ckan_version not in versions:
+        raise DatacatsError('''Datacats does not currently support CKAN version {}.
+Versions that are currently supported are: {}'''.format(ckan_version, ', '.join(versions)))
 
     if path.isdir(sitedir):
         raise DatacatsError('Site data directory {0} already exists'.format(

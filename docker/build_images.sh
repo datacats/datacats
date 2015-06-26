@@ -15,37 +15,39 @@ docker build -t datacats/postgres postgres/
 docker build -t datacats/web web/
 docker build -t datacats/lessc lessc/
 
-docker rm datacats_preload_1 || true
-docker run -i --name datacats_preload_1 \
-    -e BRANCH=release-v2.3 datacats/web \
-    /bin/bash < "$HERE/setup_ckan.sh"
-docker rmi datacats_preload_1_image || true
-docker commit datacats_preload_1 datacats_preload_1_image
+for ckan in "2.3" "2.4.0"; do
+    docker rm datacats_preload_1 || true
+    docker run -i --name datacats_preload_1 \
+        -e BRANCH=release-v$ckan datacats/web \
+        /bin/bash < "$HERE/setup_ckan.sh"
+    docker rmi datacats_preload_1_image || true
+    docker commit datacats_preload_1 datacats_preload_1_image
 
-rm -rf "$HERE/src" || true
-mkdir "$HERE/src"
+    rm -rf "$HERE/src" || true
+    mkdir "$HERE/src"
 
-docker cp datacats_preload_1:/project/ckan \
-    "$HERE/src"
+    docker cp datacats_preload_1:/project/ckan \
+        "$HERE/src"
 
-docker run -i --rm \
-    -v "$HERE/src/ckan:/project/ckan:ro" \
-    node:0.10-slim \
-    /bin/bash < "$HERE/compile_less.sh" > "$HERE/src/main.debug.css"
+    docker run -i --rm \
+        -v "$HERE/src/ckan:/project/ckan:ro" \
+        node:0.10-slim \
+        /bin/bash < "$HERE/compile_less.sh" > "$HERE/src/main.debug.css"
 
-docker rm datacats_preload_2 || true
-docker run -i --name datacats_preload_2 \
-    datacats_preload_1_image \
-    /bin/bash -c \
-    'cat > /project/ckan/ckan/public/base/css/main.debug.css' \
-    < "$HERE/src/main.debug.css"
+    docker rm datacats_preload_2 || true
+    docker run -i --name datacats_preload_2 \
+        datacats_preload_1_image \
+        /bin/bash -c \
+        'cat > /project/ckan/ckan/public/base/css/main.debug.css' \
+        < "$HERE/src/main.debug.css"
 
-docker rmi datacats/web:preload-2.3 || true
-docker commit datacats_preload_2 datacats/web:preload-2.3
+    docker rmi datacats/web:preload-$ckan || true
+    docker commit datacats_preload_2 datacats/web:preload-$ckan
 
-rm -rf "$HERE/src"
-docker rm -f datacats_preload_1
-docker rm -f datacats_preload_2
+    rm -rf "$HERE/src"
+    docker rm -f datacats_preload_1
+    docker rm -f datacats_preload_2
+done
 
 [ "$1" == "push" ] || exit
 

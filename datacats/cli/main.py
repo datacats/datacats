@@ -180,7 +180,6 @@ def _parse_arguments(args):
 
     opts = docopt(command_fn.__doc__, args, version=__version__)
 
-    _option_not_yet_implemented(opts, '--ckan')
     _option_not_yet_implemented(opts, '--remote')
     return command_fn, opts
 
