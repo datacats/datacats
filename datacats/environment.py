@@ -24,7 +24,7 @@ from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
     COMPILE_LESS, DATAPUSHER, INSTALL_POSTGIS, ADJUST_DEVINI,
-    UPDATE_ADD_ADMIN)
+    UPDATE_ADD_ADMIN, INSTALL_EXTRA_PACKAGES)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.password import generate_password
 from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
@@ -236,7 +236,7 @@ class Environment(object):
 
     def install_extra(self):
         self.user_run_script(
-            script=scripts.get_script_path('install_extra_packages.sh'),
+            script=INSTALL_EXTRA_PACKAGES,
             args=[],
             rw_venv=True
         )
