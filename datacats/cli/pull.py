@@ -13,6 +13,7 @@ from datacats.error import DatacatsError
 IMAGES = [
     'datacats/web',
     'datacats/web:preload-2.3',
+    'datacats/web:preload-2.4',
     'datacats/postgres',
     'datacats/solr'
     ]
