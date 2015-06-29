@@ -45,14 +45,14 @@ def save_new_site(site_name, sitedir, srcdir, port, address, site_url,
 
     if cp.has_section(section_name):
         cp.add_section(section_name)
-        cp.set(section_name, 'port', str(port))
-        cp.set(section_name, 'address', address or '127.0.0.1')
+    cp.set(section_name, 'port', str(port))
+    cp.set(section_name, 'address', address or '127.0.0.1')
 
-        if site_url:
-            cp.set(section_name, 'site_url', site_url)
+    if site_url:
+        cp.set(section_name, 'site_url', site_url)
 
-        with open(srcdir + '/.datacats-environment', 'w') as config:
-            cp.write(config)
+    with open(srcdir + '/.datacats-environment', 'w') as config:
+        cp.write(config)
 
     # save passwords to datadir
     cp = ConfigParser.SafeConfigParser()
