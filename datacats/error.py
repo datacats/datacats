@@ -12,7 +12,7 @@ class DatacatsError(Exception):
                 "message": str(parent_exception),
             }
             self.message = "".join([str(colored.blue("{original}\n\n")),
-                                    "~" * 30,
+                                    "-" * 30,
                                     "\n{type_description}:\n",
                                     str(colored.yellow("{message}\n"))]
                                     ).format(**vals)
