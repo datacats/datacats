@@ -689,6 +689,18 @@ class Environment(object):
             venv_volumes += ['-v',
                              self.sitedir + '/run/proxy-environment:/etc/environment:ro']
 
+        links = {self._get_container_name('solr'): 'solr',
+                 self._get_container_name('postgres'): 'db'}
+
+        links.update({self._get_container_name(container): container for container
+                      in self.extra_containers})
+
+        link_params = []
+
+        for link in links:
+            link_params.append('--link')
+            link_params.append(link + ':' + links[link])
+
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
@@ -703,9 +715,8 @@ class Environment(object):
             '-v', PASTER_CD + ':/scripts/paster_cd.sh:ro',
             '-v', self.sitedir + '/run/run.ini:/project/development.ini:ro',
             '-v', self.sitedir +
-                '/run/test.ini:/project/ckan/test-core.ini:ro',
-            '--link', self._get_container_name('solr') + ':solr',
-            '--link', self._get_container_name('postgres') + ':db']
+                '/run/test.ini:/project/ckan/test-core.ini:ro'] +
+            link_params
             + (['--link', self._get_container_name('datapusher') + ':datapusher']
                if self.needs_datapusher() else []) +
             ['--hostname', self.name,
