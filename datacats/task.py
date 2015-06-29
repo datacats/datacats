@@ -54,16 +54,16 @@ def save_new_site(site_name, sitedir, srcdir, port, address, site_url,
         with open(srcdir + '/.datacats-environment', 'w') as config:
             cp.write(config)
 
-        # save passwords to datadir
-        cp = ConfigParser.SafeConfigParser()
+    # save passwords to datadir
+    cp = ConfigParser.SafeConfigParser()
 
-        cp.add_section('passwords')
-        for n in sorted(passwords):
-            cp.set('passwords', n.lower(), passwords[n])
+    cp.add_section('passwords')
+    for n in sorted(passwords):
+        cp.set('passwords', n.lower(), passwords[n])
 
-        # Write to the sitedir so we maintain separate passwords.
-        with open(sitedir + '/passwords.ini', 'w') as config:
-            cp.write(config)
+    # Write to the sitedir so we maintain separate passwords.
+    with open(sitedir + '/passwords.ini', 'w') as config:
+        cp.write(config)
 
 
 def save_new_environment(name, datadir, srcdir, ckan_version,
