@@ -6,13 +6,12 @@
 
 import sys
 from os.path import abspath
-from getpass import getpass
 
 from datacats.environment import Environment
 from datacats.cli.install import install_all
 from datacats.error import DatacatsError
 
-from datacats.cli.util import y_or_n_prompt
+from datacats.cli.util import y_or_n_prompt, confirm_password
 
 
 def write(s):
@@ -232,15 +231,3 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
 
     if not start_web:
         environment.stop_supporting_containers()
-
-
-def confirm_password():
-    while True:
-        p1 = getpass('admin user password:')
-        if len(p1) < 4:
-            print 'At least 4 characters are required'
-            continue
-        p2 = getpass('confirm password:')
-        if p1 == p2:
-            return p1
-        print 'Passwords do not match'

@@ -75,12 +75,16 @@ def save_new_environment(name, datadir, srcdir, ckan_version,
 
     cp = ConfigParser.SafeConfigParser()
 
-    cp.add_section('datacats')
+    cp.read(srcdir + '/.datacats-environment')
+
+    if not cp.has_section('datacats'):
+        cp.add_section('datacats')
     cp.set('datacats', 'name', name)
     cp.set('datacats', 'ckan_version', ckan_version)
 
     if deploy_target:
-        cp.add_section('deploy')
+        if not cp.has_section('deploy'):
+            cp.add_section('deploy')
         cp.set('deploy', 'target', deploy_target)
 
     if always_prod:

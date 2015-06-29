@@ -12,6 +12,7 @@ import sys
 from datacats.error import DatacatsError
 from datacats.cli.util import require_extra_image
 from datacats.task import EXTRA_IMAGE_MAPPING
+from datacats.cli.util import confirm_password
 
 
 def write(s):
@@ -183,10 +184,11 @@ def logs(environment, opts):
     """Display or follow container logs
 
 Usage:
-  datacats logs [--postgres | --solr] [-s NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
-  datacats logs -f [--postgres | --solr] [-s NAME] [-r] [ENVIRONMENT]
+  datacats logs [--postgres | --solr | --datapusher] [-s NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
+  datacats logs -f [--postgres | --solr | --datapusher] [-s NAME] [-r] [ENVIRONMENT]
 
 Options:
+  --datapusher       Show logs for datapusher instead of web logs
   --postgres         Show postgres database logs instead of web logs
   -f --follow        Follow logs instead of exiting immediately
   -r --remote        Retrieve logs from DataCats.com cloud instance
@@ -203,6 +205,8 @@ Default: '.'
         container = 'solr'
     if opts['--postgres']:
         container = 'postgres'
+    if opts['--datapusher']:
+        container = 'datapusher'
     tail = opts['--tail']
     if tail != 'all':
         tail = int(tail)
@@ -247,12 +251,16 @@ def tweak(environment, opts):
 Usage:
   datacats tweak --install-postgis [ENVIRONMENT]
   datacats tweak --add-redis [ENVIRONMENT]
+  datacats tweak --admin-password [ENVIRONMENT]
 
 Options:
   --install-postgis    Install postgis in ckan database
   --add-redis          Adds redis next time this environment reloads
+  -s --site=NAME       Choose a site to tweak [default: primary]
+  -p --admin-password  Prompt to change the admin password
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
+
 Default: '.'
 """
 
@@ -263,3 +271,5 @@ Default: '.'
     if opts['--add-redis']:
         # Let the user know if they are trying to add it and it is already there
         environment.add_extra_container('redis', error_on_exists=True)
+    if opts['--admin-password']:
+        environment.create_admin_set_password(confirm_password())
