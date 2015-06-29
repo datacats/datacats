@@ -22,7 +22,8 @@ test:
     - '[ "$(echo `datacats list`)" == "site2" ]'
     - datacats init site1 -n
     - datacats reset -yn site1
-    - datacats install site1
+    - datacats install --clean site1
+    - datacats shell cat /usr/lib/ckan/bin/ckanapi
     - datacats init site1 -s two -n
     - datacats start -s two site1
     - datacats migrate -y -r 1 site1
