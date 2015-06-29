@@ -212,7 +212,6 @@ class Environment(object):
         """
         Return the preloaded ckan src and venv image name
         """
-        # FIXME: when we support more than one preload image
         # get the preload name from self.ckan_version
         return 'datacats/web:preload-{}'.format(self.ckan_version)
 

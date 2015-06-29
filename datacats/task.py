@@ -18,6 +18,7 @@ import shutil
 
 from datacats import docker, validate, migrate
 from datacats.error import DatacatsError
+from datacats.cli.pull import pull_image
 
 
 DEFAULT_REMOTE_SERVER_TARGET = 'datacats@command.datacats.com'
@@ -271,6 +272,9 @@ def load_site(srcdir, datadir, site_name=None):
     return port, address, site_url, passwords
 
 
+SUPPORTED_PRELOADS = ['2.3', '2.4.0', 'master']
+
+
 def new_environment_check(srcpath, site_name, ckan_version):
     """
     Check if a new environment or site can be created at the given path.
@@ -299,12 +303,19 @@ def new_environment_check(srcpath, site_name, ckan_version):
     else:
         srcdir = workdir + '/' + name
 
-    # Get all the versions from the tags
-    versions = [tag.split('-')[1] for tag in docker.get_tags('datacats/web') if tag != 'latest']
-
-    if ckan_version not in versions:
+    if ckan_version not in SUPPORTED_PRELOADS:
         raise DatacatsError('''Datacats does not currently support CKAN version {}.
-Versions that are currently supported are: {}'''.format(ckan_version, ', '.join(versions)))
+Versions that are currently supported are: {}'''.format(ckan_version,
+                                                        ', '.join(SUPPORTED_PRELOADS)))
+
+    preload_name = 'preload-{}'.format(ckan_version)
+
+    # Get all the versions from the tags
+    downloaded_versions = [tag.split('-')[1] for tag in docker.get_tags('datacats/web')
+                           if tag != 'latest']
+
+    if ckan_version not in downloaded_versions:
+        pull_image('datacats/web:{}'.format(preload_name))
 
     if path.isdir(sitedir):
         raise DatacatsError('Site data directory {0} already exists'.format(
