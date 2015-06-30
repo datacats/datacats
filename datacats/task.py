@@ -43,7 +43,7 @@ def save_new_site(site_name, sitedir, srcdir, port, address, site_url,
 
     section_name = 'site_' + site_name
 
-    if cp.has_section(section_name):
+    if not cp.has_section(section_name):
         cp.add_section(section_name)
     cp.set(section_name, 'port', str(port))
     cp.set(section_name, 'address', address or '127.0.0.1')
