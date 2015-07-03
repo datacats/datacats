@@ -363,7 +363,8 @@ class Environment(object):
         cp = SafeConfigParser()
         try:
             cp.read(self.target + '/development.ini')
-            return 'datapusher' in cp.get('app:main', 'ckan.plugins')
+            return ('datapusher' in cp.get('app:main', 'ckan.plugins')
+                    and isdir(self.target + '/datapusher'))
         except ConfigParserError as e:
             raise DatacatsError('Failed to read and parse development.ini: ' + str(e))
 
