@@ -1,0 +1,25 @@
+#!/bin/bash
+
+datacats create site1 -bn
+"[ ! -d site1/ckanext-site1theme ]"
+'[ "$(echo `datacats list`)" == "site1" ]'
+datacats info site1
+datacats start site1 8999
+datacats info site1
+datacats shell site1 echo hello from inside site1
+datacats logs site1
+datacats create site2 -n
+"[ -d site2/ckanext-site2theme ]"
+'[ "$(echo `datacats list`)" == "site1 site2" ]'
+datacats purge -y site1
+'[ "$(echo `datacats list`)" == "site2" ]'
+datacats init site1 -n
+datacats reset -yn site1
+datacats install site1
+datacats init site1 -s two -n
+datacats start -s two site1
+datacats migrate -y -r 1 site1
+'[ -e ~/.datacats/site1/postgres ]'
+datacats migrate -y -r 2 site1
+'[ -e ~/.datacats/site1/sites/primary/postgres ]'
+"[ $(datacats --version | wc -l) == 1 ]"
