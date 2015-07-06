@@ -44,7 +44,8 @@ def save_new_site(site_name, sitedir, srcdir, port, address, site_url,
 
     section_name = 'site_' + site_name
 
-    cp.add_section(section_name)
+    if not cp.has_section(section_name):
+        cp.add_section(section_name)
     cp.set(section_name, 'port', str(port))
     cp.set(section_name, 'address', address or '127.0.0.1')
 
@@ -76,12 +77,16 @@ def save_new_environment(name, datadir, srcdir, ckan_version,
 
     cp = ConfigParser.SafeConfigParser()
 
-    cp.add_section('datacats')
+    cp.read(srcdir + '/.datacats-environment')
+
+    if not cp.has_section('datacats'):
+        cp.add_section('datacats')
     cp.set('datacats', 'name', name)
     cp.set('datacats', 'ckan_version', ckan_version)
 
     if deploy_target:
-        cp.add_section('deploy')
+        if not cp.has_section('deploy'):
+            cp.add_section('deploy')
         cp.set('deploy', 'target', deploy_target)
 
     if always_prod:

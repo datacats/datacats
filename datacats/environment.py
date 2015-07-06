@@ -24,7 +24,7 @@ from datacats.template import ckan_extension_template
 from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
     RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
     COMPILE_LESS, DATAPUSHER, INSTALL_POSTGIS, ADJUST_DEVINI,
-    UPDATE_ADD_ADMIN)
+    UPDATE_ADD_ADMIN, INSTALL_EXTRA_PACKAGES)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.password import generate_password
 from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
@@ -233,6 +233,13 @@ class Environment(object):
             rw_venv=True,
             )
 
+    def install_extra(self):
+        self.user_run_script(
+            script=INSTALL_EXTRA_PACKAGES,
+            args=[],
+            rw_venv=True
+        )
+
     def create_source(self, datapusher=True):
         """
         Populate ckan directory from preloaded image and copy
@@ -332,8 +339,7 @@ class Environment(object):
 
     def install_postgis_sql(self):
         web_command(
-            None,  # use entrypoint to override postgres createdb magic
-            entrypoint='/scripts/install_postgis.sh',
+            '/scripts/install_postgis.sh',
             image='datacats/postgres',
             ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
             links={self._get_container_name('postgres'): 'db'},
@@ -355,7 +361,8 @@ class Environment(object):
         cp = SafeConfigParser()
         try:
             cp.read(self.target + '/development.ini')
-            return 'datapusher' in cp.get('app:main', 'ckan.plugins')
+            return ('datapusher' in cp.get('app:main', 'ckan.plugins')
+                    and isdir(self.target + '/datapusher'))
         except ConfigParserError as e:
             raise DatacatsError('Failed to read and parse development.ini: ' + str(e))
 
