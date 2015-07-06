@@ -340,8 +340,7 @@ class Environment(object):
 
     def install_postgis_sql(self):
         web_command(
-            None,  # use entrypoint to override postgres createdb magic
-            entrypoint='/scripts/install_postgis.sh',
+            '/scripts/install_postgis.sh',
             image='datacats/postgres',
             ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
             links={self._get_container_name('postgres'): 'db'},
