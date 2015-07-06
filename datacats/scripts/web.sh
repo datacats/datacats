@@ -20,7 +20,7 @@ fi
 while true; do
 	# fix our development.ini
 	if [ "$2" = "True" ]; then
-		/scripts/adjust_devini.py "$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')" "$port"
+		/scripts/adjust_devini.py "$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')" "5000"
 	fi
 
 	# production
