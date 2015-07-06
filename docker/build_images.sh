@@ -15,10 +15,14 @@ docker build -t datacats/postgres postgres/
 docker build -t datacats/web web/
 docker build -t datacats/lessc lessc/
 
-for ckan in "2.3" "2.4.0"; do
+# Json for image dict
+image_dict='{"2.3": "release-v2.3-latest", "2.4b": "release-v2.4.0", "master": "master"}'
+
+# Loop through the keys
+for key in '2.3' '2.4b' 'master'; do
     docker rm datacats_preload_1 || true
     docker run -i --name datacats_preload_1 \
-        -e BRANCH=release-v$ckan datacats/web \
+        -e "BRANCH=$(./json_lookup.py "$image_dict" "$key")" datacats/web \
         /bin/bash < "$HERE/setup_ckan.sh"
     docker rmi datacats_preload_1_image || true
     docker commit datacats_preload_1 datacats_preload_1_image
@@ -41,8 +45,8 @@ for ckan in "2.3" "2.4.0"; do
         'cat > /project/ckan/ckan/public/base/css/main.debug.css' \
         < "$HERE/src/main.debug.css"
 
-    docker rmi datacats/web:preload-$ckan || true
-    docker commit datacats_preload_2 datacats/web:preload-$ckan
+    docker rmi "datacats/web:preload-$key" || true
+    docker commit datacats_preload_2 "datacats/web:preload-$key"
 
     rm -rf "$HERE/src"
     docker rm -f datacats_preload_1

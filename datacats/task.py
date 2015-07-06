@@ -277,7 +277,7 @@ def load_site(srcdir, datadir, site_name=None):
     return port, address, site_url, passwords
 
 
-SUPPORTED_PRELOADS = ['2.3', '2.4.0', 'master']
+SUPPORTED_PRELOADS = ['2.3', '2.4b', 'master']
 
 
 def new_environment_check(srcpath, site_name, ckan_version):
