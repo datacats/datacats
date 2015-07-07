@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+1.0.2
+-----
+
+2015-07-07
+
+- compatibility with Docker 1.7.0 by removing reliance on ENTRYPOINT.
+- fix an issue with datapusher where the site_url would not be set
+  correctly for CKAN to respond.
+
 1.0.1
 -----
 
