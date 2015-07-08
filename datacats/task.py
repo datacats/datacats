@@ -487,7 +487,7 @@ def start_supporting_containers(sitedir, srcdir, passwords,
             image='datacats/solr',
             rw={sitedir + '/solr': '/var/lib/solr'},
             ro={srcdir + '/schema.xml': '/etc/solr/conf/schema.xml'},
-            log_syslog=log_config)
+            log_syslog=log_syslog)
 
         for container in extra_containers:
             # We don't know a whole lot about the extra containers so we're just gonna have to

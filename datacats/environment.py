@@ -263,15 +263,13 @@ class Environment(object):
             log_syslog=log_syslog
             )
 
-    def stop_supporting_containers(self, log_syslog=False):
+    def stop_supporting_containers(self):
         """
         Stop and remove supporting containers (containers that are used by CKAN but don't host
         CKAN or CKAN plugins). This method should *only* be called after CKAN has been stopped
         or behaviour is undefined.
         """
         task.stop_supporting_containers(self._get_container_name, self.extra_containers)
-        task.stop_supporting_containers(self._get_container_name)
-
 
     def fix_storage_permissions(self):
         """
@@ -397,7 +395,6 @@ class Environment(object):
 
         if address != '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify address on boot2docker.')
-
 
         # XXX nasty hack, remove this once we have a lessc command
         # for users (not just for building our preload image)
