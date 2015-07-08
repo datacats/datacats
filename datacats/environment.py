@@ -249,21 +249,29 @@ class Environment(object):
         """
         task.create_source(self.target, self._preload_image(), datapusher)
 
-    def start_supporting_containers(self):
+    def start_supporting_containers(self, log_syslog=Flase):
         """
         Start all supporting containers (containers required for CKAN to
         operate) if they aren't already running.
         """
-        task.start_supporting_containers(self.sitedir, self.target,
-            self.passwords, self._get_container_name, self.extra_containers)
+        task.start_supporting_containers(
+            self.sitedir,
+            self.target,
+            self.passwords,
+            self._get_container_name,
+            self.extra_containers,
+            log_syslog=log_syslog
+            )
 
-    def stop_supporting_containers(self):
+    def stop_supporting_containers(self, log_syslog=False):
         """
         Stop and remove supporting containers (containers that are used by CKAN but don't host
         CKAN or CKAN plugins). This method should *only* be called after CKAN has been stopped
         or behaviour is undefined.
         """
         task.stop_supporting_containers(self._get_container_name, self.extra_containers)
+        task.stop_supporting_containers(self._get_container_name)
+
 
     def fix_storage_permissions(self):
         """
