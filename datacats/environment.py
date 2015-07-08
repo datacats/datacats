@@ -414,7 +414,8 @@ class Environment(object):
                 'datacats/web',
                 '/scripts/datapusher.sh',
                 ro=ro,
-                volumes_from=(self._get_container_name('venv') if is_boot2docker() else None))
+                volumes_from=(self._get_container_name('venv') if is_boot2docker() else None),
+                log_syslog=log_syslog)
 
         while True:
             self._create_run_ini(port, production)
