@@ -390,7 +390,6 @@ class Environment(object):
         if address != '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify address on boot2docker.')
 
-        datapusher = self.needs_datapusher()
 
         # XXX nasty hack, remove this once we have a lessc command
         # for users (not just for building our preload image)
@@ -408,6 +407,7 @@ class Environment(object):
         if not is_boot2docker():
             ro[self.datadir + '/venv'] = '/usr/lib/ckan'
 
+        datapusher = self.needs_datapusher()
         if datapusher:
             run_container(
                 self._get_container_name('datapusher'),
