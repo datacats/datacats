@@ -373,9 +373,10 @@ class Environment(object):
         """
         Start the apache server or paster serve
 
-        :param production: True for apache, False for paster serve + debug on
         :param address: On Linux, the address to serve from (can be 0.0.0.0 for
                         listening on all addresses)
+        :param log_syslog: A flag to redirect all container logs to host's syslog
+        :param production: True for apache, False for paster serve + debug on
         :param paster_reload: Instruct paster to watch for file changes
         """
         self.stop_ckan()
