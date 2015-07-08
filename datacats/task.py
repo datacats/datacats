@@ -277,7 +277,7 @@ def load_site(srcdir, datadir, site_name=None):
     return port, address, site_url, passwords
 
 
-SUPPORTED_PRELOADS = ['2.3', '2.4b', 'master']
+SUPPORTED_PRELOADS = ['2.3', '2.4b', 'latest']
 
 
 def new_environment_check(srcpath, site_name, ckan_version):
@@ -313,14 +313,13 @@ def new_environment_check(srcpath, site_name, ckan_version):
 Versions that are currently supported are: {}'''.format(ckan_version,
                                                         ', '.join(SUPPORTED_PRELOADS)))
 
-    preload_name = 'preload-{}'.format(ckan_version)
+    preload_name = str(ckan_version)
 
     # Get all the versions from the tags
-    downloaded_versions = [tag.split('-')[1] for tag in docker.get_tags('datacats/web')
-                           if tag != 'latest']
+    downloaded_versions = [tag for tag in docker.get_tags('datacats/ckan')]
 
     if ckan_version not in downloaded_versions:
-        pull_image('datacats/web:{}'.format(preload_name))
+        pull_image('datacats/ckan:{}'.format(preload_name))
 
     if path.isdir(sitedir):
         raise DatacatsError('Site data directory {0} already exists'.format(

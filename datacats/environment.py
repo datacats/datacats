@@ -112,6 +112,8 @@ class Environment(object):
         Raises DatcatsError if directories or project with same
         name already exits.
         """
+        if ckan_version == 'master':
+            ckan_version = 'latest'
         name, datadir, srcdir = task.new_environment_check(path, site_name, ckan_version)
         environment = cls(name, srcdir, datadir, site_name, ckan_version, **kwargs)
         environment._generate_passwords()
@@ -213,7 +215,7 @@ class Environment(object):
         Return the preloaded ckan src and venv image name
         """
         # get the preload name from self.ckan_version
-        return 'datacats/web:preload-{}'.format(self.ckan_version)
+        return 'datacats/ckan:{}'.format(self.ckan_version)
 
     def create_virtualenv(self):
         """
