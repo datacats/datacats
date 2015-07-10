@@ -600,8 +600,11 @@ class Environment(object):
         :param container: The container name to add
         :param error_on_exists: Raise a DatacatsError if the extra container already exists.
         """
-        if container in self.extra_containers and error_on_exists:
-            raise DatacatsError('{} is already added as an extra container.'.format(container))
+        if container in self.extra_containers:
+            if error_on_exists:
+                raise DatacatsError('{} is already added as an extra container.'.format(container))
+            else:
+                return
 
         self.extra_containers.append(container)
 
