@@ -202,7 +202,6 @@ def _subcommand_arguments(args):
     return command, args
 
 
-
 def _hack_site_opt(args, i, paster=False):
     """
     Adjusts the "cut off point" for positional argument protection.
