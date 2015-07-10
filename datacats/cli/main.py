@@ -139,50 +139,68 @@ def _error_exit(exception):
 
 
 def _parse_arguments(args):
-    help_ = False  # flag for only showing the help message
+    command, args = _subcommand_arguments(args)
 
-    # Find subcommand without docopt so that subcommand options may appear
-    # anywhere
-    for i, a in enumerate(args):
-        if a.startswith('-'):
-            continue
-        if a == 'help':
-            help_ = True
-            continue
-        if a not in COMMANDS:
-            raise DatacatsError("\'{0}\' command is not recognized. \n"
-              "See \'datacats help\' for the list of available commands".format(a))
-        command_fn = COMMANDS[a]
-        break
-    else:
+    if not command:
+        # allow --version
         opts = docopt(__doc__, args, version=__version__)
-        return _intro_message, {}
+        # if above didn't exit, this certainly will
+        return docopt(__doc__, ['--help'])
 
-    # i is where the subcommand starts.
-    # shell, paster are special: options might belong to the command being
-    # executed
-    if command_fn == shell.shell:
-        i = _hack_site_opt(args, i)
-        # assume commands don't start with '-' and that those options
-        # are intended for datacats
-        for j, a in enumerate(args[i + 2:], i + 2):
-            if not a.startswith('-'):
-                # -- makes docopt parse the rest as positional args
-                args = args[:j] + ['--'] + args[j:]
-                break
-
-    if command_fn == shell.paster:
-        i = _hack_site_opt(args, i, True)
-        args = args[:i + 1] + ['--'] + args[i + 1:]
-
-    if help_:
-        args.insert(1, '--help')
+    command_fn = COMMANDS[command]
 
     opts = docopt(command_fn.__doc__, args, version=__version__)
 
     _option_not_yet_implemented(opts, '--ckan')
     _option_not_yet_implemented(opts, '--remote')
     return command_fn, opts
+
+
+def _subcommand_arguments(args):
+    """
+    Return (subcommand, (possibly adjusted) arguments for that subcommand)
+
+    Returns (None, args) when no subcommand is found
+
+    Parsing our arguments is hard. Each subcommand has its own docopt
+    validation, and some subcommands (paster and shell) have positional
+    options (some options passed to datacats and others passed to
+    commands run inside the container)
+    """
+    # Find subcommand without docopt so that subcommand options may appear
+    # anywhere
+    for i, a in enumerate(args):
+        if a.startswith('-'):
+            continue
+        if a == 'help':
+            return _subcommand_arguments(args[:i] + ['--help'] + args[i + 1:])
+        if a not in COMMANDS:
+            raise DatacatsError("\'{0}\' command is not recognized. \n"
+              "See \'datacats help\' for the list of available commands".format(a))
+        command = a
+        break
+    else:
+        return None, args
+
+    # i is where the subcommand starts.
+    # shell, paster are special: options might belong to the command being
+    # executed
+    if command == 'shell':
+        i = _hack_site_opt(args, i)
+        # assume commands don't start with '-' and that those options
+        # are intended for datacats
+        for j, a in enumerate(args[i + 1:], i + 1):
+            if not a.startswith('-'):
+                # -- makes docopt parse the rest as positional args
+                args = args[:j] + ['--'] + args[j:]
+                break
+
+    if command == 'paster':
+        i = _hack_site_opt(args, i, True)
+        args = args[:i + 1] + ['--'] + args[i + 1:]
+
+    return command, args
+
 
 
 def _hack_site_opt(args, i, paster=False):
@@ -225,10 +243,6 @@ def _option_not_yet_implemented(opts, name):
     raise DatacatsError(
         "\'{0}\' option is not implemented yet. \n".format(name))
 
-
-def _intro_message(opts):
-    # pylint: disable=unused-argument
-    return docopt(__doc__, ['--help'])
 
 if __name__ == '__main__':
     main()
