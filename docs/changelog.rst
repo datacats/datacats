@@ -1,18 +1,67 @@
 Change Log
 ==========
 
+1.0.2
+-----
+
+2015-07-07
+
+- compatibility with Docker 1.7.0 by removing reliance on ENTRYPOINT.
+- fix an issue with datapusher where the site_url would not be set
+  correctly for CKAN to respond.
+
+1.0.1
+-----
+
+2015-06-26
+
+- fix for a bug in start/restart that would remove site settings
+  when passing a port or address option
+- logs: new --datapusher option to view datapusher logs
+- tweak: new --site option to specify site to modify
+- fix for install --clean command not reinstalling ckanapi into
+  virtualenv
+
+1.0.0
+-----
+
+2015-06-24
+
+- new support for multiple sites (DBs, files etc.) per environment
+- new support for datapusher
+- new support for ckanext-spatial
+- new migrate command: migrate data directory formats between
+  pre-multisite and post-multisite versions of datacats
+- new reset command: reset DBs, files etc. to a default post-create
+  state for a site
+- init, create: now add postgis SQL to new DBs created
+- create: now includes datapusher in the source directory by default
+- tweak: new command can add postgis SQL to existing DBs
+- lessc now streams output to show errors
+- start, reload: new --no-watch option to prevent automatic paster
+  reload on file changes, useful when testing updates to static files
+- create, init, logs, open, paster, purge, reload, reset, shell,
+  start, stop: new --site option to specify site
+- bigger, shinier tracebacks and error messages
+
 0.11.2
 ------
+
+2015-06-19
 
 - fix for a second deployment regression
 
 0.11.1
 ------
 
+2015-06-15
+
 - fix for a deployment regression
 
 0.11.0
 ------
+
+2015-06-05
 
 - workaround for common TLS error with boot2docker and recent openssl
 - less: new command to compile less files to css
@@ -28,6 +77,8 @@ Change Log
 
 0.10.0
 ------
+
+2015-05-19
 
 - create/start/reload --address=IP: choose the IP address to bind
   for serving ckan. allows use of datacats to serve public sites directly
@@ -45,20 +96,28 @@ Change Log
 0.9.3
 -----
 
+2015-05-12
+
 - fix for ConnectionError on OSX for some users
 
 0.9.2
 -----
+
+2015-05-06
 
 - fix for deploy with docker 1.6
 
 0.9.1
 -----
 
+2015-05-05
+
 - fix for shell command when containers already running
 
 0.9
 ---
+
+2015-05-05
 
 - install --clean: install dependencies to an empty virtualenv
   to support running datacats with older ckan versions (local only)
@@ -75,6 +134,8 @@ Change Log
 0.8
 ---
 
+2015-03-27
+
 - create, init: fix for race between db creation and init
 - create, init, start, reload: fix for automatic port selection
 - install, start, reload, open, shell, paster:
@@ -90,5 +151,7 @@ Change Log
 
 0.7
 ---
+
+2015-03-15
 
 - initial public release

@@ -14,6 +14,7 @@ from clint.textui import colored
 from datacats.cli import manage
 from datacats.docker import check_connectivity
 from datacats.error import DatacatsError
+from datacats.environment import Environment
 
 
 def install(environment, opts):
@@ -33,16 +34,18 @@ Default: '.'
     environment.require_data()
     install_all(environment, opts['--clean'], verbose=not opts['--quiet'])
 
-    if 'web' in environment.containers_running():
-        # FIXME: reload without changing debug setting?
-        manage.reload_(environment, {
-            '--address': opts['--address'],
-            '--background': False,
-            '--no-reload': False,
-            '--production': False,
-            'PORT': None,
-            '--syslog': False,
-            })
+    for site in environment.sites:
+        environment = Environment.load(environment.name, site)
+        if 'web' in environment.containers_running():
+            # FIXME: reload without changing debug setting?
+            manage.reload_(environment, {
+                '--address': opts['--address'],
+                '--background': False,
+                '--no-watch': False,
+                '--production': False,
+                'PORT': None,
+                '--syslog': False,
+                })
 
 
 def install_all(environment, clean, verbose=False, quiet=False):
@@ -70,6 +73,7 @@ def install_all(environment, clean, verbose=False, quiet=False):
 
     if clean:
         environment.clean_virtualenv()
+        environment.install_extra()
 
     for s in ['ckan'] + sorted(srcdirs):
         if verbose:

@@ -1,4 +1,17 @@
 import sys
+from getpass import getpass
+
+
+def confirm_password():
+    while True:
+        p1 = getpass('admin user password:')
+        if len(p1) < 4:
+            print 'At least 4 characters are required'
+            continue
+        p2 = getpass('confirm password:')
+        if p1 == p2:
+            return p1
+        print 'Passwords do not match'
 
 
 def y_or_n_prompt(statement_of_risk):

@@ -230,6 +230,13 @@ class Environment(object):
             rw_venv=True,
             )
 
+    def install_extra(self):
+        self.user_run_script(
+            script=scripts.get_script_path('install_extra_packages.sh'),
+            args=[],
+            rw_venv=True
+        )
+
     def create_source(self, datapusher=True):
         """
         Populate ckan directory from preloaded image and copy
@@ -329,8 +336,7 @@ class Environment(object):
 
     def install_postgis_sql(self):
         web_command(
-            None,  # use entrypoint to override postgres createdb magic
-            entrypoint='/scripts/install_postgis.sh',
+            '/scripts/install_postgis.sh',
             image='datacats/postgres',
             ro={scripts.get_script_path('install_postgis.sh'): '/scripts/install_postgis.sh'},
             links={self._get_container_name('postgres'): 'db'},
@@ -352,7 +358,8 @@ class Environment(object):
         cp = SafeConfigParser()
         try:
             cp.read(self.target + '/development.ini')
-            return 'datapusher' in cp.get('app:main', 'ckan.plugins')
+            return ('datapusher' in cp.get('app:main', 'ckan.plugins')
+                    and isdir(self.target + '/datapusher'))
         except ConfigParserError as e:
             raise DatacatsError('Failed to read and parse development.ini: ' + str(e))
 

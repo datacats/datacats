@@ -23,7 +23,11 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -q -y install \
         apache2 \
         libapache2-mod-wsgi \
         libgeos-dev \
-        libcurl4-openssl-dev
+        libmysqlclient-dev \
+        libcurl4-openssl-dev \
+        libldap2-dev \
+        libsasl2-dev \
+        libssl-dev
 
 #Configure webserver
 ADD apache.wsgi /etc/ckan/apache.wsgi
@@ -32,7 +36,9 @@ ADD ports.conf /etc/apache2/ports.conf
 RUN a2ensite ckan_default
 RUN a2dissite 000-default
 
-RUN usermod -u 1000 www-data
+RUN mkdir -p /var/www/storage
+RUN chown -R www-data:www-data /var/www/
+RUN usermod -u 1000 -d /var/www/storage www-data
 
 CMD ["/usr/sbin/apachectl", "-DFOREGROUND"]
 EXPOSE 5000

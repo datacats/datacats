@@ -9,6 +9,7 @@
 set -e
 
 trap 'kill $!' SIGUSR1
+export HOME="/var/www/storage"
 
 port=5000
 

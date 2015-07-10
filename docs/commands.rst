@@ -25,6 +25,10 @@ install
 -------
 .. program-output:: datacats help install
 
+less
+----
+.. program-output:: datacats help less
+
 list
 ----
 .. program-output:: datacats help list
@@ -32,6 +36,10 @@ list
 logs
 ----
 .. program-output:: datacats help logs
+
+migrate
+-------
+.. program-output:: datacats help migrate
 
 open
 ----
@@ -53,6 +61,10 @@ reload
 ------
 .. program-output:: datacats help reload
 
+reset
+------
+.. program-output:: datacats help reset
+
 shell
 -----
 .. program-output:: datacats help shell
@@ -65,13 +77,9 @@ stop
 ----
 .. program-output:: datacats help stop
 
-less
-----
-.. program-output:: datacats help less
-
-migrate
--------
-.. program-output:: datacats help migrate
+tweak
+-----
+.. program-output:: datacats help tweak
 
 datacats-lesscd
 ---------------

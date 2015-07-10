@@ -10,6 +10,7 @@ import webbrowser
 import sys
 
 from datacats.error import DatacatsError
+from datacats.cli.util import confirm_password
 
 
 def write(s):
@@ -39,13 +40,13 @@ def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
-  datacats start [-b] [-p|--no-reload] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats start [-b] [-p|--no-watch] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
   datacats start -r [-b] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
-  --no-reload        Do not automatically reload templates and .py files on change
+  --no-watch         Do not automatically reload templates and .py files on change
   -p --production    Start with apache and debug=false
   -r --remote        Start DataCats.com cloud instance
   -s --site=NAME     Specify a site to start [default: primary]
@@ -67,13 +68,13 @@ def reload_(environment, opts):
     """Reload environment source and configuration
 
 Usage:
-  datacats reload [-b] [-p|--no-reload] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats reload [-b] [-p|--no-watch] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT [PORT]]
   datacats reload -r [-b] [--syslog] [-s NAME] [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP       Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background    Don't wait for response from web server
-  --no-reload        Do not automatically reload templates and .py files on change
+  --no-watch         Do not automatically reload templates and .py files on change
   -p --production    Reload with apache and debug=false
   -r --remote        Reload DataCats.com cloud instance
   -s --site=NAME     Specify a site to reload [default: primary]
@@ -97,7 +98,7 @@ Default: '.'
     environment.start_ckan(
         production=opts['--production'],
         address=opts['--address'],
-        paster_reload=not opts['--no-reload'],
+        paster_reload=not opts['--no-watch'],
         log_syslog=opts['--syslog'])
     write('Starting web server at {0} ...'.format(environment.web_address()))
     if opts['--background']:
@@ -178,10 +179,11 @@ def logs(environment, opts):
     """Display or follow container logs
 
 Usage:
-  datacats logs [--postgres | --solr] [-s NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
-  datacats logs -f [--postgres | --solr] [-s NAME] [-r] [ENVIRONMENT]
+  datacats logs [--postgres | --solr | --datapusher] [-s NAME] [-tr] [--tail=LINES] [ENVIRONMENT]
+  datacats logs -f [--postgres | --solr | --datapusher] [-s NAME] [-r] [ENVIRONMENT]
 
 Options:
+  --datapusher       Show logs for datapusher instead of web logs
   --postgres         Show postgres database logs instead of web logs
   -f --follow        Follow logs instead of exiting immediately
   -r --remote        Retrieve logs from DataCats.com cloud instance
@@ -198,6 +200,8 @@ Default: '.'
         container = 'solr'
     if opts['--postgres']:
         container = 'postgres'
+    if opts['--datapusher']:
+        container = 'datapusher'
     tail = opts['--tail']
     if tail != 'all':
         tail = int(tail)
@@ -240,10 +244,12 @@ def tweak(environment, opts):
     """Commands operating on environment data
 
 Usage:
-  datacats tweak --install-postgis [ENVIRONMENT]
+  datacats tweak [-s NAME] [--install-postgis|--admin-password] [ENVIRONMENT]
 
 Options:
   --install-postgis    Install postgis in ckan database
+  -s --site=NAME       Choose a site to tweak [default: primary]
+  -p --admin-password  Prompt to change the admin password
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -253,3 +259,5 @@ Default: '.'
     if opts['--install-postgis']:
         print "Installing postgis"
         environment.install_postgis_sql()
+    if opts['--admin-password']:
+        environment.create_admin_set_password(confirm_password())
