@@ -20,7 +20,7 @@ IMAGES = [
 EXTRA_IMAGES = [
     'datacats/lessc',
     'datacats/ckan:latest',
-    'datacats/ckan:2.4b'
+    'datacats/ckan:2.4'
     ]
 
 

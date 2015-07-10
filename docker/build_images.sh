@@ -16,7 +16,7 @@ docker build -t datacats/web web/
 docker build -t datacats/lessc lessc/
 docker build -t datacats/ckan ckan/
 docker build -t datacats/ckan:2.3 -f ckan/Dockerfile-2.3 ckan/
-docker build -t datacats/ckan:2.4b -f ckan/Dockerfile-2.4b ckan/
+docker build -t datacats/ckan:2.4 -f ckan/Dockerfile-2.4 ckan/
 
 
 [ "$1" == "push" ] || exit

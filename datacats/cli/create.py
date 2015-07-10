@@ -53,9 +53,11 @@ part of this path will be used as the environment name.
         )
 
 
-def create_environment(environment_dir, port, ckan_version, create_skin, site_name,
-        start_web, create_sysadmin, address, log_syslog=False, datapusher=True, quiet=False):
-    environment = Environment.new(environment_dir, '2.3', site_name, address=address, port=port)
+def create_environment(environment_dir, port, ckan_version, create_skin,
+        site_name, start_web, create_sysadmin, address, log_syslog=False,
+        datapusher=True, quiet=False):
+    environment = Environment.new(environment_dir, ckan_version, site_name,
+                                  address=address, port=port)
 
     try:
         # There are a lot of steps we can/must skip if we're making a sub-site only
