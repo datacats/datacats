@@ -24,7 +24,10 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -q -y install \
         libapache2-mod-wsgi \
         libgeos-dev \
         libmysqlclient-dev \
-        libcurl4-openssl-dev
+        libcurl4-openssl-dev \
+        libldap2-dev \
+        libsasl2-dev \
+        libssl-dev
 
 #Configure webserver
 ADD apache.wsgi /etc/ckan/apache.wsgi

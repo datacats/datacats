@@ -11,6 +11,7 @@ datacats logs site1
 datacats create site2 -n
 [ -d site2/ckanext-site2theme ]
 [ "$(echo `datacats list`)" == "site1 site2" ]
+[ "$(cat ~/.datacats/site1/sites/primary/run/development.ini | egrep 127.0.0.1 | wc -l)" == 0 ]
 datacats purge -y site1
 [ "$(echo `datacats list`)" == "site2" ]
 datacats init site1 -n
