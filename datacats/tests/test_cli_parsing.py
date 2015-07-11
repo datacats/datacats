@@ -67,3 +67,47 @@ class TestParseArguments(TestCase):
     def test_shell_site_long_equals_first(self):
         self.assertEqual(_s('shell --site=a b c d'),
             ('shell', 'shell --site=a b -- c d'))
+
+    def test_shell_site_short_before_inner_command(self):
+        self.assertEqual(_s('shell a -s b c d'),
+            ('shell', 'shell a -s b -- c d'))
+
+    def test_shell_site_long_before_inner_command(self):
+        self.assertEqual(_s('shell a --site b c d'),
+            ('shell', 'shell a --site b -- c d'))
+
+    def test_shell_site_long_equals_before_inner_command(self):
+        self.assertEqual(_s('shell a --site=b c d'),
+            ('shell', 'shell a --site=b -- c d'))
+
+    def test_shell_site_short_after_inner_command(self):
+        self.assertEqual(_s('shell a b -s c d'),
+            ('shell', 'shell a -- b -s c d'))
+
+    def test_shell_site_long_after_inner_command(self):
+        self.assertEqual(_s('shell a b --site c d'),
+            ('shell', 'shell a -- b --site c d'))
+
+    def test_shell_site_long_equals_after_inner_command(self):
+        self.assertEqual(_s('shell a b --site=c d'),
+            ('shell', 'shell a -- b --site=c d'))
+
+    def test_paster_positional_only(self):
+        self.assertEqual(_s('paster a b c'), ('paster', 'paster -- a b c'))
+
+    def test_paster_option_last(self):
+        self.assertEqual(_s('paster a b -c'), ('paster', 'paster -- a b -c'))
+
+    def test_paster_option_after_inner_command(self):
+        self.assertEqual(_s('paster a -b c'), ('paster', 'paster -- a -b c'))
+
+    def test_paster_option_before_inner_command(self):
+        self.assertEqual(_s('paster -a b c'), ('paster', 'paster -a -- b c'))
+
+    def test_paster_site_short_after_inner_command(self):
+        self.assertEqual(_s('paster a -s b c'),
+            ('paster', 'paster -- a -s b c'))
+
+    def test_paster_site_short_before_inner_command(self):
+        self.assertEqual(_s('paster -s a b c'),
+            ('paster', 'paster -s a -- b c'))
