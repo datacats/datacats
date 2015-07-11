@@ -11,6 +11,7 @@ from datacats.error import DatacatsError
 
 
 def _s(cmd):
+    "helper to make our tests shorter"
     command, args = _subcommand_arguments(cmd.split())
     return command, ' '.join(args)
 
@@ -39,3 +40,30 @@ class TestParseArguments(TestCase):
 
     def test_subcommand_option_last(self):
         self.assertEqual(_s('info -q'), ('info', 'info -q'))
+
+    def test_shell_positional_only(self):
+        self.assertEqual(_s('shell a b c d'), ('shell', 'shell a -- b c d'))
+
+    def test_shell_option_last(self):
+        self.assertEqual(_s('shell a b c -d'), ('shell', 'shell a -- b c -d'))
+
+    def test_shell_option_after_inner_command(self):
+        self.assertEqual(_s('shell a b -c d'), ('shell', 'shell a -- b -c d'))
+
+    def test_shell_option_before_inner_command(self):
+        self.assertEqual(_s('shell a -b c d'), ('shell', 'shell a -b -- c d'))
+
+    def test_shell_option_first(self):
+        self.assertEqual(_s('shell -a b c d'), ('shell', 'shell -a b -- c d'))
+
+    def test_shell_site_short_first(self):
+        self.assertEqual(_s('shell -s a b c d'),
+            ('shell', 'shell -s a b -- c d'))
+
+    def test_shell_site_long_first(self):
+        self.assertEqual(_s('shell --site a b c d'),
+            ('shell', 'shell --site a b -- c d'))
+
+    def test_shell_site_long_equals_first(self):
+        self.assertEqual(_s('shell --site=a b c d'),
+            ('shell', 'shell --site=a b -- c d'))
