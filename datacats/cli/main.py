@@ -167,10 +167,16 @@ def _subcommand_arguments(args):
     options (some options passed to datacats and others passed to
     commands run inside the container)
     """
+    skip_site = False
     # Find subcommand without docopt so that subcommand options may appear
     # anywhere
     for i, a in enumerate(args):
+        if skip_site:
+            skip_site = False
+            continue
         if a.startswith('-'):
+            if a == '-s' or a == '--site':
+                skip_site = True
             continue
         if a == 'help':
             return _subcommand_arguments(args[:i] + ['--help'] + args[i + 1:])
@@ -182,58 +188,32 @@ def _subcommand_arguments(args):
     else:
         return None, args
 
+    if command != 'shell' and command != 'paster':
+        return command, args
+
+    # shell requires the environment name, paster does not
+    remaining_positional = 2 if command == 'shell' else 1
+
     # i is where the subcommand starts.
     # shell, paster are special: options might belong to the command being
-    # executed
-    if command == 'shell':
-        i = _hack_site_opt(args, i)
-        # assume commands don't start with '-' and that those options
-        # are intended for datacats
-        for j, a in enumerate(args[i + 1:], i + 1):
-            if not a.startswith('-'):
-                # -- makes docopt parse the rest as positional args
-                args = args[:j] + ['--'] + args[j:]
-                break
-
-    if command == 'paster':
-        i = _hack_site_opt(args, i, True)
-        args = args[:i + 1] + ['--'] + args[i + 1:]
+    # find where the the inner command starts and insert a '--' before
+    # so that we can separate inner options from ones we need to parse
+    while i < len(args):
+        a = args[i]
+        if a.startswith('-'):
+            if a == '-s' or a == '--site':
+                # site name is coming
+                i += 2
+                continue
+            i += 1
+            continue
+        if remaining_positional:
+            remaining_positional -= 1
+            i += 1
+            continue
+        return command, args[:i] + ['--'] + args[i:]
 
     return command, args
-
-
-def _hack_site_opt(args, i, paster=False):
-    """
-    Adjusts the "cut off point" for positional argument protection.
-    :param args: The arguments list
-    :param i: The current cut off
-    :return: The new i value
-    """
-    SHORT_SITE = '-s'
-    LONG_SITE = '--site'
-    found_env = False
-
-    # Avoid out of bounds
-    if i + 1 == len(args):
-        return i
-    elif not args[i + 1].startswith('-') and not paster:
-        found_env = True
-        i += 1
-
-    arg = args[i + 1] if len(args) != i + 1 else None
-
-    if arg == SHORT_SITE or arg == LONG_SITE:
-        # The thing after is a site name
-        i += 2 if paster else 1
-
-    if i + 1 == len(args):
-        return i
-
-    if not found_env and not args[i + 1].startswith('-') and not paster:
-        found_env = True
-        i += 1
-
-    return i
 
 
 def _option_not_yet_implemented(opts, name):
