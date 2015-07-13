@@ -39,7 +39,8 @@ class Environment(object):
     """
     def __init__(self, name, target, datadir, site_name, ckan_version=None,
                  port=None, deploy_target=None, site_url=None, always_prod=False,
-                 extension_dir='ckan', address=None, remote_server_key=None):
+                 extension_dir='ckan', address=None, remote_server_key=None,
+                 extra_containers=None):
         self.name = name
         self.target = target
         self.datadir = datadir
@@ -54,6 +55,10 @@ class Environment(object):
         self.site_url = site_url
         self.always_prod = always_prod
         self.sites = None
+        if extra_containers:
+            self.extra_containers = extra_containers
+        else:
+            self.extra_containers = []
 
     def _set_site_name(self, site_name):
         self._site_name = site_name
@@ -133,16 +138,16 @@ class Environment(object):
             return cls(environment_name, None, datadir, site_name)
 
         (datadir, name, ckan_version, always_prod, deploy_target,
-            remote_server_key) = task.load_environment(srcdir, datadir)
+            remote_server_key, extra_containers) = task.load_environment(srcdir, datadir)
 
-        (port, address, site_url, passwords
-            ) = task.load_site(srcdir, datadir, site_name)
+        (port, address, site_url, passwords) = task.load_site(srcdir, datadir, site_name)
 
         environment = cls(name, srcdir, datadir, site_name, ckan_version=ckan_version,
                           port=port, deploy_target=deploy_target, site_url=site_url,
                           always_prod=always_prod, address=address,
                           extension_dir=extension_dir,
-                          remote_server_key=remote_server_key)
+                          remote_server_key=remote_server_key,
+                          extra_containers=extra_containers)
 
         if passwords:
             environment.passwords = passwords
@@ -250,7 +255,7 @@ class Environment(object):
         operate) if they aren't already running.
         """
         task.start_supporting_containers(self.sitedir, self.target,
-            self.passwords, self._get_container_name)
+            self.passwords, self._get_container_name, self.extra_containers)
 
     def stop_supporting_containers(self):
         """
@@ -258,7 +263,7 @@ class Environment(object):
         CKAN or CKAN plugins). This method should *only* be called after CKAN has been stopped
         or behaviour is undefined.
         """
-        task.stop_supporting_containers(self._get_container_name)
+        task.stop_supporting_containers(self._get_container_name, self.extra_containers)
 
     def fix_storage_permissions(self):
         """
@@ -482,6 +487,9 @@ class Environment(object):
             self._get_container_name('postgres'): 'db'
         }
 
+        links.update({self._get_container_name(container): container
+                      for container in self.extra_containers})
+
         if datapusher:
             if 'datapusher' not in self.containers_running():
                 raise DatacatsError(container_logs(self._get_container_name('datapusher'), "all",
@@ -582,6 +590,29 @@ class Environment(object):
                 'solr' in running and
                 'web' in running)
 
+    def add_extra_container(self, container, error_on_exists=False):
+        """
+        Add a container as a 'extra'. These are running containers which are not necessary for
+        running default CKAN but are useful for certain extensions
+        :param container: The container name to add
+        :param error_on_exists: Raise a DatacatsError if the extra container already exists.
+        """
+        if container in self.extra_containers:
+            if error_on_exists:
+                raise DatacatsError('{} is already added as an extra container.'.format(container))
+            else:
+                return
+
+        self.extra_containers.append(container)
+
+        cp = SafeConfigParser()
+        cp.read(self.target + '/.datacats-environment')
+
+        cp.set('datacats', 'extra_containers', ' '.join(self.extra_containers))
+
+        with open(self.target + '/.datacats-environment', 'w') as f:
+            cp.write(f)
+
     def containers_running(self):
         """
         Return a list of containers tracked by this environment that are running
@@ -658,6 +689,18 @@ class Environment(object):
             venv_volumes += ['-v',
                              self.sitedir + '/run/proxy-environment:/etc/environment:ro']
 
+        links = {self._get_container_name('solr'): 'solr',
+                 self._get_container_name('postgres'): 'db'}
+
+        links.update({self._get_container_name(container): container for container
+                      in self.extra_containers})
+
+        link_params = []
+
+        for link in links:
+            link_params.append('--link')
+            link_params.append(link + ':' + links[link])
+
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
@@ -672,9 +715,8 @@ class Environment(object):
             '-v', scripts.get_script_path('paster_cd.sh') + ':/scripts/paster_cd.sh:ro',
             '-v', self.sitedir + '/run/run.ini:/project/development.ini:ro',
             '-v', self.sitedir +
-                '/run/test.ini:/project/ckan/test-core.ini:ro',
-            '--link', self._get_container_name('solr') + ':solr',
-            '--link', self._get_container_name('postgres') + ':db']
+                '/run/test.ini:/project/ckan/test-core.ini:ro'] +
+            link_params
             + (['--link', self._get_container_name('datapusher') + ':datapusher']
                if self.needs_datapusher() else []) +
             ['--hostname', self.name,
@@ -882,6 +924,7 @@ class Environment(object):
             - 'pgdata'
             - 'lessc'
             - 'datapusher'
+            - 'redis'
         The name will be formatted appropriately with any prefixes and postfixes
         needed.
 
