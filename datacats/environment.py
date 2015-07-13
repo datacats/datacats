@@ -16,15 +16,11 @@ from sha import sha
 from struct import unpack
 from ConfigParser import (SafeConfigParser, Error as ConfigParserError)
 
-from datacats import task
+from datacats import task, scripts
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker,
                              docker_host, container_logs, APIError)
 from datacats.template import ckan_extension_template
-from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
-    RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
-    COMPILE_LESS, DATAPUSHER, INSTALL_POSTGIS, ADJUST_DEVINI,
-    UPDATE_ADD_ADMIN, INSTALL_EXTRA_PACKAGES)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.password import generate_password
 from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
@@ -234,14 +230,14 @@ class Environment(object):
         installed
         """
         self.user_run_script(
-            script=CLEAN_VIRTUALENV,
+            script=scripts.get_script_path('clean_virtualenv.sh'),
             args=[],
             rw_venv=True,
             )
 
     def install_extra(self):
         self.user_run_script(
-            script=INSTALL_EXTRA_PACKAGES,
+            script=scripts.get_script_path('install_extra_packages.sh'),
             args=[],
             rw_venv=True
         )
@@ -345,10 +341,9 @@ class Environment(object):
 
     def install_postgis_sql(self):
         web_command(
-            None,  # use entrypoint to override postgres createdb magic
-            entrypoint='/scripts/install_postgis.sh',
+            '/scripts/install_postgis.sh',
             image='datacats/postgres',
-            ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
+            ro={scripts.get_script_path('install_postgis.sh'): '/scripts/install_postgis.sh'},
             links={self._get_container_name('postgres'): 'db'},
             )
 
@@ -368,7 +363,8 @@ class Environment(object):
         cp = SafeConfigParser()
         try:
             cp.read(self.target + '/development.ini')
-            return 'datapusher' in cp.get('app:main', 'ckan.plugins')
+            return ('datapusher' in cp.get('app:main', 'ckan.plugins')
+                    and isdir(self.target + '/datapusher'))
         except ConfigParserError as e:
             raise DatacatsError('Failed to read and parse development.ini: ' + str(e))
 
@@ -405,7 +401,7 @@ class Environment(object):
 
         ro = {
             self.target: '/project',
-            DATAPUSHER: '/scripts/datapusher.sh'
+            scripts.get_script_path('datapusher.sh'): '/scripts/datapusher.sh'
         }
 
         if not is_boot2docker():
@@ -509,8 +505,9 @@ class Environment(object):
                         '/project/development.ini'},
                 ro=dict({
                     self.target: '/project/',
-                    WEB: '/scripts/web.sh',
-                    ADJUST_DEVINI: '/scripts/adjust_devini.py'}, **ro),
+                    scripts.get_script_path('web.sh'): '/scripts/web.sh',
+                    scripts.get_script_path('adjust_devini.py'): '/scripts/adjust_devini.py'},
+                    **ro),
                 links=links,
                 volumes_from=volumes_from,
                 command=command,
@@ -646,7 +643,7 @@ class Environment(object):
                 'sysadmin': True},
                 out)
         self.user_run_script(
-            script=UPDATE_ADD_ADMIN,
+            script=scripts.get_script_path('update_add_admin.sh'),
             args=[],
             db_links=True,
             ro={
@@ -680,9 +677,9 @@ class Environment(object):
         self._create_run_ini(self.port, production=True, output='test.ini',
                              source='ckan/test-core.ini', override_site_url=False)
 
-        script = SHELL
+        script = scripts.get_script_path('shell.sh')
         if paster:
-            script = PASTER
+            script = scripts.get_script_path('paster.sh')
             if command and command != ['help'] and command != ['--help']:
                 command += ['--config=/project/development.ini']
             command = [self.extension_dir] + command
@@ -715,7 +712,7 @@ class Environment(object):
             '-v', self.target + ':/project:rw',
             '-v', self.sitedir + '/files:/var/www/storage:rw',
             '-v', script + ':/scripts/shell.sh:ro',
-            '-v', PASTER_CD + ':/scripts/paster_cd.sh:ro',
+            '-v', scripts.get_script_path('paster_cd.sh') + ':/scripts/paster_cd.sh:ro',
             '-v', self.sitedir + '/run/run.ini:/project/development.ini:ro',
             '-v', self.sitedir +
                 '/run/test.ini:/project/ckan/test-core.ini:ro'] +
@@ -739,7 +736,7 @@ class Environment(object):
             if not exists(package + reqname):
                 return
         return self.user_run_script(
-            script=INSTALL_REQS,
+            script=scripts.get_script_path('install_reqs.sh'),
             args=['/project/' + psrc + reqname],
             rw_venv=True,
             rw_project=True,
@@ -757,7 +754,7 @@ class Environment(object):
         if not exists(package + '/setup.py'):
             return
         return self.user_run_script(
-            script=INSTALL_PACKAGE,
+            script=scripts.get_script_path('install_package.sh'),
             args=['/project/' + psrc],
             rw_venv=True,
             rw_project=True,
@@ -773,7 +770,7 @@ class Environment(object):
             rw_project=rw_project,
             rw=rw,
             ro=dict(ro or {}, **{
-                RUN_AS_USER: '/scripts/run_as_user.sh',
+                scripts.get_script_path('run_as_user.sh'): '/scripts/run_as_user.sh',
                 script: '/scripts/run.sh',
                 }),
             stream_output=stream_output
@@ -850,7 +847,7 @@ class Environment(object):
         web_command(
             command=['/scripts/purge.sh']
                 + ['/project/data/' + d for d in datadirs],
-            ro={PURGE: '/scripts/purge.sh'},
+            ro={scripts.get_script_path('purge.sh'): '/scripts/purge.sh'},
             rw={self.datadir: '/project/data'},
             )
 
@@ -874,7 +871,7 @@ class Environment(object):
         c = run_container(
             name=self._get_container_name('lessc'), image='datacats/lessc',
             rw={self.target: '/project/target'},
-            ro={COMPILE_LESS: '/project/compile_less.sh'})
+            ro={scripts.get_script_path('compile_less.sh'): '/project/compile_less.sh'})
         for log in container_logs(c['Id'], "all", True, False):
             yield log
         remove_container(c)
