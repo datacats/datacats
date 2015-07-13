@@ -10,6 +10,8 @@ import webbrowser
 import sys
 
 from datacats.error import DatacatsError
+from datacats.cli.util import require_extra_image
+from datacats.task import EXTRA_IMAGE_MAPPING
 from datacats.cli.util import confirm_password
 
 
@@ -106,9 +108,12 @@ Default: '.'
             except (KeyError, IndexError, ValueError) as e:
                 raise DatacatsError('Could not parse site_url: {}'.format(e))
         environment.save()
-    if 'postgres' not in environment.containers_running():
-        environment.stop_supporting_containers()
-        environment.start_supporting_containers()
+
+    for container in environment.extra_containers:
+        require_extra_image(EXTRA_IMAGE_MAPPING[container])
+
+    environment.stop_supporting_containers()
+    environment.start_supporting_containers()
 
     environment.start_ckan(
         production=opts['--production'],
@@ -259,14 +264,18 @@ def tweak(environment, opts):
     """Commands operating on environment data
 
 Usage:
-  datacats tweak [-s NAME] [--install-postgis|--admin-password] [ENVIRONMENT]
+  datacats tweak --install-postgis [ENVIRONMENT]
+  datacats tweak --add-redis [ENVIRONMENT]
+  datacats tweak --admin-password [ENVIRONMENT]
 
 Options:
   --install-postgis    Install postgis in ckan database
+  --add-redis          Adds redis next time this environment reloads
   -s --site=NAME       Choose a site to tweak [default: primary]
   -p --admin-password  Prompt to change the admin password
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
+
 Default: '.'
 """
 
@@ -274,5 +283,8 @@ Default: '.'
     if opts['--install-postgis']:
         print "Installing postgis"
         environment.install_postgis_sql()
+    if opts['--add-redis']:
+        # Let the user know if they are trying to add it and it is already there
+        environment.add_extra_container('redis', error_on_exists=True)
     if opts['--admin-password']:
         environment.create_admin_set_password(confirm_password())
