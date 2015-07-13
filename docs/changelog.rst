@@ -1,6 +1,27 @@
 Change Log
 ==========
 
+1.0.2
+-----
+
+2015-07-07
+
+- compatibility with Docker 1.7.0 by removing reliance on ENTRYPOINT.
+- fix an issue with datapusher where the site_url would not be set
+  correctly for CKAN to respond.
+
+1.0.1
+-----
+
+2015-06-26
+
+- fix for a bug in start/restart that would remove site settings
+  when passing a port or address option
+- logs: new --datapusher option to view datapusher logs
+- tweak: new --site option to specify site to modify
+- fix for install --clean command not reinstalling ckanapi into
+  virtualenv
+
 1.0.0
 -----
 

@@ -133,7 +133,8 @@ Options:
         '--syslog': None,
         '--address': '127.0.0.1',
         '--image-only': False,
-        '--no-sysadmin': opts['--no-sysadmin']
+        '--no-sysadmin': opts['--no-sysadmin'],
+        '--site-url': None
         }, no_install=True)
 
 
