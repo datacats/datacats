@@ -24,7 +24,7 @@ def create(opts):
 
 Usage:
   datacats create [-bin] [-s NAME] [--address=IP] [--syslog] [--ckan=CKAN_VERSION]
-                  [--no-datapusher] ENVIRONMENT_DIR [PORT]
+                  [--no-datapusher] [--site-url SITE_URL] ENVIRONMENT_DIR [PORT]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
@@ -33,8 +33,9 @@ Options:
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME          Pick a site to create [default: primary]
-  --syslog                Log to the syslog
   --no-datapusher         Don't install/enable ckanext-datapusher
+  --site-url SITE_URL     The site_url to use in API responses
+  --syslog                Log to the syslog
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
@@ -50,14 +51,16 @@ part of this path will be used as the environment name.
         address=opts['--address'],
         log_syslog=opts['--syslog'],
         datapusher=not opts['--no-datapusher'],
+        site_url=opts['--site-url'],
         )
 
 
 def create_environment(environment_dir, port, ckan_version, create_skin, site_name,
-        start_web, create_sysadmin, address, log_syslog=False, datapusher=True, quiet=False):
+        start_web, create_sysadmin, address, log_syslog=False, datapusher=True, quiet=False,
+        site_url=None):
     # pylint: disable=unused-argument
-    # FIXME: only 2.3 preload supported at the moment
-    environment = Environment.new(environment_dir, '2.3', site_name, address=address, port=port)
+    environment = Environment.new(environment_dir, '2.3', site_name, address=address,
+                                  port=port)
 
     try:
         # There are a lot of steps we can/must skip if we're making a sub-site only
@@ -93,7 +96,7 @@ def create_environment(environment_dir, port, ckan_version, create_skin, site_na
             write('\n')
 
         return finish_init(environment, start_web, create_sysadmin, address,
-                           log_syslog=log_syslog)
+                           log_syslog=log_syslog, site_url=site_url)
     except:
         # Make sure that it doesn't get printed right after the dots
         # by printing a newline
@@ -139,13 +142,14 @@ def init(opts, no_install=False, quiet=False):
 
 Usage:
   datacats init [-in] [--syslog] [-s NAME] [--address=IP]
-                [ENVIRONMENT_DIR [PORT]]
+                [--site-url SITE_URL] [ENVIRONMENT_DIR [PORT]]
 
 Options:
   --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME          Pick a site to initialize [default: primary]
+  --site-url SITE_URL     The site_url to use in API responses
   --syslog                Log to the syslog
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
@@ -156,6 +160,7 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     start_web = not opts['--image-only']
     create_sysadmin = not opts['--no-sysadmin']
     site_name = opts['--site']
+    site_url = opts['--site-url']
 
     environment_dir = abspath(environment_dir or '.')
     log_syslog = opts['--syslog']
@@ -164,6 +169,8 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     environment.address = address
     if port:
         environment.port = int(port)
+    if site_url:
+        environment.site_url = site_url
 
     try:
         if environment.sites and site_name in environment.sites:
@@ -198,11 +205,12 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
         raise
 
     return finish_init(environment, start_web, create_sysadmin, address,
-                       log_syslog=log_syslog, do_install=not no_install, quiet=quiet)
+                       log_syslog=log_syslog, do_install=not no_install,
+                       quiet=quiet, site_url=site_url)
 
 
 def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False,
-                do_install=True, quiet=False):
+                do_install=True, quiet=False, site_url=None):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """
@@ -215,6 +223,14 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
     environment.ckan_db_init()
     if not quiet:
         write('\n')
+
+    if site_url:
+        try:
+            site_url = site_url.format(address=environment.address, port=environment.port)
+            environment.site_url = site_url
+            environment.save_site(False)
+        except (KeyError, IndexError, ValueError) as e:
+            raise DatacatsError('Could not parse site_url: {}'.format(e))
 
     if start_web:
         environment.start_ckan(address=address, log_syslog=log_syslog)
