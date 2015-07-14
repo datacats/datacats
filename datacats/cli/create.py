@@ -34,7 +34,7 @@ Options:
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME          Pick a site to create [default: primary]
   --no-datapusher         Don't install/enable ckanext-datapusher
-  --site-url SITE_URL     The site_url to use in API responses
+  --site-url SITE_URL     The site_url to use in API responses (e.x. http://myhostname.org:{port}/)
   --syslog                Log to the syslog
 
 ENVIRONMENT_DIR is a path for the new environment directory. The last
@@ -150,7 +150,7 @@ Options:
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME          Pick a site to initialize [default: primary]
-  --site-url SITE_URL     The site_url to use in API responses
+  --site-url SITE_URL     The site_url to use in API responses (e.x. http://myhostname.org:{port}/)
   --syslog                Log to the syslog
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
