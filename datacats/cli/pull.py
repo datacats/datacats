@@ -38,7 +38,22 @@ Options:
                      you are going offline.
 """
     for i in IMAGES + (EXTRA_IMAGES if opts['--all'] else []):
-        pull_image(i)
+        retrying_pull_image(i)
+
+
+def retrying_pull_image(image_name):
+    while True:
+        retries = 0
+        try:
+            retries += 1
+            pull_image(image_name)
+            break
+        except DatacatsError:
+            if retries <= 5:
+                print
+                print 'Error while pulling image {}. Retrying.'
+            else:
+                raise
 
 
 def pull_image(image_name):
