@@ -249,7 +249,7 @@ class Environment(object):
         """
         task.create_source(self.target, self._preload_image(), datapusher)
 
-    def start_supporting_containers(self, log_syslog=Flase):
+    def start_supporting_containers(self, log_syslog=False):
         """
         Start all supporting containers (containers required for CKAN to
         operate) if they aren't already running.
