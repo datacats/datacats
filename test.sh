@@ -2,7 +2,7 @@
 
 set -e
 
-datacats create site1 -bn
+datacats create site1 -bn --ckan $1
 [ ! -d site1/ckanext-site1theme ]
 [ "$(echo `datacats list`)" == "site1" ]
 datacats info site1
@@ -10,7 +10,7 @@ datacats start site1 8999
 datacats info site1
 datacats shell site1 echo hello from inside site1
 datacats logs site1
-datacats create site2 -n
+datacats create site2 -n --ckan $1
 [ -d site2/ckanext-site2theme ]
 [ "$(echo `datacats list`)" == "site1 site2" ]
 datacats tweak --add-redis site1

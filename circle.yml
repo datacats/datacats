@@ -7,7 +7,7 @@ dependencies:
     - pip install -r requirements_test.txt
 test:
   override:
-      - case $CIRCLE_NODE_INDEX in 0) bash -x ~/datacats/test_2.3.sh ;; 1) bash -x ~/datacats/test_2.4.sh ;; 2) bash -x ~/datacats/test_master.sh ;; esac:
+      - case $CIRCLE_NODE_INDEX in 0) bash -x ~/datacats/test.sh 2.3 ;; 1) bash -x ~/datacats/test.sh 2.4 ;; 2) bash -x ~/datacats/test.sh master ;; esac:
           parallel: true
   post:
       - python setup.py test
