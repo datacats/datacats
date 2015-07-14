@@ -12,13 +12,15 @@ from datacats.error import DatacatsError
 
 IMAGES = [
     'datacats/web',
-    'datacats/web:preload-2.3',
+    'datacats/ckan:2.3',
     'datacats/postgres',
     'datacats/solr'
     ]
 
-DEVEL_IMAGES = [
+EXTRA_IMAGES = [
     'datacats/lessc',
+    'datacats/ckan:latest',
+    'datacats/ckan:2.4'
     ]
 
 
@@ -35,7 +37,7 @@ Options:
                      sure you have all the images you need if
                      you are going offline.
 """
-    for i in IMAGES + (DEVEL_IMAGES if opts['--all'] else []):
+    for i in IMAGES + (EXTRA_IMAGES if opts['--all'] else []):
         pull_image(i)
 
 
