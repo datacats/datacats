@@ -16,15 +16,11 @@ from sha import sha
 from struct import unpack
 from ConfigParser import (SafeConfigParser, Error as ConfigParserError)
 
-from datacats import task
+from datacats import task, scripts
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker,
                              docker_host, container_logs, APIError)
 from datacats.template import ckan_extension_template
-from datacats.scripts import (WEB, SHELL, PASTER, PASTER_CD, PURGE,
-    RUN_AS_USER, INSTALL_REQS, CLEAN_VIRTUALENV, INSTALL_PACKAGE,
-    COMPILE_LESS, DATAPUSHER, INSTALL_POSTGIS, ADJUST_DEVINI,
-    UPDATE_ADD_ADMIN, INSTALL_EXTRA_PACKAGES)
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.password import generate_password
 from datacats.error import DatacatsError, WebCommandError, PortAllocatedError
@@ -43,7 +39,8 @@ class Environment(object):
     """
     def __init__(self, name, target, datadir, site_name, ckan_version=None,
                  port=None, deploy_target=None, site_url=None, always_prod=False,
-                 extension_dir='ckan', address=None, remote_server_key=None):
+                 extension_dir='ckan', address=None, remote_server_key=None,
+                 extra_containers=None):
         self.name = name
         self.target = target
         self.datadir = datadir
@@ -58,6 +55,10 @@ class Environment(object):
         self.site_url = site_url
         self.always_prod = always_prod
         self.sites = None
+        if extra_containers:
+            self.extra_containers = extra_containers
+        else:
+            self.extra_containers = []
 
     def _set_site_name(self, site_name):
         self._site_name = site_name
@@ -139,16 +140,16 @@ class Environment(object):
             return cls(environment_name, None, datadir, site_name)
 
         (datadir, name, ckan_version, always_prod, deploy_target,
-            remote_server_key) = task.load_environment(srcdir, datadir)
+            remote_server_key, extra_containers) = task.load_environment(srcdir, datadir)
 
-        (port, address, site_url, passwords
-            ) = task.load_site(srcdir, datadir, site_name)
+        (port, address, site_url, passwords) = task.load_site(srcdir, datadir, site_name)
 
         environment = cls(name, srcdir, datadir, site_name, ckan_version=ckan_version,
                           port=port, deploy_target=deploy_target, site_url=site_url,
                           always_prod=always_prod, address=address,
                           extension_dir=extension_dir,
-                          remote_server_key=remote_server_key)
+                          remote_server_key=remote_server_key,
+                          extra_containers=extra_containers)
 
         if passwords:
             environment.passwords = passwords
@@ -230,14 +231,14 @@ class Environment(object):
         installed
         """
         self.user_run_script(
-            script=CLEAN_VIRTUALENV,
+            script=scripts.get_script_path('clean_virtualenv.sh'),
             args=[],
             rw_venv=True,
             )
 
     def install_extra(self):
         self.user_run_script(
-            script=INSTALL_EXTRA_PACKAGES,
+            script=scripts.get_script_path('install_extra_packages.sh'),
             args=[],
             rw_venv=True
         )
@@ -255,7 +256,7 @@ class Environment(object):
         operate) if they aren't already running.
         """
         task.start_supporting_containers(self.sitedir, self.target,
-            self.passwords, self._get_container_name)
+            self.passwords, self._get_container_name, self.extra_containers)
 
     def stop_supporting_containers(self):
         """
@@ -263,7 +264,7 @@ class Environment(object):
         CKAN or CKAN plugins). This method should *only* be called after CKAN has been stopped
         or behaviour is undefined.
         """
-        task.stop_supporting_containers(self._get_container_name)
+        task.stop_supporting_containers(self._get_container_name, self.extra_containers)
 
     def fix_storage_permissions(self):
         """
@@ -343,7 +344,7 @@ class Environment(object):
         web_command(
             '/scripts/install_postgis.sh',
             image='datacats/postgres',
-            ro={INSTALL_POSTGIS: '/scripts/install_postgis.sh'},
+            ro={scripts.get_script_path('install_postgis.sh'): '/scripts/install_postgis.sh'},
             links={self._get_container_name('postgres'): 'db'},
             )
 
@@ -401,7 +402,7 @@ class Environment(object):
 
         ro = {
             self.target: '/project',
-            DATAPUSHER: '/scripts/datapusher.sh'
+            scripts.get_script_path('datapusher.sh'): '/scripts/datapusher.sh'
         }
 
         if not is_boot2docker():
@@ -487,6 +488,9 @@ class Environment(object):
             self._get_container_name('postgres'): 'db'
         }
 
+        links.update({self._get_container_name(container): container
+                      for container in self.extra_containers})
+
         if datapusher:
             if 'datapusher' not in self.containers_running():
                 raise DatacatsError(container_logs(self._get_container_name('datapusher'), "all",
@@ -502,8 +506,9 @@ class Environment(object):
                         '/project/development.ini'},
                 ro=dict({
                     self.target: '/project/',
-                    WEB: '/scripts/web.sh',
-                    ADJUST_DEVINI: '/scripts/adjust_devini.py'}, **ro),
+                    scripts.get_script_path('web.sh'): '/scripts/web.sh',
+                    scripts.get_script_path('adjust_devini.py'): '/scripts/adjust_devini.py'},
+                    **ro),
                 links=links,
                 volumes_from=volumes_from,
                 command=command,
@@ -586,6 +591,29 @@ class Environment(object):
                 'solr' in running and
                 'web' in running)
 
+    def add_extra_container(self, container, error_on_exists=False):
+        """
+        Add a container as a 'extra'. These are running containers which are not necessary for
+        running default CKAN but are useful for certain extensions
+        :param container: The container name to add
+        :param error_on_exists: Raise a DatacatsError if the extra container already exists.
+        """
+        if container in self.extra_containers:
+            if error_on_exists:
+                raise DatacatsError('{} is already added as an extra container.'.format(container))
+            else:
+                return
+
+        self.extra_containers.append(container)
+
+        cp = SafeConfigParser()
+        cp.read(self.target + '/.datacats-environment')
+
+        cp.set('datacats', 'extra_containers', ' '.join(self.extra_containers))
+
+        with open(self.target + '/.datacats-environment', 'w') as f:
+            cp.write(f)
+
     def containers_running(self):
         """
         Return a list of containers tracked by this environment that are running
@@ -616,7 +644,7 @@ class Environment(object):
                 'sysadmin': True},
                 out)
         self.user_run_script(
-            script=UPDATE_ADD_ADMIN,
+            script=scripts.get_script_path('update_add_admin.sh'),
             args=[],
             db_links=True,
             ro={
@@ -650,9 +678,9 @@ class Environment(object):
         self._create_run_ini(self.port, production=True, output='test.ini',
                              source='ckan/test-core.ini', override_site_url=False)
 
-        script = SHELL
+        script = scripts.get_script_path('shell.sh')
         if paster:
-            script = PASTER
+            script = scripts.get_script_path('paster.sh')
             if command and command != ['help'] and command != ['--help']:
                 command += ['--config=/project/development.ini']
             command = [self.extension_dir] + command
@@ -661,6 +689,18 @@ class Environment(object):
         if proxy_settings:
             venv_volumes += ['-v',
                              self.sitedir + '/run/proxy-environment:/etc/environment:ro']
+
+        links = {self._get_container_name('solr'): 'solr',
+                 self._get_container_name('postgres'): 'db'}
+
+        links.update({self._get_container_name(container): container for container
+                      in self.extra_containers})
+
+        link_params = []
+
+        for link in links:
+            link_params.append('--link')
+            link_params.append(link + ':' + links[link])
 
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
@@ -673,12 +713,11 @@ class Environment(object):
             '-v', self.target + ':/project:rw',
             '-v', self.sitedir + '/files:/var/www/storage:rw',
             '-v', script + ':/scripts/shell.sh:ro',
-            '-v', PASTER_CD + ':/scripts/paster_cd.sh:ro',
+            '-v', scripts.get_script_path('paster_cd.sh') + ':/scripts/paster_cd.sh:ro',
             '-v', self.sitedir + '/run/run.ini:/project/development.ini:ro',
             '-v', self.sitedir +
-                '/run/test.ini:/project/ckan/test-core.ini:ro',
-            '--link', self._get_container_name('solr') + ':solr',
-            '--link', self._get_container_name('postgres') + ':db']
+                '/run/test.ini:/project/ckan/test-core.ini:ro'] +
+            link_params
             + (['--link', self._get_container_name('datapusher') + ':datapusher']
                if self.needs_datapusher() else []) +
             ['--hostname', self.name,
@@ -698,7 +737,7 @@ class Environment(object):
             if not exists(package + reqname):
                 return
         return self.user_run_script(
-            script=INSTALL_REQS,
+            script=scripts.get_script_path('install_reqs.sh'),
             args=['/project/' + psrc + reqname],
             rw_venv=True,
             rw_project=True,
@@ -716,7 +755,7 @@ class Environment(object):
         if not exists(package + '/setup.py'):
             return
         return self.user_run_script(
-            script=INSTALL_PACKAGE,
+            script=scripts.get_script_path('install_package.sh'),
             args=['/project/' + psrc],
             rw_venv=True,
             rw_project=True,
@@ -732,7 +771,7 @@ class Environment(object):
             rw_project=rw_project,
             rw=rw,
             ro=dict(ro or {}, **{
-                RUN_AS_USER: '/scripts/run_as_user.sh',
+                scripts.get_script_path('run_as_user.sh'): '/scripts/run_as_user.sh',
                 script: '/scripts/run.sh',
                 }),
             stream_output=stream_output
@@ -809,7 +848,7 @@ class Environment(object):
         web_command(
             command=['/scripts/purge.sh']
                 + ['/project/data/' + d for d in datadirs],
-            ro={PURGE: '/scripts/purge.sh'},
+            ro={scripts.get_script_path('purge.sh'): '/scripts/purge.sh'},
             rw={self.datadir: '/project/data'},
             )
 
@@ -833,7 +872,7 @@ class Environment(object):
         c = run_container(
             name=self._get_container_name('lessc'), image='datacats/lessc',
             rw={self.target: '/project/target'},
-            ro={COMPILE_LESS: '/project/compile_less.sh'})
+            ro={scripts.get_script_path('compile_less.sh'): '/project/compile_less.sh'})
         for log in container_logs(c['Id'], "all", True, False):
             yield log
         remove_container(c)
@@ -886,6 +925,7 @@ class Environment(object):
             - 'pgdata'
             - 'lessc'
             - 'datapusher'
+            - 'redis'
         The name will be formatted appropriately with any prefixes and postfixes
         needed.
 
