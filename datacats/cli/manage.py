@@ -54,7 +54,7 @@ Options:
   -s --site=NAME        Specify a site to start [default: primary]
   --syslog              Log to the syslog
   --site-url SITE_URL   The site_url to use in API responses. Defaults to old setting or
-                        will attempt to determine it. (e.g. http://myrandomhostname.org:{port}/)
+                        will attempt to determine it. (e.g. http://example.org:{port}/)
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -80,7 +80,7 @@ Usage:
 Options:
   --address=IP          Address to listen on (Linux-only) [default: 127.0.0.1]
   --site-url=SITE_URL   The site_url to use in API responses. Can use Python template syntax
-                        to insert the port and address (e.g. http://myrandomhostname.org:{port}/)
+                        to insert the port and address (e.g. http://example.org:{port}/)
   -b --background       Don't wait for response from web server
   --no-watch            Do not automatically reload templates and .py files on change
   -p --production       Reload with apache and debug=false
