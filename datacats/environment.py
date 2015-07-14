@@ -253,7 +253,12 @@ class Environment(object):
         """
         Start all supporting containers (containers required for CKAN to
         operate) if they aren't already running.
+
+            :param log_syslog: A flag to redirect all container logs to host's syslog
+
         """
+        log_syslog = True if self.always_prod else log_syslog
+        # in production we always use log_syslog driver (to aggregate all the logs)
         task.start_supporting_containers(
             self.sitedir,
             self.target,
@@ -388,6 +393,8 @@ class Environment(object):
         self.stop_ckan()
 
         port = self.port
+        # in prod we always use log_syslog driver
+        log_syslog = True if self.always_prod else log_syslog
 
         production = production or self.always_prod
         override_site_url = self.address == '127.0.0.1' and not is_boot2docker()
