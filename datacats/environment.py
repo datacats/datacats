@@ -249,13 +249,24 @@ class Environment(object):
         """
         task.create_source(self.target, self._preload_image(), datapusher)
 
-    def start_supporting_containers(self):
+    def start_supporting_containers(self, log_syslog=False):
         """
         Start all supporting containers (containers required for CKAN to
         operate) if they aren't already running.
+
+            :param log_syslog: A flag to redirect all container logs to host's syslog
+
         """
-        task.start_supporting_containers(self.sitedir, self.target,
-            self.passwords, self._get_container_name, self.extra_containers)
+        log_syslog = True if self.always_prod else log_syslog
+        # in production we always use log_syslog driver (to aggregate all the logs)
+        task.start_supporting_containers(
+            self.sitedir,
+            self.target,
+            self.passwords,
+            self._get_container_name,
+            self.extra_containers,
+            log_syslog=log_syslog
+            )
 
     def stop_supporting_containers(self):
         """
@@ -373,14 +384,17 @@ class Environment(object):
         """
         Start the apache server or paster serve
 
-        :param production: True for apache, False for paster serve + debug on
         :param address: On Linux, the address to serve from (can be 0.0.0.0 for
                         listening on all addresses)
+        :param log_syslog: A flag to redirect all container logs to host's syslog
+        :param production: True for apache, False for paster serve + debug on
         :param paster_reload: Instruct paster to watch for file changes
         """
         self.stop_ckan()
 
         port = self.port
+        # in prod we always use log_syslog driver
+        log_syslog = True if self.always_prod else log_syslog
 
         production = production or self.always_prod
         override_site_url = self.address == '127.0.0.1' and not is_boot2docker()
@@ -388,8 +402,6 @@ class Environment(object):
 
         if address != '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify address on boot2docker.')
-
-        datapusher = self.needs_datapusher()
 
         # XXX nasty hack, remove this once we have a lessc command
         # for users (not just for building our preload image)
@@ -407,13 +419,15 @@ class Environment(object):
         if not is_boot2docker():
             ro[self.datadir + '/venv'] = '/usr/lib/ckan'
 
+        datapusher = self.needs_datapusher()
         if datapusher:
             run_container(
                 self._get_container_name('datapusher'),
                 'datacats/web',
                 '/scripts/datapusher.sh',
                 ro=ro,
-                volumes_from=(self._get_container_name('venv') if is_boot2docker() else None))
+                volumes_from=(self._get_container_name('venv') if is_boot2docker() else None),
+                log_syslog=log_syslog)
 
         while True:
             self._create_run_ini(port, production)

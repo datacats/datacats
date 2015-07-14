@@ -449,7 +449,7 @@ EXTRA_IMAGE_MAPPING = {'redis': 'redis'}
 
 
 def start_supporting_containers(sitedir, srcdir, passwords,
-        get_container_name, extra_containers):
+        get_container_name, extra_containers, log_syslog=False):
     """
     Start all supporting containers (containers required for CKAN to
     operate) if they aren't already running, along with some extra
@@ -479,13 +479,15 @@ def start_supporting_containers(sitedir, srcdir, passwords,
             image='datacats/postgres',
             environment=passwords,
             rw=rw,
-            volumes_from=volumes_from)
+            volumes_from=volumes_from,
+            log_syslog=log_syslog)
 
         docker.run_container(
             name=get_container_name('solr'),
             image='datacats/solr',
             rw={sitedir + '/solr': '/var/lib/solr'},
-            ro={srcdir + '/schema.xml': '/etc/solr/conf/schema.xml'})
+            ro={srcdir + '/schema.xml': '/etc/solr/conf/schema.xml'},
+            log_syslog=log_syslog)
 
         for container in extra_containers:
             # We don't know a whole lot about the extra containers so we're just gonna have to
@@ -497,7 +499,8 @@ def start_supporting_containers(sitedir, srcdir, passwords,
                 ro={
                     sitedir: '/datadir',
                     srcdir: '/project'
-                }
+                },
+                log_syslog=log_syslog
             )
 
 

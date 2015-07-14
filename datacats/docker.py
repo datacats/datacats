@@ -238,16 +238,20 @@ def run_container(name, image, command=None, environment=None,
     """
     Wrapper for docker create_container, start calls
 
+    :param log_syslog: bool flag to redirect container's logs to host's syslog
+
     :returns: container info dict or None if container couldn't be created
 
     Raises PortAllocatedError if container couldn't start on the
     requested port.
     """
     binds = ro_rw_to_binds(ro, rw)
-
-    host_config = create_host_config(binds=binds,
-                                     log_config=LogConfig(
-                                         type=('syslog' if log_syslog else 'json-file')))
+    log_config = LogConfig(type=LogConfig.types.JSON)
+    if log_syslog:
+        log_config = LogConfig(
+            type=LogConfig.types.SYSLOG,
+            config={'syslog-tag': name})
+    host_config = create_host_config(binds=binds, log_config=log_config)
 
     c = _get_docker().create_container(
         name=name,
