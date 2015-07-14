@@ -384,7 +384,13 @@ class Environment(object):
         port = self.port
 
         production = production or self.always_prod
-        override_site_url = self.address == '127.0.0.1' and not is_boot2docker()
+        # We only override the site URL with the docker URL on three conditions
+        # 1 - we're listening on 127.0.0.1
+        override_site_url = (self.address == '127.0.0.1'
+                             # 2 - we're not using boot2docker
+                             and not is_boot2docker()
+                             # 3 - the site url is NOT set.
+                             and not self.site_url)
         command = ['/scripts/web.sh', str(production), str(override_site_url), str(paster_reload)]
 
         if address != '127.0.0.1' and is_boot2docker():
