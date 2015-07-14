@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 datacats create site1 -bn
 [ ! -d site1/ckanext-site1theme ]
 [ "$(echo `datacats list`)" == "site1" ]
