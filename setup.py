@@ -7,6 +7,8 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 from setuptools import setup
+from os.path import realpath, dirname
+from os import chdir
 import sys
 
 install_requires = [
@@ -19,7 +21,9 @@ install_requires = [
     'watchdog' # For lesscd
 ]
 
-exec(open("datacats/version.py").read())
+chdir(dirname(realpath(__file__)))
+
+execfile("datacats/version.py")
 
 setup(
     name='datacats',
