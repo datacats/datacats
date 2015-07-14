@@ -78,13 +78,14 @@ class Environment(object):
             self.sites = task.list_sites(self.datadir)
         return self.sites
 
-    def save_site(self):
+    def save_site(self, create=True):
         """
         Save environment settings in the directory that need to be saved
         even when creating only a new sub-site env.
         """
         self._load_sites()
-        self.sites.append(self.site_name)
+        if create:
+            self.sites.append(self.site_name)
 
         task.save_new_site(self.site_name, self.sitedir, self.target, self.port,
             self.address, self.site_url, self.passwords)
@@ -398,7 +399,10 @@ class Environment(object):
         log_syslog = True if self.always_prod else log_syslog
 
         production = production or self.always_prod
-        override_site_url = self.address == '127.0.0.1' and not is_boot2docker()
+        # We only override the site URL with the docker URL on three conditions
+        override_site_url = (self.address == '127.0.0.1'
+                             and not is_boot2docker()
+                             and not self.site_url)
         command = ['/scripts/web.sh', str(production), str(override_site_url), str(paster_reload)]
 
         if address != '127.0.0.1' and is_boot2docker():
