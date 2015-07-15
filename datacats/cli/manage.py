@@ -42,8 +42,10 @@ def start(environment, opts):
     """Create containers and start serving environment
 
 Usage:
-  datacats start [-b] [-p|--no-watch] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
-  datacats start -r [-b] [-s NAME] [--syslog] [--address=IP] [ENVIRONMENT]
+  datacats start [-b] [--site-url SITE_URL] [-p|--no-watch] [-s NAME]
+                 [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
+  datacats start -r [-b] [--site-url SITE_URL] [-s NAME] [--syslog]
+                 [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP          Address to listen on (Linux-only) [default: 127.0.0.1]
