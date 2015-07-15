@@ -42,16 +42,14 @@ Options:
 
 
 def retrying_pull_image(image_name):
-    while True:
-        retries = 0
+    for retries in range(1, 6):
         try:
-            retries += 1
             pull_image(image_name)
             break
         except DatacatsError:
             if retries <= 5:
                 print
-                print 'Error while pulling image {}. Retrying.'
+                print 'Error while pulling image {}. Retrying.'.format(image_name)
             else:
                 raise
 
