@@ -1,0 +1,25 @@
+from datacats.cli.pull import _retry_func
+from datacats.error import DatacatsError
+from unittest import TestCase
+
+
+def raise_an_error(_):
+    raise DatacatsError('Hi')
+
+
+class TestPullCli(TestCase):
+    def test_cli_pull_retry(self):
+        def count(*__, **_):
+            count.counter += 1
+        count.counter = 0
+
+        try:
+            _retry_func(raise_an_error, None, 5, count,
+                        'Error! We wanted this to happen')
+            self.fail('Exception was not raised.')
+        except DatacatsError:
+            pass
+        finally:
+            self.assertEqual(count.counter, 5)
+
+        self.assertEqual(count.counter, 5)

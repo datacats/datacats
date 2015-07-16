@@ -24,6 +24,11 @@ EXTRA_IMAGES = [
     ]
 
 
+def write(line):
+    sys.stdout.write(line)
+    sys.stdout.flush()
+
+
 def pull(opts):
     """Download or update required datacats docker images
 
@@ -42,16 +47,32 @@ Options:
 
 
 def retrying_pull_image(image_name):
-    for retries in range(1, 6):
+    _retry_func(pull_image, image_name, 5,
+                lambda img, num: write("Pulling image {} failed. Retrying.".format(image_name)),
+                "Failed to pull image {}.".format(image_name))
+
+
+def _retry_func(func, param, num, retry_notif, error_msg):
+    """
+    A function which retries a given function num times and calls retry_notif each
+    time the function is retried.
+    :param func: The function to retry num times.
+    :param num: The number of times to try before giving up.
+    :param retry_notif: Will be called with the same parameter as func if we have to retry the
+                        function. Will also receive the number of retries so far as a second
+                        parameter.
+    :param: error_msg: The message
+
+    Throws DatacatsError if we run out of retries. Returns otherwise.
+    """
+    for retry_num in range(1, num + 1):
         try:
-            pull_image(image_name)
-            break
+            func(param)
+            return
         except DatacatsError:
-            if retries <= 5:
-                print
-                print 'Error while pulling image {}. Retrying.'.format(image_name)
-            else:
-                raise
+            retry_notif(param, retry_num)
+
+    raise DatacatsError(error_msg)
 
 
 def pull_image(image_name):
