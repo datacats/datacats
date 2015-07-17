@@ -65,8 +65,8 @@ def _retry_func(func, param, num, retry_notif, error_msg):
 
     Throws DatacatsError if we run out of retries. Returns otherwise.
     """
-    for retry_num in range(1, num + 1):
-        if retry_num - 1:
+    for retry_num in range(num):
+        if retry_num:
             retry_notif(param, retry_num)
         try:
             func(param)
