@@ -20,4 +20,4 @@ class TestPullCli(TestCase):
         except DatacatsError:
             pass
         finally:
-            self.assertEqual(count.counter, 5)
+            self.assertEqual(count.counter, 4)
