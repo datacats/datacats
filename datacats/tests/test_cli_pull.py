@@ -17,7 +17,6 @@ class TestPullCli(TestCase):
             _retry_func(raise_an_error, None, 5, count,
                         'Error! We wanted this to happen')
             self.fail('Exception was not raised.')
-        except DatacatsError:
-            pass
-        finally:
+        except DatacatsError as e:
             self.assertEqual(count.counter, 4)
+            self.failIf('We wanted this to happen' not in str(e))
