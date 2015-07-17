@@ -9,7 +9,7 @@ def raise_an_error(_):
 
 class TestPullCli(TestCase):
     def test_cli_pull_retry(self):
-        def count(*__, **_):
+        def count(*dummy, **_):
             count.counter += 1
         count.counter = 0
 
@@ -21,5 +21,3 @@ class TestPullCli(TestCase):
             pass
         finally:
             self.assertEqual(count.counter, 5)
-
-        self.assertEqual(count.counter, 5)
