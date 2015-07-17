@@ -833,46 +833,70 @@ class Environment(object):
         Remove uploaded files, postgres db, solr index, venv
         """
         # Default to the set of all sites
-        if not which_sites:
-            which_sites = self.sites
+        if not exists(self.target + '/.version'):
+            format_version = 1
+        else:
+            with open(self.target + '/.version') as f:
+                format_version = int(f.read().strip())
 
-        datadirs = []
-        boot2docker = is_boot2docker()
+        if format_version == 1:
+            datadirs = ['files', 'solr']
+            if is_boot2docker():
+                remove_container(self._get_container_name('pgdata'))
+                remove_container(self._get_container_name('venv'))
+            else:
+                datadirs += ['postgres', 'venv']
 
-        if which_sites:
-            if self.target:
-                cp = SafeConfigParser()
-                cp.read([self.target + '/.datacats-environment'])
-
-            for site in which_sites:
-                if boot2docker:
-                    remove_container(self._get_container_name('pgdata'))
-                else:
-                    datadirs += [site + '/postgres']
-                # Always rm the site dir & solr & files
-                datadirs += [site, site + '/files', site + '/solr']
-                if self.target:
-                    cp.remove_section('site_' + site)
-                    self.sites.remove(site)
-
-            if self.target:
-                with open(self.target + '/.datacats-environment', 'w') as conf:
-                    cp.write(conf)
-
-        datadirs = ['sites/' + datadir for datadir in datadirs]
-
-        if not self.sites and not never_delete:
-            datadirs.append('venv')
-
-        web_command(
-            command=['/scripts/purge.sh']
+            web_command(
+                command=['/scripts/purge.sh']
                 + ['/project/data/' + d for d in datadirs],
-            ro={scripts.get_script_path('purge.sh'): '/scripts/purge.sh'},
-            rw={self.datadir: '/project/data'},
-            )
-
-        if not self.sites and not never_delete:
+                ro={scripts.get_script_path('purge.sh'): '/scripts/purge.sh'},
+                rw={self.datadir: '/project/data'},
+                )
             shutil.rmtree(self.datadir)
+        elif format_version == 2:
+            if not which_sites:
+                which_sites = self.sites
+
+            datadirs = []
+            boot2docker = is_boot2docker()
+
+            if which_sites:
+                if self.target:
+                    cp = SafeConfigParser()
+                    cp.read([self.target + '/.datacats-environment'])
+
+                for site in which_sites:
+                    if boot2docker:
+                        remove_container(self._get_container_name('pgdata'))
+                    else:
+                        datadirs += [site + '/postgres']
+                    # Always rm the site dir & solr & files
+                    datadirs += [site, site + '/files', site + '/solr']
+                    if self.target:
+                        cp.remove_section('site_' + site)
+                        self.sites.remove(site)
+
+                if self.target:
+                    with open(self.target + '/.datacats-environment', 'w') as conf:
+                        cp.write(conf)
+
+            datadirs = ['sites/' + datadir for datadir in datadirs]
+
+            if not self.sites and not never_delete:
+                datadirs.append('venv')
+
+            web_command(
+                command=['/scripts/purge.sh']
+                    + ['/project/data/' + d for d in datadirs],
+                ro={scripts.get_script_path('purge.sh'): '/scripts/purge.sh'},
+                rw={self.datadir: '/project/data'},
+                )
+
+            if not self.sites and not never_delete:
+                shutil.rmtree(self.datadir)
+        else:
+            raise DatacatsError('Unknown format version {}'.format(format_version))
 
     def logs(self, container, tail='all', follow=False, timestamps=False):
         """
