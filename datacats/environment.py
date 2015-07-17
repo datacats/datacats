@@ -842,8 +842,8 @@ class Environment(object):
         if format_version == 1:
             datadirs = ['files', 'solr']
             if is_boot2docker():
-                remove_container(self._get_container_name('pgdata'))
-                remove_container(self._get_container_name('venv'))
+                remove_container('datacats_pgdata_{}'.format(self.name))
+                remove_container('datacats_venv_{}'.format(self.name))
             else:
                 datadirs += ['postgres', 'venv']
 
