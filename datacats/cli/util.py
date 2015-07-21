@@ -125,5 +125,24 @@ class CliProgressTracker(object):
             return
         self.stream.write(" " * self.prev_sym_len)
         self.prev_sym_len = 0
-        self.stream.write("\r\b")
+        self.stream.write("\r")
         self.stream.flush()
+
+
+def function_as_step(func, description=None):
+    """
+    Returns a tuple of function and first string of docstring
+    to provide the user is some details on what the function does
+
+    For procedures with a lot of steps or that take a long time
+    one would like to print out a status message
+    to the user to provide her with more details of
+    what is going on.
+    """
+    if description:
+        return func, description
+    if func.__doc__:
+        doc_lines = func.__doc__.split('\n')
+        if len(doc_lines) > 0:
+            return func, doc_lines[1].lstrip().rstrip()
+    return func, func.__name__
