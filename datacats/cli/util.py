@@ -64,7 +64,10 @@ class CliProgressTracker(object):
         self.clean_up()
         return False  # not surpressing exceptions
 
-    def __init__(self, task_title, total=100, stream=sys.stderr):
+    def __init__(self, task_title, total=100, stream=sys.stderr, quiet=False):
+        self.quiet = quiet
+        if self.quiet:
+            return
         self.current = 0
         self.title = task_title
         self.total = total
@@ -84,6 +87,8 @@ class CliProgressTracker(object):
         """
         if not (state == 'PROGRESS'):
             self.clean_up()
+            return
+        if self.quiet:
             return
         if not meta:
             return
@@ -116,6 +121,8 @@ class CliProgressTracker(object):
         Clean up after the progress bar by
         overwriting whatever was printed so far with white spaces
         """
+        if self.quiet:
+            return
         self.stream.write(" " * self.prev_sym_len)
         self.prev_sym_len = 0
         self.stream.write("\r\b")
