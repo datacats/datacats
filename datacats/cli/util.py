@@ -32,7 +32,7 @@ def require_extra_image(image_name):
         pull_image(image_name)
 
 
-class CliProgressTracker(object):
+class CLIProgressTracker(object):
     """
     CliProgressTracker helps render a TTY progress bar
     and show progress to the user.

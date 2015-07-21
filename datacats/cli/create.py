@@ -12,7 +12,7 @@ from datacats.environment import Environment
 from datacats.cli.install import install_all
 from datacats.error import DatacatsError
 
-from datacats.cli.util import CliProgressTracker, y_or_n_prompt, confirm_password, function_as_step
+from datacats.cli.util import CLIProgressTracker, y_or_n_prompt, confirm_password, function_as_step
 
 
 def write(s):
@@ -93,7 +93,7 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
 
         if not progress_tracker:
             # by default we use a cli progress tracker
-            progress_tracker = CliProgressTracker(
+            progress_tracker = CLIProgressTracker(
                 task_title='Creating datacats site environment',
                 total=len(steps),
                 quiet=quiet)
