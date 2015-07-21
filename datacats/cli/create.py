@@ -5,13 +5,14 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 import sys
+import types
 from os.path import abspath
 
 from datacats.environment import Environment
 from datacats.cli.install import install_all
 from datacats.error import DatacatsError
 
-from datacats.cli.util import y_or_n_prompt, confirm_password
+from datacats.cli.util import CliProgressTracker, y_or_n_prompt, confirm_password, function_as_step
 
 
 def write(s):
@@ -57,7 +58,7 @@ part of this path will be used as the environment name.
 
 def create_environment(environment_dir, port, ckan_version, create_skin,
         site_name, start_web, create_sysadmin, address, log_syslog=False,
-        datapusher=True, quiet=False, site_url=None):
+        datapusher=True, quiet=False, site_url=None, progress_tracker=None):
     environment = Environment.new(environment_dir, ckan_version, site_name,
                                   address=address, port=port)
 
@@ -65,43 +66,58 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
         # There are a lot of steps we can/must skip if we're making a sub-site only
         making_full_environment = not environment.data_exists()
 
-        if not quiet:
-            write('Creating environment "{0}/{1}"'.format(environment.name, environment.site_name))
         steps = [
-            lambda: environment.create_directories(making_full_environment),
-            environment.create_bash_profile
+            function_as_step(
+                lambda: environment.create_directories(making_full_environment),
+                description="Create the directories"),
+            function_as_step(environment.create_bash_profile)
             ] + \
             ([
-                environment.create_virtualenv,
-                environment.save,
-                lambda: environment.create_source(datapusher),
-                environment.create_ckan_ini] if making_full_environment else []
+                function_as_step(environment.create_virtualenv),
+                function_as_step(environment.save),
+                function_as_step(lambda: environment.create_source(datapusher),
+                    description="Create source"),
+                function_as_step(environment.create_ckan_ini)] if making_full_environment else []
             ) + \
             [
-                environment.save_site,
-                environment.start_supporting_containers,
-                environment.fix_storage_permissions,
-                lambda: environment.update_ckan_ini(skin=create_skin),
+                function_as_step(environment.save_site),
+                function_as_step(environment.start_supporting_containers),
+                function_as_step(environment.fix_storage_permissions),
+                function_as_step(
+                    lambda: environment.update_ckan_ini(skin=create_skin),
+                    description="Create ckan INI file"),
             ]
 
         if create_skin and making_full_environment:
-            steps.append(environment.create_install_template_skin)
+            steps.append(function_as_step(environment.create_install_template_skin))
 
-        for fn in steps:
+        if not progress_tracker:
+            # by default we use a cli progress tracker
+            progress_tracker = CliProgressTracker(
+                task_title='Creating datacats site environment',
+                total=len(steps),
+                quiet=quiet)
+        for step_num, step in enumerate(steps):
+            if not isinstance(step, types.FunctionType):
+                fn, descr = step
+            else:
+                fn, descr = step, "Please Wait"
+            progress_tracker.update_state(
+                state='PROGRESS',
+                meta={
+                    'current': step_num,
+                    'total': len(steps),
+                    'status': descr
+                })
             fn()
-            if not quiet:
-                write('.')
-        if not quiet:
-            write('\n')
+        if hasattr(progress_tracker, "clean_up"):
+            progress_tracker.clean_up()
 
-        return finish_init(environment, start_web, create_sysadmin, address,
-                           log_syslog=log_syslog, site_url=site_url)
+        finish_init(environment, start_web, create_sysadmin, address,
+           log_syslog=log_syslog, site_url=site_url)
     except:
-        # Make sure that it doesn't get printed right after the dots
-        # by printing a newline
-        # i.e. Creating environment 'hello'.....ERROR MESSAGE
-        if not quiet:
-            print
+        if hasattr(progress_tracker, "clean_up"):
+            progress_tracker.clean_up()
         raise
 
 
