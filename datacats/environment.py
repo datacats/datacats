@@ -205,8 +205,8 @@ class Environment(object):
 
     def create_bash_profile(self):
         """
-        Create a default .bash_profile for the shell user that
-        activates the ckan virtualenv
+        Create a default .bash_profile
+        for the shell user that activates the ckan virtualenv
         """
         with open(self.target + '/.bash_profile', 'w') as prof:
             prof.write('source /usr/lib/ckan/bin/activate\n')
