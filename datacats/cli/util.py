@@ -109,6 +109,7 @@ class CliProgressTracker(object):
             self.stream.write(" " * (self.prev_sym_len - len(output_str)))
         self.prev_sym_len = len(output_str)
         self.stream.write("\r")
+        self.stream.flush()
 
     def clean_up(self):
         """
@@ -118,3 +119,4 @@ class CliProgressTracker(object):
         self.stream.write(" " * self.prev_sym_len)
         self.prev_sym_len = 0
         self.stream.write("\r\b")
+        self.stream.flush()
