@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+1.0.3
+-----
+
+2015-07-24
+
+- fix for setting site url in development ini for local linux use
+- fix for development.ini being created in source directory as root
+- fix for broken edge cases in parsing paster and shell commands
+  when combined with datacats options
+
 1.0.2
 -----
 
