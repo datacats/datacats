@@ -1,6 +1,6 @@
 import sys
 from datacats import docker
-from datacats.cli.pull import pull_image
+from datacats.cli.pull import retrying_pull_image
 from getpass import getpass
 
 
@@ -29,4 +29,4 @@ def y_or_n_prompt(statement_of_risk):
 
 def require_extra_image(image_name):
     if not docker.image_exists(image_name):
-        pull_image(image_name)
+        retrying_pull_image(image_name)
