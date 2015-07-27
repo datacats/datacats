@@ -32,7 +32,7 @@ def paster(opts):
     """Run a paster command from the current directory
 
 Usage:
-  datacats paster [-d] [-s NAME] [COMMAND...]
+  datacats paster [-d] [-s NAME] COMMAND...
 
 Options:
   -s --site=NAME   Specify a site to run this paster command on [default: primary]
