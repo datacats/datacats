@@ -8,7 +8,7 @@ import sys
 from os.path import abspath
 
 from datacats.environment import Environment
-from datacats.cli.install import install_all
+from datacats.cli.install import install_all, clean_pyc
 from datacats.error import DatacatsError
 
 from datacats.cli.util import y_or_n_prompt, confirm_password
@@ -124,6 +124,7 @@ Options:
     print 'Resetting...'
     environment.stop_supporting_containers()
     environment.stop_ckan()
+    clean_pyc(environment)
     environment.purge_data([opts['--site']], never_delete=True)
     init({
         'ENVIRONMENT_DIR': opts['ENVIRONMENT'],
