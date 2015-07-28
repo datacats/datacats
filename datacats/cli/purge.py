@@ -6,8 +6,6 @@
 
 from shutil import rmtree
 
-from os.path import expanduser
-
 from datacats.environment import Environment, DatacatsError
 from datacats.cli.util import y_or_n_prompt
 from datacats.error import DatacatsError
@@ -37,7 +35,6 @@ Default: '.'
         if get_format_version(environment.datadir) == 1:
             old = True
             environment = Environment.load(opts['ENVIRONMENT'], opts['--site'], allow_old=True)
-
 
     # We need a valid site if they don't want to blow away everything.
     if not opts['--delete-environment'] and not old:
