@@ -34,6 +34,13 @@ def list_sites(datadir):
         return []
 
 
+def get_format_version(datadir):
+    if path.exists(datadir + '/.version'):
+        return open(datadir + '/.version').read()
+    else:
+        return 1
+
+
 def save_new_site(site_name, sitedir, srcdir, port, address, site_url,
         passwords):
     """
