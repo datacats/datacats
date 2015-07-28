@@ -840,6 +840,7 @@ class Environment(object):
                 format_version = int(f.read().strip())
 
         if format_version == 1:
+            print 'WARNING: Defaulting to old purge for version 1.'
             datadirs = ['files', 'solr']
             if is_boot2docker():
                 remove_container('datacats_pgdata_{}'.format(self.name))
