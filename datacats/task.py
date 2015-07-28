@@ -18,7 +18,7 @@ import shutil
 
 from datacats import docker, validate, migrate
 from datacats.error import DatacatsError
-from datacats.cli.pull import pull_image
+from datacats.cli.pull import retrying_pull_image
 
 
 DEFAULT_REMOTE_SERVER_TARGET = 'datacats@command.datacats.com'
@@ -324,7 +324,7 @@ Versions that are currently supported are: {}'''.format(ckan_version,
     downloaded_versions = [tag for tag in docker.get_tags('datacats/ckan')]
 
     if ckan_version not in downloaded_versions:
-        pull_image('datacats/ckan:{}'.format(preload_name))
+        retrying_pull_image('datacats/ckan:{}'.format(preload_name))
 
     if path.isdir(sitedir):
         raise DatacatsError('Site data directory {0} already exists'.format(
