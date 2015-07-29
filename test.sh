@@ -23,13 +23,13 @@ datacats purge -y site1
 datacats init site1 -n
 datacats reset -yn site1
 datacats install site1
-datacats init site1 -s two -n
-datacats start -s two site1
 datacats migrate -y -r 1 site1
 [ -e ~/.datacats/site1/postgres ]
 datacats purge -y site1
 datacats init -n site1
 datacats migrate -y -r 1 site1
 datacats migrate -y -r 2 site1
+datacats init site1 -s two -n
+datacats start -s two site1
 [ -e ~/.datacats/site1/sites/primary/postgres ]
 [ $(datacats --version | wc -l) == 1 ]
