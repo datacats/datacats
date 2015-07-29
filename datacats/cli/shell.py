@@ -32,7 +32,7 @@ def paster(opts):
     """Run a paster command from the current directory
 
 Usage:
-  datacats paster [-d] [-s NAME] COMMAND...
+  datacats paster [-d] [-s NAME] [COMMAND...]
 
 Options:
   -s --site=NAME   Specify a site to run this paster command on [default: primary]
@@ -45,6 +45,9 @@ specify the --plugin option. The --config option also need not be specified.
     environment = Environment.load('.')
     environment.require_data()
     environment.start_supporting_containers()
+
+    if not opts['COMMAND']:
+        opts['COMMAND'] = ['--', 'help']
 
     assert opts['COMMAND'][0] == '--'
     return environment.interactive_shell(
