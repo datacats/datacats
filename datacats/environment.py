@@ -833,10 +833,10 @@ class Environment(object):
         Remove uploaded files, postgres db, solr index, venv
         """
         # Default to the set of all sites
-        if not exists(self.target + '/.version'):
+        if not exists(self.datadir + '/.version'):
             format_version = 1
         else:
-            with open(self.target + '/.version') as f:
+            with open(self.datadir + '/.version') as f:
                 format_version = int(f.read().strip())
 
         if format_version == 1:
