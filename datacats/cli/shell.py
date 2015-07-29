@@ -46,6 +46,9 @@ specify the --plugin option. The --config option also need not be specified.
     environment.require_data()
     environment.start_supporting_containers()
 
+    if not opts['COMMAND']:
+        opts['COMMAND'] = ['--', 'help']
+
     assert opts['COMMAND'][0] == '--'
     return environment.interactive_shell(
         opts['COMMAND'][1:],
