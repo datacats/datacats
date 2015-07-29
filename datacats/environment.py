@@ -145,7 +145,7 @@ class Environment(object):
         (datadir, name, ckan_version, always_prod, deploy_target,
             remote_server_key, extra_containers) = task.load_environment(srcdir, datadir, allow_old)
 
-        if allow_old:
+        if not allow_old:
             (port, address, site_url, passwords) = task.load_site(srcdir, datadir, site_name)
         else:
             (port, address, site_url, passwords) = (None, None, None, None)

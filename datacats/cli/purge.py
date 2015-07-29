@@ -34,8 +34,8 @@ Default: '.'
             environment = Environment.load(opts['ENVIRONMENT'], opts['--site'], data_only=True)
         except DatacatsError:
             old = True
-            environment = Environment.load(opts['ENVIRONMENT'], opts['--site'], data_only=True, allow_old=True)
-
+            environment = Environment.load(opts['ENVIRONMENT'], opts['--site'],
+                                           data_only=True, allow_old=True)
 
     # We need a valid site if they don't want to blow away everything.
     if not opts['--delete-environment'] and not old:
