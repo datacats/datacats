@@ -162,13 +162,15 @@ def find_environment_dirs(environment_name=None, data_only=False):
     return srcdir, extension_dir, None
 
 
-def load_environment(srcdir, datadir=None):
+def load_environment(srcdir, datadir=None, allow_old=False):
     """
     Load configuration values for an environment
 
     :param srcdir: environment source directory
     :param datadir: environment data direcory, if None will be discovered
                     from srcdir
+    :param allow_old: Don't throw an exception if this is an old site
+                      This is only valid for sites that you are purging.
     if datadir is None it will be discovered from srcdir
 
     Returns (datadir, name, ckan_version, always_prod, deploy_target,
@@ -189,7 +191,7 @@ def load_environment(srcdir, datadir=None):
         datadir = path.expanduser('~/.datacats/' + name)
         # FIXME: check if datadir is sane, project-dir points back to srcdir
 
-    if migrate.needs_format_conversion(datadir):
+    if migrate.needs_format_conversion(datadir) and not allow_old:
         raise DatacatsError('This environment uses an old format. You must'
                             ' migrate to the new format. To do so, use the'
                             ' "datacats migrate" command.')

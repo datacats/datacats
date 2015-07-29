@@ -122,7 +122,7 @@ class Environment(object):
         return environment
 
     @classmethod
-    def load(cls, environment_name=None, site_name='primary', data_only=False):
+    def load(cls, environment_name=None, site_name='primary', data_only=False, allow_old=False):
         """
         Return an Environment object based on an existing environnment+site.
 
@@ -130,6 +130,8 @@ class Environment(object):
             look in current or parent directories for project
         :param data_only: set to True to only load from data dir, not
             the project dir; Used for purging environment data.
+        :param allow_old: load a very minimal subset of what we usually
+            load. This will only work for purging environment data on an old site.
 
         Raises DatacatsError if environment can't be found or if there is an
         error parsing the environment information.
@@ -141,9 +143,12 @@ class Environment(object):
             return cls(environment_name, None, datadir, site_name)
 
         (datadir, name, ckan_version, always_prod, deploy_target,
-            remote_server_key, extra_containers) = task.load_environment(srcdir, datadir)
+            remote_server_key, extra_containers) = task.load_environment(srcdir, datadir, allow_old)
 
-        (port, address, site_url, passwords) = task.load_site(srcdir, datadir, site_name)
+        if allow_old:
+            (port, address, site_url, passwords) = task.load_site(srcdir, datadir, site_name)
+        else:
+            (port, address, site_url, passwords) = (None, None, None, None)
 
         environment = cls(name, srcdir, datadir, site_name, ckan_version=ckan_version,
                           port=port, deploy_target=deploy_target, site_url=site_url,
@@ -157,7 +162,8 @@ class Environment(object):
         else:
             environment._generate_passwords()
 
-        environment._load_sites()
+        if not allow_old:
+            environment._load_sites()
         return environment
 
     def data_exists(self):
