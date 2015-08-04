@@ -48,14 +48,16 @@ Default: '.'
                 '--site-url': None
                 })
 
+
 def clean_pyc(environment, quiet=False):
     if not quiet:
         print 'Cleaning environment {} of pyc files...'.format(environment.name)
 
-    for root, dirs, files in walk(environment.target):
+    for root, _, files in walk(environment.target):
         for f in files:
             if f.endswith('.pyc'):
                 remove(join(root, f))
+
 
 def install_all(environment, clean, verbose=False, quiet=False):
     logs = check_connectivity()
