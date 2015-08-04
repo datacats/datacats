@@ -383,7 +383,7 @@ class Environment(object):
             raise DatacatsError('Failed to read and parse development.ini: ' + str(e))
 
     def start_ckan(self, production=False, address='127.0.0.1', log_syslog=False,
-                   paster_reload=True):
+                   paster_reload=True, interactive=False):
         """
         Start the apache server or paster serve
 
@@ -439,7 +439,7 @@ class Environment(object):
             self._create_run_ini(port, production)
             try:
                 self._run_web_container(port, command, address, log_syslog=log_syslog,
-                                        datapusher=datapusher)
+                                        datapusher=datapusher, interactive=interactive)
                 if not is_boot2docker():
                     self.address = address
             except PortAllocatedError:
@@ -491,7 +491,7 @@ class Environment(object):
             cp.write(runini)
 
     def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False,
-                           datapusher=True):
+                           datapusher=True, interactive=False):
         """
         Start web container on port with command
         """
@@ -516,25 +516,43 @@ class Environment(object):
                                                    False, False))
             links[self._get_container_name('datapusher')] = 'datapusher'
 
+        ro = dict({
+                  self.target: '/project/',
+                  scripts.get_script_path('web.sh'): '/scripts/web.sh',
+                  scripts.get_script_path('adjust_devini.py'): '/scripts/adjust_devini.py'},
+                  **ro)
+        rw = {
+            self.sitedir + '/files': '/var/www/storage',
+            self.sitedir + '/run/development.ini': '/project/development.ini'
+            }
         try:
-            run_container(
-                name=self._get_container_name('web'),
-                image='datacats/web',
-                rw={self.sitedir + '/files': '/var/www/storage',
-                    self.sitedir + '/run/development.ini':
-                        '/project/development.ini'},
-                ro=dict({
-                    self.target: '/project/',
-                    scripts.get_script_path('web.sh'): '/scripts/web.sh',
-                    scripts.get_script_path('adjust_devini.py'): '/scripts/adjust_devini.py'},
-                    **ro),
-                links=links,
-                volumes_from=volumes_from,
-                command=command,
-                port_bindings={
-                    5000: port if is_boot2docker() else (address, port)},
-                log_syslog=log_syslog
-                )
+            if not interactive:
+                run_container(
+                    name=self._get_container_name('web'),
+                    image='datacats/web',
+                    rw=rw,
+                    ro=ro,
+                    links=links,
+                    volumes_from=volumes_from,
+                    command=command,
+                    port_bindings={
+                        5000: port if is_boot2docker() else (address, port)},
+                    log_syslog=log_syslog
+                    )
+            else:
+                if is_boot2docker():
+                    switches = ['--volumes-from', 
+                                self._get_container_name('pgdata'), '--volumes-from', self._get_container_name('venv')]
+                else:
+                    switches = []
+                switches += ['--volume={}:{}:ro'.format(vol, ro[vol]) for vol in ro]
+                switches += ['--volume={}:{}'.format(vol, rw[vol]) for vol in rw]
+                links = ['--link={}:{}'.format(link, links[link]) for link in links]
+                args = ['docker', 'run', '-it', '--name', self._get_container_name('web'), 
+                        '-p', '5000:{}'.format(port) if is_boot2docker()
+                        else '{}:5000:{}'.format(address, port)] + \
+                        switches + links + ['datacats/web',] + command
+                subprocess.call(args)
         except APIError as e:
             if '409' in str(e):
                 raise DatacatsError('Web container already running. '

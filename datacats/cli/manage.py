@@ -43,14 +43,16 @@ def start(environment, opts):
 
 Usage:
   datacats start [-b] [--site-url SITE_URL] [-p|--no-watch] [-s NAME]
-                 [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
+                 [-i] [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
   datacats start -r [-b] [--site-url SITE_URL] [-s NAME] [--syslog]
-                 [--address=IP] [ENVIRONMENT]
+                 [-i] [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP          Address to listen on (Linux-only) [default: 127.0.0.1]
   -b --background       Don't wait for response from web server
   --no-watch            Do not automatically reload templates and .py files on change
+  -i --interactive      Calls out to docker via the command line, allowing
+                        for interactivity with the web image.
   -p --production       Start with apache and debug=false
   -r --remote           Start DataCats.com cloud instance
   -s --site=NAME        Specify a site to start [default: primary]
@@ -75,12 +77,14 @@ def reload_(environment, opts):
 
 Usage:
   datacats reload [-b] [-p|--no-watch] [--syslog] [-s NAME] [--site-url=SITE_URL]
-                            [--address=IP] [ENVIRONMENT [PORT]]
+                            [-i] [--address=IP] [ENVIRONMENT [PORT]]
   datacats reload -r [-b] [--syslog] [-s NAME] [--address=IP] [--site-url=SITE_URL]
-                            [ENVIRONMENT]
+                            [-i] [ENVIRONMENT]
 
 Options:
   --address=IP          Address to listen on (Linux-only) [default: 127.0.0.1]
+  -i --interactive      Calls out to docker via the command line, allowing
+                        for interactivity with the web image.
   --site-url=SITE_URL   The site_url to use in API responses. Can use Python template syntax
                         to insert the port and address (e.g. http://example.org:{port}/)
   -b --background       Don't wait for response from web server
@@ -93,6 +97,9 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+    if opts['--interactive']:
+        # We can't wait for the server if we're tty'd
+        opts['--background'] = True
     environment.require_data()
     environment.stop_ckan()
     if opts['PORT'] or opts['--address'] != '127.0.0.1' or opts['--site-url']:
@@ -121,7 +128,8 @@ Default: '.'
         production=opts['--production'],
         address=opts['--address'],
         paster_reload=not opts['--no-watch'],
-        log_syslog=opts['--syslog'],)
+        log_syslog=opts['--syslog'],
+        interactive=opts['--interactive'])
     write('Starting web server at {0} ...'.format(environment.web_address()))
     if opts['--background']:
         write('\n')
