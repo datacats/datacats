@@ -53,7 +53,7 @@ part of this path will be used as the environment name.
         log_syslog=opts['--syslog'],
         datapusher=not opts['--no-datapusher'],
         site_url=opts['--site-url'],
-        interactive=True,
+        interactive=opts['--interactive'],
         )
 
 
