@@ -146,7 +146,7 @@ def init(opts, no_install=False, quiet=False):
     """Initialize a purged environment or copied environment directory
 
 Usage:
-  datacats init [-in] [--syslog] [-s NAME] [--address=IP]
+  datacats init [-in] [--syslog] [-s NAME] [--address=IP] [--interactive]
                 [--site-url SITE_URL] [ENVIRONMENT_DIR [PORT]]
 
 Options:
