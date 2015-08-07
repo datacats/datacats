@@ -23,6 +23,12 @@ EOSQL
 
 # Adjust PostgreSQL configuration so that remote connections to the
 # database are possible.
+
+set_listen_addresses() {
+	sedEscapedValue="$(echo "$1" | sed 's/[\/&]/\\&/g')"
+	sed -ri "s/^#?(listen_addresses\s*=\s*)\S+/\1'$sedEscapedValue'/" "/var/lib/postgresql/data/postgresql.conf"
+}
+
+listen_addresses '*'
 echo "local all  postgres    peer" >> /var/lib/postgresql/data/pg_hba.conf
 echo "host  all  all    0.0.0.0/0  md5" >> /var/lib/postgresql/data/pg_hba.conf
-echo "listen_addresses='*'" >> /var/lib/postgresql/data/postgresql.conf
