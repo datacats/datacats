@@ -168,7 +168,7 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     log_syslog = opts['--syslog']
 
     environment = Environment.load(environment_dir, site_name)
-    if opts['--address']:
+    if address:
         environment.address = address
     if port:
         environment.port = int(port)
