@@ -94,7 +94,7 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
         if not quiet:
             write('\n')
 
-        return finish_init(environment, start_web, create_sysadmin, address,
+        return finish_init(environment, start_web, create_sysadmin,
                            log_syslog=log_syslog, site_url=site_url)
     except:
         # Make sure that it doesn't get printed right after the dots
@@ -207,12 +207,12 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
             print
         raise
 
-    return finish_init(environment, start_web, create_sysadmin, address,
+    return finish_init(environment, start_web, create_sysadmin,
                        log_syslog=log_syslog, do_install=not no_install,
                        quiet=quiet, site_url=site_url)
 
 
-def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False,
+def finish_init(environment, start_web, create_sysadmin, log_syslog=False,
                 do_install=True, quiet=False, site_url=None):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
