@@ -168,7 +168,8 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     log_syslog = opts['--syslog']
 
     environment = Environment.load(environment_dir, site_name)
-    environment.address = address
+    if opts['--address'] != '127.0.0.1':
+        environment.address = address
     if port:
         environment.port = int(port)
     if site_url:
@@ -235,7 +236,7 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
             raise DatacatsError('Could not parse site_url: {}'.format(e))
 
     if start_web:
-        environment.start_ckan(address=address, log_syslog=log_syslog)
+        environment.start_ckan(log_syslog=log_syslog)
         if not quiet:
             write('Starting web server at {0} ...\n'.format(
                 environment.web_address()))

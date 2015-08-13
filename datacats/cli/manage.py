@@ -119,7 +119,6 @@ Default: '.'
 
     environment.start_ckan(
         production=opts['--production'],
-        address=opts['--address'],
         paster_reload=not opts['--no-watch'],
         log_syslog=opts['--syslog'],)
     write('Starting web server at {0} ...'.format(environment.web_address()))

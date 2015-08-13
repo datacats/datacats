@@ -388,19 +388,17 @@ class Environment(object):
         except ConfigParserError as e:
             raise DatacatsError('Failed to read and parse development.ini: ' + str(e))
 
-    def start_ckan(self, production=False, address='127.0.0.1', log_syslog=False,
-                   paster_reload=True):
+    def start_ckan(self, production=False, log_syslog=False, paster_reload=True):
         """
         Start the apache server or paster serve
 
-        :param address: On Linux, the address to serve from (can be 0.0.0.0 for
-                        listening on all addresses)
         :param log_syslog: A flag to redirect all container logs to host's syslog
         :param production: True for apache, False for paster serve + debug on
         :param paster_reload: Instruct paster to watch for file changes
         """
         self.stop_ckan()
 
+        address = self.address
         port = self.port
         # in prod we always use log_syslog driver
         log_syslog = True if self.always_prod else log_syslog
