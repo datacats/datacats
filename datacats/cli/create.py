@@ -27,7 +27,7 @@ Usage:
                   [--no-datapusher] [--site-url SITE_URL] ENVIRONMENT_DIR [PORT]
 
 Options:
-  --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
+  --address=IP            Address to listen on (Linux-only)
   --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION [default: 2.3]
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
@@ -132,7 +132,7 @@ Options:
         '--site': opts['--site'],
         'PORT': saved_port,
         '--syslog': None,
-        '--address': '127.0.0.1',
+        '--address': None,
         '--image-only': False,
         '--no-sysadmin': opts['--no-sysadmin'],
         '--site-url': None
@@ -147,7 +147,7 @@ Usage:
                 [--site-url SITE_URL] [ENVIRONMENT_DIR [PORT]]
 
 Options:
-  --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
+  --address=IP            Address to listen on (Linux-only)
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME          Pick a site to initialize [default: primary]
@@ -168,7 +168,7 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     log_syslog = opts['--syslog']
 
     environment = Environment.load(environment_dir, site_name)
-    if opts['--address'] != '127.0.0.1':
+    if opts['--address']:
         environment.address = address
     if port:
         environment.port = int(port)

@@ -398,19 +398,19 @@ class Environment(object):
         """
         self.stop_ckan()
 
-        address = self.address
+        address = self.address or '127.0.0.1'
         port = self.port
         # in prod we always use log_syslog driver
         log_syslog = True if self.always_prod else log_syslog
 
         production = production or self.always_prod
         # We only override the site URL with the docker URL on three conditions
-        override_site_url = (self.address == '127.0.0.1'
+        override_site_url = (self.address is None
                              and not is_boot2docker()
                              and not self.site_url)
         command = ['/scripts/web.sh', str(production), str(override_site_url), str(paster_reload)]
 
-        if address != '127.0.0.1' and is_boot2docker():
+        if address == '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify address on boot2docker.')
 
         # XXX nasty hack, remove this once we have a lessc command
@@ -494,7 +494,7 @@ class Environment(object):
         with open(self.sitedir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False,
+    def _run_web_container(self, port, command, address, log_syslog=False,
                            datapusher=True):
         """
         Start web container on port with command
