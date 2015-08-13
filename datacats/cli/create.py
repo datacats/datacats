@@ -124,11 +124,13 @@ Options:
     print 'Resetting...'
     environment.stop_supporting_containers()
     environment.stop_ckan()
+    # Save the port.
+    saved_port = environment.port
     environment.purge_data([opts['--site']], never_delete=True)
     init({
         'ENVIRONMENT_DIR': opts['ENVIRONMENT'],
         '--site': opts['--site'],
-        'PORT': None,
+        'PORT': saved_port,
         '--syslog': None,
         '--address': '127.0.0.1',
         '--image-only': False,
