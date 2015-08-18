@@ -9,6 +9,7 @@ from shutil import rmtree
 from datacats.environment import Environment, DatacatsError
 from datacats.cli.util import y_or_n_prompt
 from datacats.error import DatacatsError
+from datacats.task import get_format_version
 
 
 def purge(opts):
@@ -26,13 +27,17 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+    old = False
     try:
         environment = Environment.load(opts['ENVIRONMENT'], opts['--site'])
     except DatacatsError:
         environment = Environment.load(opts['ENVIRONMENT'], opts['--site'], data_only=True)
+        if get_format_version(environment.datadir) == 1:
+            old = True
+            environment = Environment.load(opts['ENVIRONMENT'], opts['--site'], allow_old=True)
 
     # We need a valid site if they don't want to blow away everything.
-    if not opts['--delete-environment']:
+    if not opts['--delete-environment'] and not old:
         environment.require_valid_site()
 
     sites = [opts['--site']] if not opts['--delete-environment'] else environment.sites

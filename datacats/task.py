@@ -34,6 +34,13 @@ def list_sites(datadir):
         return []
 
 
+def get_format_version(datadir):
+    if path.exists(datadir + '/.version'):
+        return open(datadir + '/.version').read()
+    else:
+        return 1
+
+
 def save_new_site(site_name, sitedir, srcdir, port, address, site_url,
         passwords):
     """
@@ -47,7 +54,8 @@ def save_new_site(site_name, sitedir, srcdir, port, address, site_url,
     if not cp.has_section(section_name):
         cp.add_section(section_name)
     cp.set(section_name, 'port', str(port))
-    cp.set(section_name, 'address', address or '127.0.0.1')
+    if address:
+        cp.set(section_name, 'address', address)
 
     if site_url:
         cp.set(section_name, 'site_url', site_url)
@@ -162,13 +170,15 @@ def find_environment_dirs(environment_name=None, data_only=False):
     return srcdir, extension_dir, None
 
 
-def load_environment(srcdir, datadir=None):
+def load_environment(srcdir, datadir=None, allow_old=False):
     """
     Load configuration values for an environment
 
     :param srcdir: environment source directory
     :param datadir: environment data direcory, if None will be discovered
                     from srcdir
+    :param allow_old: Don't throw an exception if this is an old site
+                      This is only valid for sites that you are purging.
     if datadir is None it will be discovered from srcdir
 
     Returns (datadir, name, ckan_version, always_prod, deploy_target,
@@ -189,7 +199,7 @@ def load_environment(srcdir, datadir=None):
         datadir = path.expanduser('~/.datacats/' + name)
         # FIXME: check if datadir is sane, project-dir points back to srcdir
 
-    if migrate.needs_format_conversion(datadir):
+    if migrate.needs_format_conversion(datadir) and not allow_old:
         raise DatacatsError('This environment uses an old format. You must'
                             ' migrate to the new format. To do so, use the'
                             ' "datacats migrate" command.')

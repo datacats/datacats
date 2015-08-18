@@ -122,7 +122,7 @@ class Environment(object):
         return environment
 
     @classmethod
-    def load(cls, environment_name=None, site_name='primary', data_only=False):
+    def load(cls, environment_name=None, site_name='primary', data_only=False, allow_old=False):
         """
         Return an Environment object based on an existing environnment+site.
 
@@ -130,6 +130,8 @@ class Environment(object):
             look in current or parent directories for project
         :param data_only: set to True to only load from data dir, not
             the project dir; Used for purging environment data.
+        :param allow_old: load a very minimal subset of what we usually
+            load. This will only work for purging environment data on an old site.
 
         Raises DatacatsError if environment can't be found or if there is an
         error parsing the environment information.
@@ -141,9 +143,12 @@ class Environment(object):
             return cls(environment_name, None, datadir, site_name)
 
         (datadir, name, ckan_version, always_prod, deploy_target,
-            remote_server_key, extra_containers) = task.load_environment(srcdir, datadir)
+            remote_server_key, extra_containers) = task.load_environment(srcdir, datadir, allow_old)
 
-        (port, address, site_url, passwords) = task.load_site(srcdir, datadir, site_name)
+        if not allow_old:
+            (port, address, site_url, passwords) = task.load_site(srcdir, datadir, site_name)
+        else:
+            (port, address, site_url, passwords) = (None, None, None, None)
 
         environment = cls(name, srcdir, datadir, site_name, ckan_version=ckan_version,
                           port=port, deploy_target=deploy_target, site_url=site_url,
@@ -157,7 +162,8 @@ class Environment(object):
         else:
             environment._generate_passwords()
 
-        environment._load_sites()
+        if not allow_old:
+            environment._load_sites()
         return environment
 
     def data_exists(self):
@@ -382,31 +388,29 @@ class Environment(object):
         except ConfigParserError as e:
             raise DatacatsError('Failed to read and parse development.ini: ' + str(e))
 
-    def start_ckan(self, production=False, address='127.0.0.1', log_syslog=False,
-                   paster_reload=True):
+    def start_ckan(self, production=False, log_syslog=False, paster_reload=True):
         """
         Start the apache server or paster serve
 
-        :param address: On Linux, the address to serve from (can be 0.0.0.0 for
-                        listening on all addresses)
         :param log_syslog: A flag to redirect all container logs to host's syslog
         :param production: True for apache, False for paster serve + debug on
         :param paster_reload: Instruct paster to watch for file changes
         """
         self.stop_ckan()
 
+        address = self.address or '127.0.0.1'
         port = self.port
         # in prod we always use log_syslog driver
         log_syslog = True if self.always_prod else log_syslog
 
         production = production or self.always_prod
         # We only override the site URL with the docker URL on three conditions
-        override_site_url = (self.address == '127.0.0.1'
+        override_site_url = (self.address is None
                              and not is_boot2docker()
                              and not self.site_url)
         command = ['/scripts/web.sh', str(production), str(override_site_url), str(paster_reload)]
 
-        if address != '127.0.0.1' and is_boot2docker():
+        if address == '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify address on boot2docker.')
 
         # XXX nasty hack, remove this once we have a lessc command
@@ -490,7 +494,7 @@ class Environment(object):
         with open(self.sitedir + '/run/' + output, 'w') as runini:
             cp.write(runini)
 
-    def _run_web_container(self, port, command, address='127.0.0.1', log_syslog=False,
+    def _run_web_container(self, port, command, address, log_syslog=False,
                            datapusher=True):
         """
         Start web container on port with command
@@ -833,46 +837,71 @@ class Environment(object):
         Remove uploaded files, postgres db, solr index, venv
         """
         # Default to the set of all sites
-        if not which_sites:
-            which_sites = self.sites
+        if not exists(self.datadir + '/.version'):
+            format_version = 1
+        else:
+            with open(self.datadir + '/.version') as f:
+                format_version = int(f.read().strip())
 
-        datadirs = []
-        boot2docker = is_boot2docker()
+        if format_version == 1:
+            print 'WARNING: Defaulting to old purge for version 1.'
+            datadirs = ['files', 'solr']
+            if is_boot2docker():
+                remove_container('datacats_pgdata_{}'.format(self.name))
+                remove_container('datacats_venv_{}'.format(self.name))
+            else:
+                datadirs += ['postgres', 'venv']
 
-        if which_sites:
-            if self.target:
-                cp = SafeConfigParser()
-                cp.read([self.target + '/.datacats-environment'])
-
-            for site in which_sites:
-                if boot2docker:
-                    remove_container(self._get_container_name('pgdata'))
-                else:
-                    datadirs += [site + '/postgres']
-                # Always rm the site dir & solr & files
-                datadirs += [site, site + '/files', site + '/solr']
-                if self.target:
-                    cp.remove_section('site_' + site)
-                    self.sites.remove(site)
-
-            if self.target:
-                with open(self.target + '/.datacats-environment', 'w') as conf:
-                    cp.write(conf)
-
-        datadirs = ['sites/' + datadir for datadir in datadirs]
-
-        if not self.sites and not never_delete:
-            datadirs.append('venv')
-
-        web_command(
-            command=['/scripts/purge.sh']
+            web_command(
+                command=['/scripts/purge.sh']
                 + ['/project/data/' + d for d in datadirs],
-            ro={scripts.get_script_path('purge.sh'): '/scripts/purge.sh'},
-            rw={self.datadir: '/project/data'},
-            )
-
-        if not self.sites and not never_delete:
+                ro={scripts.get_script_path('purge.sh'): '/scripts/purge.sh'},
+                rw={self.datadir: '/project/data'},
+                )
             shutil.rmtree(self.datadir)
+        elif format_version == 2:
+            if not which_sites:
+                which_sites = self.sites
+
+            datadirs = []
+            boot2docker = is_boot2docker()
+
+            if which_sites:
+                if self.target:
+                    cp = SafeConfigParser()
+                    cp.read([self.target + '/.datacats-environment'])
+
+                for site in which_sites:
+                    if boot2docker:
+                        remove_container(self._get_container_name('pgdata'))
+                    else:
+                        datadirs += [site + '/postgres']
+                    # Always rm the site dir & solr & files
+                    datadirs += [site, site + '/files', site + '/solr']
+                    if self.target:
+                        cp.remove_section('site_' + site)
+                        self.sites.remove(site)
+
+                if self.target:
+                    with open(self.target + '/.datacats-environment', 'w') as conf:
+                        cp.write(conf)
+
+            datadirs = ['sites/' + datadir for datadir in datadirs]
+
+            if not self.sites and not never_delete:
+                datadirs.append('venv')
+
+            web_command(
+                command=['/scripts/purge.sh']
+                    + ['/project/data/' + d for d in datadirs],
+                ro={scripts.get_script_path('purge.sh'): '/scripts/purge.sh'},
+                rw={self.datadir: '/project/data'},
+                )
+
+            if not self.sites and not never_delete:
+                shutil.rmtree(self.datadir)
+        else:
+            raise DatacatsError('Unknown format version {}'.format(format_version))
 
     def logs(self, container, tail='all', follow=False, timestamps=False):
         """

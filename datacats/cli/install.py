@@ -24,7 +24,7 @@ Usage:
   datacats install [-cq] [--address=IP] [ENVIRONMENT]
 
 Options:
-  --address=IP          The address to bind to when reloading after install [default: 127.0.0.1]
+  --address=IP          The address to bind to when reloading after install
   -c --clean            Reinstall packages into a clean virtualenv
   -q --quiet            Do not show output from installing packages and requirements.
 

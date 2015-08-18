@@ -15,7 +15,7 @@ CKAN development & deployment with Docker
     <div class="row" style="margin-bottom:20px;">
         <div class="columns small-12 medium-8 medium-offset-2" style="text-align: center;">
             <div class="flowplayer">
-                <video src="http://www.datacats.com/media/datacats_intro.mp4" width=665 height=416></video>
+                <video src="https://www.datacats.com/media/datacats_intro.mp4" width=665 height=416></video>
             </div>
         </div>
     </div>
