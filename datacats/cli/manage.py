@@ -48,7 +48,7 @@ Usage:
                  [--address=IP] [ENVIRONMENT]
 
 Options:
-  --address=IP          Address to listen on (Linux-only) [default: 127.0.0.1]
+  --address=IP          Address to listen on (Linux-only)
   -b --background       Don't wait for response from web server
   --no-watch            Do not automatically reload templates and .py files on change
   -p --production       Start with apache and debug=false
@@ -80,7 +80,7 @@ Usage:
                             [ENVIRONMENT]
 
 Options:
-  --address=IP          Address to listen on (Linux-only) [default: 127.0.0.1]
+  --address=IP          Address to listen on (Linux-only)
   --site-url=SITE_URL   The site_url to use in API responses. Can use Python template syntax
                         to insert the port and address (e.g. http://example.org:{port}/)
   -b --background       Don't wait for response from web server
@@ -95,10 +95,10 @@ Default: '.'
 """
     environment.require_data()
     environment.stop_ckan()
-    if opts['PORT'] or opts['--address'] != '127.0.0.1' or opts['--site-url']:
+    if opts['PORT'] or opts['--address'] or opts['--site-url']:
         if opts['PORT']:
             environment.port = int(opts['PORT'])
-        if opts['--address'] != '127.0.0.1':
+        if opts['--address']:
             environment.address = opts['--address']
         if opts['--site-url']:
             site_url = opts['--site-url']
@@ -119,7 +119,6 @@ Default: '.'
 
     environment.start_ckan(
         production=opts['--production'],
-        address=opts['--address'],
         paster_reload=not opts['--no-watch'],
         log_syslog=opts['--syslog'],)
     write('Starting web server at {0} ...'.format(environment.web_address()))
