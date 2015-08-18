@@ -286,6 +286,9 @@ Default: '.'
         environment.install_postgis_sql()
     if opts['--add-redis']:
         # Let the user know if they are trying to add it and it is already there
+        print ('Adding redis extra container... Please note that you will have '
+            'to reload your environment for these changes to take effect ("datacats reload {}")'
+            .format(environment.name))
         environment.add_extra_container('redis', error_on_exists=True)
     if opts['--admin-password']:
         environment.create_admin_set_password(confirm_password())
