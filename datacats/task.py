@@ -18,6 +18,7 @@ import shutil
 
 from datacats import docker, validate, migrate
 from datacats.error import DatacatsError
+from datacats.cli.pull import retrying_pull_image
 
 
 DEFAULT_REMOTE_SERVER_TARGET = 'datacats@command.datacats.com'
@@ -33,6 +34,13 @@ def list_sites(datadir):
         return []
 
 
+def get_format_version(datadir):
+    if path.exists(datadir + '/.version'):
+        return open(datadir + '/.version').read()
+    else:
+        return 1
+
+
 def save_new_site(site_name, sitedir, srcdir, port, address, site_url,
         passwords):
     """
@@ -43,9 +51,11 @@ def save_new_site(site_name, sitedir, srcdir, port, address, site_url,
 
     section_name = 'site_' + site_name
 
-    cp.add_section(section_name)
+    if not cp.has_section(section_name):
+        cp.add_section(section_name)
     cp.set(section_name, 'port', str(port))
-    cp.set(section_name, 'address', address or '127.0.0.1')
+    if address:
+        cp.set(section_name, 'address', address)
 
     if site_url:
         cp.set(section_name, 'site_url', site_url)
@@ -75,12 +85,16 @@ def save_new_environment(name, datadir, srcdir, ckan_version,
 
     cp = ConfigParser.SafeConfigParser()
 
-    cp.add_section('datacats')
+    cp.read(srcdir + '/.datacats-environment')
+
+    if not cp.has_section('datacats'):
+        cp.add_section('datacats')
     cp.set('datacats', 'name', name)
     cp.set('datacats', 'ckan_version', ckan_version)
 
     if deploy_target:
-        cp.add_section('deploy')
+        if not cp.has_section('deploy'):
+            cp.add_section('deploy')
         cp.set('deploy', 'target', deploy_target)
 
     if always_prod:
@@ -156,13 +170,15 @@ def find_environment_dirs(environment_name=None, data_only=False):
     return srcdir, extension_dir, None
 
 
-def load_environment(srcdir, datadir=None):
+def load_environment(srcdir, datadir=None, allow_old=False):
     """
     Load configuration values for an environment
 
     :param srcdir: environment source directory
     :param datadir: environment data direcory, if None will be discovered
                     from srcdir
+    :param allow_old: Don't throw an exception if this is an old site
+                      This is only valid for sites that you are purging.
     if datadir is None it will be discovered from srcdir
 
     Returns (datadir, name, ckan_version, always_prod, deploy_target,
@@ -183,7 +199,7 @@ def load_environment(srcdir, datadir=None):
         datadir = path.expanduser('~/.datacats/' + name)
         # FIXME: check if datadir is sane, project-dir points back to srcdir
 
-    if migrate.needs_format_conversion(datadir):
+    if migrate.needs_format_conversion(datadir) and not allow_old:
         raise DatacatsError('This environment uses an old format. You must'
                             ' migrate to the new format. To do so, use the'
                             ' "datacats migrate" command.')
@@ -206,6 +222,11 @@ def load_environment(srcdir, datadir=None):
     except ConfigParser.NoOptionError:
         always_prod = False
 
+    try:
+        extra_containers = cp.get('datacats', 'extra_containers').split(' ')
+    except ConfigParser.NoOptionError:
+        extra_containers = ()
+
     # if remote_server's custom ssh connection
     # address is defined,
     # we overwrite the default datacats.com one
@@ -223,7 +244,7 @@ def load_environment(srcdir, datadir=None):
         remote_server_key = None
 
     return (datadir, name, ckan_version, always_prod, deploy_target,
-        remote_server_key)
+        remote_server_key, extra_containers)
 
 
 def load_site(srcdir, datadir, site_name=None):
@@ -271,7 +292,10 @@ def load_site(srcdir, datadir, site_name=None):
     return port, address, site_url, passwords
 
 
-def new_environment_check(srcpath, site_name):
+SUPPORTED_PRELOADS = ['2.3', '2.4', 'latest']
+
+
+def new_environment_check(srcpath, site_name, ckan_version):
     """
     Check if a new environment or site can be created at the given path.
 
@@ -298,6 +322,19 @@ def new_environment_check(srcpath, site_name):
             srcdir = pd.read()
     else:
         srcdir = workdir + '/' + name
+
+    if ckan_version not in SUPPORTED_PRELOADS:
+        raise DatacatsError('''Datacats does not currently support CKAN version {}.
+Versions that are currently supported are: {}'''.format(ckan_version,
+                                                        ', '.join(SUPPORTED_PRELOADS)))
+
+    preload_name = str(ckan_version)
+
+    # Get all the versions from the tags
+    downloaded_versions = [tag for tag in docker.get_tags('datacats/ckan')]
+
+    if ckan_version not in downloaded_versions:
+        retrying_pull_image('datacats/ckan:{}'.format(preload_name))
 
     if path.isdir(sitedir):
         raise DatacatsError('Site data directory {0} already exists'.format(
@@ -434,11 +471,16 @@ def create_source(srcdir, preload_image, datapusher=False):
             )
 
 
+# Maps container extra names to actual names
+EXTRA_IMAGE_MAPPING = {'redis': 'redis'}
+
+
 def start_supporting_containers(sitedir, srcdir, passwords,
-        get_container_name):
+        get_container_name, extra_containers, log_syslog=False):
     """
     Start all supporting containers (containers required for CKAN to
-    operate) if they aren't already running.
+    operate) if they aren't already running, along with some extra
+    containers specified by the user
     """
     if docker.is_boot2docker():
         docker.data_only_container(get_container_name('pgdata'),
@@ -449,10 +491,12 @@ def start_supporting_containers(sitedir, srcdir, passwords,
         rw = {sitedir + '/postgres': '/var/lib/postgresql/data'}
         volumes_from = None
 
-    running = containers_running(get_container_name)
+    running = set(containers_running(get_container_name))
 
-    if 'postgres' not in running or 'solr' not in running:
-        stop_supporting_containers(get_container_name)
+    needed = set(extra_containers).union({'postgres', 'solr'})
+
+    if not needed.issubset(running):
+        stop_supporting_containers(get_container_name, extra_containers)
 
         # users are created when data dir is blank so we must pass
         # all the user passwords as environment vars
@@ -462,21 +506,39 @@ def start_supporting_containers(sitedir, srcdir, passwords,
             image='datacats/postgres',
             environment=passwords,
             rw=rw,
-            volumes_from=volumes_from)
+            volumes_from=volumes_from,
+            log_syslog=log_syslog)
 
         docker.run_container(
             name=get_container_name('solr'),
             image='datacats/solr',
             rw={sitedir + '/solr': '/var/lib/solr'},
-            ro={srcdir + '/schema.xml': '/etc/solr/conf/schema.xml'})
+            ro={srcdir + '/schema.xml': '/etc/solr/conf/schema.xml'},
+            log_syslog=log_syslog)
+
+        for container in extra_containers:
+            # We don't know a whole lot about the extra containers so we're just gonna have to
+            # mount /project and /datadir r/o even if they're not needed for ease of
+            # implementation.
+            docker.run_container(
+                name=get_container_name(container),
+                image=EXTRA_IMAGE_MAPPING[container],
+                ro={
+                    sitedir: '/datadir',
+                    srcdir: '/project'
+                },
+                log_syslog=log_syslog
+            )
 
 
-def stop_supporting_containers(get_container_name):
+def stop_supporting_containers(get_container_name, extra_containers):
     """
-    Stop postgres and solr containers
+    Stop postgres and solr containers, along with any specified extra containers
     """
     docker.remove_container(get_container_name('postgres'))
     docker.remove_container(get_container_name('solr'))
+    for container in extra_containers:
+        docker.remove_container(get_container_name(container))
 
 
 def containers_running(get_container_name):
@@ -484,7 +546,7 @@ def containers_running(get_container_name):
     Return a list of containers tracked by this environment that are running
     """
     running = []
-    for n in ['web', 'postgres', 'solr', 'datapusher']:
+    for n in ['web', 'postgres', 'solr', 'datapusher', 'redis']:
         info = docker.inspect_container(get_container_name(n))
         if info and not info['State']['Running']:
             running.append(n + '(halted)')

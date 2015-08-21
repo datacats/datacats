@@ -6,6 +6,7 @@
 
 from __future__ import absolute_import
 
+from datacats.scripts import get_script_path
 from os import environ, devnull
 from requests.packages.urllib3.exceptions import InsecureRequestWarning, InsecurePlatformWarning
 import json
@@ -28,7 +29,6 @@ from requests import ConnectionError
 
 from datacats.error import (DatacatsError,
         WebCommandError, PortAllocatedError)
-from datacats.scripts import KNOWN_HOSTS, SSH_CONFIG, CHECK_CONNECTIVITY
 
 MINIMUM_API_VERSION = '1.16'
 
@@ -212,12 +212,12 @@ def remote_server_command(command, environment, user_profile, **kwargs):
         temp.seek(0)
         known_hosts = temp.name
     else:
-        known_hosts = KNOWN_HOSTS
+        known_hosts = get_script_path('known_hosts')
 
     binds = {
         user_profile.profiledir + '/id_rsa': '/root/.ssh/id_rsa',
         known_hosts: '/root/.ssh/known_hosts',
-        SSH_CONFIG: '/etc/ssh/ssh_config'
+        get_script_path('ssh_config'): '/etc/ssh/ssh_config'
     }
 
     if kwargs.get("include_project_dir", None):
@@ -238,16 +238,20 @@ def run_container(name, image, command=None, environment=None,
     """
     Wrapper for docker create_container, start calls
 
+    :param log_syslog: bool flag to redirect container's logs to host's syslog
+
     :returns: container info dict or None if container couldn't be created
 
     Raises PortAllocatedError if container couldn't start on the
     requested port.
     """
     binds = ro_rw_to_binds(ro, rw)
-
-    host_config = create_host_config(binds=binds,
-                                     log_config=LogConfig(
-                                         type=('syslog' if log_syslog else 'json-file')))
+    log_config = LogConfig(type=LogConfig.types.JSON)
+    if log_syslog:
+        log_config = LogConfig(
+            type=LogConfig.types.SYSLOG,
+            config={'syslog-tag': name})
+    host_config = create_host_config(binds=binds, log_config=log_config)
 
     c = _get_docker().create_container(
         name=name,
@@ -363,7 +367,9 @@ def collect_logs(name):
 
 def check_connectivity():
     c = run_container(None, 'datacats/web', '/project/check_connectivity.sh',
-                      ro={CHECK_CONNECTIVITY: '/project/check_connectivity.sh'}, detach=False)
+                      ro={get_script_path('check_connectivity.sh'):
+                          '/project/check_connectivity.sh'},
+                      detach=False)
     return collect_logs(c['Id'])
 
 
@@ -395,6 +401,10 @@ def data_only_container(name, volumes):
 
 def remove_image(image, force=False, noprune=False):
     _get_docker().remove_image(image, force=force, noprune=noprune)
+
+
+def get_tags(image):
+    return [i['RepoTags'][0].split(':')[1] for i in _get_docker().images(image)]
 
 
 def require_images():

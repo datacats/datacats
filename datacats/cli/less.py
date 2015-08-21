@@ -4,9 +4,7 @@
 # the terms of the GNU Affero General Public License version 3.0.
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
-from datacats.docker import image_exists
-
-from datacats.cli.pull import pull_image
+from datacats.cli.util import require_extra_image
 
 
 LESSC_IMAGE = 'datacats/lessc'
@@ -22,8 +20,7 @@ Usage:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    if not image_exists(LESSC_IMAGE):
-        pull_image(LESSC_IMAGE)
+    require_extra_image(LESSC_IMAGE)
 
     print 'Converting .less files to .css...'
     for log in environment.compile_less():

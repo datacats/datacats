@@ -12,14 +12,21 @@ from datacats.error import DatacatsError
 
 IMAGES = [
     'datacats/web',
-    'datacats/web:preload-2.3',
+    'datacats/ckan:2.3',
     'datacats/postgres',
     'datacats/solr'
     ]
 
-DEVEL_IMAGES = [
+EXTRA_IMAGES = [
     'datacats/lessc',
+    'datacats/ckan:latest',
+    'datacats/ckan:2.4'
     ]
+
+
+def write(line):
+    sys.stdout.write(line)
+    sys.stdout.flush()
 
 
 def pull(opts):
@@ -35,8 +42,39 @@ Options:
                      sure you have all the images you need if
                      you are going offline.
 """
-    for i in IMAGES + (DEVEL_IMAGES if opts['--all'] else []):
-        pull_image(i)
+    for i in IMAGES + (EXTRA_IMAGES if opts['--all'] else []):
+        retrying_pull_image(i)
+
+
+def retrying_pull_image(image_name):
+    _retry_func(pull_image, image_name, 5,
+                lambda img, num: write("Pulling image {} failed. Retrying.".format(image_name)),
+                "Failed to pull image {}.".format(image_name))
+
+
+def _retry_func(func, param, num, retry_notif, error_msg):
+    """
+    A function which retries a given function num times and calls retry_notif each
+    time the function is retried.
+    :param func: The function to retry num times.
+    :param num: The number of times to try before giving up.
+    :param retry_notif: Will be called with the same parameter as func if we have to retry the
+                        function. Will also receive the number of retries so far as a second
+                        parameter.
+    :param: error_msg: The message
+
+    Throws DatacatsError if we run out of retries. Returns otherwise.
+    """
+    for retry_num in range(num):
+        if retry_num:
+            retry_notif(param, retry_num)
+        try:
+            func(param)
+            return
+        except DatacatsError:
+            pass
+
+    raise DatacatsError(error_msg)
 
 
 def pull_image(image_name):
