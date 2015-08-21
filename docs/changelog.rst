@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+1.1.0
+-----
+
+2015-08-21
+
+- create: CKAN 2.4, 2.3 and latest preloaded environments are now available
+  with the --ckan option
+- tweak: --add-redis to enable new experimental redis container support
+  for extensions that use redis
+- create, init, start: new --site-url option to apply a custom site_url
+- pull: automatically retry downloads when they fail
+- purge: allow purging old datadirs without migrating them first
+- reload: fix for saved --addresses values being reset
+- install: reload all running sites after reinstalling packages
+
 1.0.3
 -----
 
