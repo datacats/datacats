@@ -410,7 +410,7 @@ class Environment(object):
                              and not self.site_url)
         command = ['/scripts/web.sh', str(production), str(override_site_url), str(paster_reload)]
 
-        if address == '127.0.0.1' and is_boot2docker():
+        if address != '127.0.0.1' and is_boot2docker():
             raise DatacatsError('Cannot specify address on boot2docker.')
 
         # XXX nasty hack, remove this once we have a lessc command
