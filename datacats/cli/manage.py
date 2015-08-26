@@ -10,6 +10,7 @@ import webbrowser
 import sys
 
 from datacats.error import DatacatsError
+from datacats.docker import is_boot2docker
 from datacats.cli.util import require_extra_image
 from datacats.task import EXTRA_IMAGE_MAPPING
 from datacats.cli.util import confirm_password
@@ -93,6 +94,8 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+    if opts['--address'] and is_boot2docker():
+        raise DatacatsError('Cannot specify address on boot2docker.')
     environment.require_data()
     environment.stop_ckan()
     if opts['PORT'] or opts['--address'] or opts['--site-url']:
