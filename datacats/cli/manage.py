@@ -94,7 +94,7 @@ Options:
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
-    if opts['--address'] and not is_boot2docker():
+    if opts['--address'] and is_boot2docker():
         raise DatacatsError('Cannot specify address on boot2docker.')
     environment.require_data()
     environment.stop_ckan()

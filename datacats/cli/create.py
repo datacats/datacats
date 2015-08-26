@@ -41,7 +41,7 @@ Options:
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
 """
-    if opts['--address'] and not is_boot2docker():
+    if opts['--address'] and is_boot2docker():
         raise DatacatsError('Cannot specify address on boot2docker.')
     return create_environment(
         environment_dir=opts['ENVIRONMENT_DIR'],
@@ -159,7 +159,7 @@ Options:
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
-    if opts['--address'] and not is_boot2docker():
+    if opts['--address'] and is_boot2docker():
         raise DatacatsError('Cannot specify address on boot2docker.')
     environment_dir = opts['ENVIRONMENT_DIR']
     port = opts['PORT']
