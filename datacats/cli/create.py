@@ -10,6 +10,7 @@ from os.path import abspath
 from datacats.environment import Environment
 from datacats.cli.install import install_all
 from datacats.error import DatacatsError
+from datacats.docker import is_boot2docker
 
 from datacats.cli.util import y_or_n_prompt, confirm_password
 
@@ -40,6 +41,8 @@ Options:
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
 """
+    if opts['--address'] and not is_boot2docker():
+        raise DatacatsError('Cannot specify address on boot2docker.')
     return create_environment(
         environment_dir=opts['ENVIRONMENT_DIR'],
         port=opts['PORT'],
@@ -156,6 +159,8 @@ Options:
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
+    if opts['--address'] and not is_boot2docker():
+        raise DatacatsError('Cannot specify address on boot2docker.')
     environment_dir = opts['ENVIRONMENT_DIR']
     port = opts['PORT']
     address = opts['--address']

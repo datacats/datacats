@@ -49,7 +49,7 @@ class Environment(object):
         # This is the site that all commands will operate on.
         self.site_name = site_name
         self.port = int(port if port else self._choose_port())
-        self.address = address
+        self.address = address if not is_boot2docker() else None
         self.deploy_target = deploy_target
         self.remote_server_key = remote_server_key
         self.site_url = site_url
@@ -409,9 +409,6 @@ class Environment(object):
                              and not is_boot2docker()
                              and not self.site_url)
         command = ['/scripts/web.sh', str(production), str(override_site_url), str(paster_reload)]
-
-        if address != '127.0.0.1' and is_boot2docker():
-            raise DatacatsError('Cannot specify address on boot2docker.')
 
         # XXX nasty hack, remove this once we have a lessc command
         # for users (not just for building our preload image)
