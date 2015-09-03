@@ -10,6 +10,7 @@ from os.path import abspath
 from datacats.environment import Environment
 from datacats.cli.install import install_all
 from datacats.error import DatacatsError
+from datacats.docker import is_boot2docker
 
 from datacats.cli.util import y_or_n_prompt, confirm_password
 
@@ -27,7 +28,7 @@ Usage:
                   [--no-datapusher] [--site-url SITE_URL] ENVIRONMENT_DIR [PORT]
 
 Options:
-  --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
+  --address=IP            Address to listen on (Linux-only)
   --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION [default: 2.3]
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
@@ -40,6 +41,8 @@ Options:
 ENVIRONMENT_DIR is a path for the new environment directory. The last
 part of this path will be used as the environment name.
 """
+    if opts['--address'] and is_boot2docker():
+        raise DatacatsError('Cannot specify address on boot2docker.')
     return create_environment(
         environment_dir=opts['ENVIRONMENT_DIR'],
         port=opts['PORT'],
@@ -94,7 +97,7 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
         if not quiet:
             write('\n')
 
-        return finish_init(environment, start_web, create_sysadmin, address,
+        return finish_init(environment, start_web, create_sysadmin,
                            log_syslog=log_syslog, site_url=site_url)
     except:
         # Make sure that it doesn't get printed right after the dots
@@ -132,7 +135,7 @@ Options:
         '--site': opts['--site'],
         'PORT': saved_port,
         '--syslog': None,
-        '--address': '127.0.0.1',
+        '--address': None,
         '--image-only': False,
         '--no-sysadmin': opts['--no-sysadmin'],
         '--site-url': None
@@ -147,7 +150,7 @@ Usage:
                 [--site-url SITE_URL] [ENVIRONMENT_DIR [PORT]]
 
 Options:
-  --address=IP            Address to listen on (Linux-only) [default: 127.0.0.1]
+  --address=IP            Address to listen on (Linux-only)
   -i --image-only         Create the environment but don't start containers
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME          Pick a site to initialize [default: primary]
@@ -156,6 +159,8 @@ Options:
 
 ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 """
+    if opts['--address'] and is_boot2docker():
+        raise DatacatsError('Cannot specify address on boot2docker.')
     environment_dir = opts['ENVIRONMENT_DIR']
     port = opts['PORT']
     address = opts['--address']
@@ -168,7 +173,8 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     log_syslog = opts['--syslog']
 
     environment = Environment.load(environment_dir, site_name)
-    environment.address = address
+    if address:
+        environment.address = address
     if port:
         environment.port = int(port)
     if site_url:
@@ -206,12 +212,12 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
             print
         raise
 
-    return finish_init(environment, start_web, create_sysadmin, address,
+    return finish_init(environment, start_web, create_sysadmin,
                        log_syslog=log_syslog, do_install=not no_install,
                        quiet=quiet, site_url=site_url)
 
 
-def finish_init(environment, start_web, create_sysadmin, address, log_syslog=False,
+def finish_init(environment, start_web, create_sysadmin, log_syslog=False,
                 do_install=True, quiet=False, site_url=None):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
@@ -235,7 +241,7 @@ def finish_init(environment, start_web, create_sysadmin, address, log_syslog=Fal
             raise DatacatsError('Could not parse site_url: {}'.format(e))
 
     if start_web:
-        environment.start_ckan(address=address, log_syslog=log_syslog)
+        environment.start_ckan(log_syslog=log_syslog)
         if not quiet:
             write('Starting web server at {0} ...\n'.format(
                 environment.web_address()))
