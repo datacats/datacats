@@ -10,6 +10,7 @@ import webbrowser
 import sys
 
 from datacats.error import DatacatsError
+from datacats.docker import is_boot2docker
 from datacats.cli.util import require_extra_image
 from datacats.task import EXTRA_IMAGE_MAPPING
 from datacats.cli.util import confirm_password
@@ -48,7 +49,7 @@ Usage:
                  [-i] [--address=IP] [ENVIRONMENT]
 
 Options:
-  --address=IP          Address to listen on (Linux-only) [default: 127.0.0.1]
+  --address=IP          Address to listen on (Linux-only)
   -b --background       Don't wait for response from web server
   --no-watch            Do not automatically reload templates and .py files on change
   -i --interactive      Calls out to docker via the command line, allowing
@@ -82,7 +83,7 @@ Usage:
                             [-i] [ENVIRONMENT]
 
 Options:
-  --address=IP          Address to listen on (Linux-only) [default: 127.0.0.1]
+  --address=IP          Address to listen on (Linux-only)
   -i --interactive      Calls out to docker via the command line, allowing
                         for interactivity with the web image.
   --site-url=SITE_URL   The site_url to use in API responses. Can use Python template syntax
@@ -100,12 +101,14 @@ Default: '.'
     if opts['--interactive']:
         # We can't wait for the server if we're tty'd
         opts['--background'] = True
+    if opts['--address'] and is_boot2docker():
+        raise DatacatsError('Cannot specify address on boot2docker.')
     environment.require_data()
     environment.stop_ckan()
-    if opts['PORT'] or opts['--address'] != '127.0.0.1' or opts['--site-url']:
+    if opts['PORT'] or opts['--address'] or opts['--site-url']:
         if opts['PORT']:
             environment.port = int(opts['PORT'])
-        if opts['--address'] != '127.0.0.1':
+        if opts['--address']:
             environment.address = opts['--address']
         if opts['--site-url']:
             site_url = opts['--site-url']
@@ -126,7 +129,6 @@ Default: '.'
 
     environment.start_ckan(
         production=opts['--production'],
-        address=opts['--address'],
         paster_reload=not opts['--no-watch'],
         log_syslog=opts['--syslog'],
         interactive=opts['--interactive'])
@@ -295,6 +297,9 @@ Default: '.'
         environment.install_postgis_sql()
     if opts['--add-redis']:
         # Let the user know if they are trying to add it and it is already there
+        print ('Adding redis extra container... Please note that you will have '
+            'to reload your environment for these changes to take effect ("datacats reload {}")'
+            .format(environment.name))
         environment.add_extra_container('redis', error_on_exists=True)
     if opts['--admin-password']:
         environment.create_admin_set_password(confirm_password())
