@@ -552,8 +552,8 @@ class Environment(object):
                 switches += ['--volume={}:{}'.format(vol, rw[vol]) for vol in rw]
                 links = ['--link={}:{}'.format(link, links[link]) for link in links]
                 args = ['docker', 'run', '-it', '--name', self._get_container_name('web'),
-                        '-p', '5000:{}'.format(port) if is_boot2docker()
-                        else '{}:5000:{}'.format(address, port)] + \
+                        '-p', '{}:5000'.format(port) if is_boot2docker()
+                        else '{}:{}:5000'.format(address, port)] + \
                     switches + links + ['datacats/web', ] + command
                 subprocess.call(args)
         except APIError as e:
