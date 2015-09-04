@@ -6,6 +6,8 @@
 
 from __future__ import absolute_import
 
+import sys
+
 from datacats.scripts import get_script_path
 from os import environ, devnull
 import json
@@ -49,8 +51,7 @@ except TLSParameterError:
     exit(1)
 
 
-def _get_docker():
-    global _docker
+def _boot2docker_check_connectivity():
     # HACK: We determine from commands if we're boot2docker
     # Needed cause this method is called from is_boot2docker...
     with open(devnull, 'w') as devnull_f:
@@ -61,6 +62,13 @@ def _get_docker():
             if status == 'Stopped':
                 raise DatacatsError('Please start your docker-machine '
                                     'VM with "docker-machine start dev"')
+
+            # XXX HACK: This exists because of
+            #           http://github.com/datacats/datacats/issues/63,
+            # as a temporary fix.
+            if 'tls' in _docker_kwargs:
+                # It will print out messages to the user otherwise.
+                _docker_kwargs['tls'].assert_hostname = False
         except OSError:
             # Docker machine isn't installed.
             try:
@@ -74,6 +82,12 @@ def _get_docker():
                                         'can migrate to the newer docker-machine.')
                 print ('Please note that boot2docker support in datacats is '
                        'deprecated in favour of docker-machine')
+               # XXX HACK: This exists because of
+               #           http://github.com/datacats/datacats/issues/63,
+               # as a temporary fix.
+               if 'tls' in _docker_kwargs:
+                   # It will print out messages to the user otherwise.
+                   _docker_kwargs['tls'].verify = False
             except OSError:
                 # We're probably on Linux or a new Mac.
                 pass
@@ -87,13 +101,14 @@ def _get_docker():
         except subprocess.CalledProcessError:
             raise DatacatsError('Please create a docker-machine with '
                                 '"docker-machine start dev"')
+
+
+def _get_docker():
+    global _docker
+
     if not _docker:
-        # XXX HACK: This exists because of
-        #           http://github.com/datacats/datacats/issues/63,
-        # as a temporary fix.
-        if 'tls' in _docker_kwargs:
-            # It will print out messages to the user otherwise.
-            _docker_kwargs['tls'].assert_hostname = False
+        if sys.platform.startswith('darwin'):
+            _boot2docker_check_connectivity()
 
         # Create the Docker client
         version_client = Client(version=MINIMUM_API_VERSION, **_docker_kwargs)
