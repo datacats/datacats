@@ -82,12 +82,12 @@ def _boot2docker_check_connectivity():
                                         'can migrate to the newer docker-machine.')
                 print ('Please note that boot2docker support in datacats is '
                        'deprecated in favour of docker-machine')
-               # XXX HACK: This exists because of
-               #           http://github.com/datacats/datacats/issues/63,
-               # as a temporary fix.
-               if 'tls' in _docker_kwargs:
-                   # It will print out messages to the user otherwise.
-                   _docker_kwargs['tls'].verify = False
+                # XXX HACK: This exists because of
+                #           http://github.com/datacats/datacats/issues/63,
+                # as a temporary fix.
+                if 'tls' in _docker_kwargs:
+                    # It will print out messages to the user otherwise.
+                    _docker_kwargs['tls'].verify = False
             except OSError:
                 # We're probably on Linux or a new Mac.
                 pass
