@@ -28,7 +28,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -q -y install \
         libldap2-dev \
         libsasl2-dev \
         libssl-dev \
-        gdal-bin
+        gdal-bin \
+        postgresql-client
 
 #Configure webserver
 ADD apache.wsgi /etc/ckan/apache.wsgi
