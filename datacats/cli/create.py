@@ -64,6 +64,9 @@ part of this path will be used as the environment name.
 def create_environment(environment_dir, port, ckan_version, create_skin,
         site_name, start_web, create_sysadmin, address, log_syslog=False,
         datapusher=True, quiet=False, site_url=None, init_db=True):
+    if not init_db:
+        print 'Since the database will not be initialized, we will not copy datapusher.'
+        datapusher = False
     environment = Environment.new(environment_dir, ckan_version, site_name,
                                   address=address, port=port)
 

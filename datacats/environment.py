@@ -19,7 +19,8 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError)
 from datacats import task, scripts
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker,
-                             docker_host, container_logs, APIError)
+                             docker_host, container_logs, APIError,
+                             container_running)
 from datacats.template import ckan_extension_template
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.password import generate_password
@@ -55,6 +56,7 @@ class Environment(object):
         self.site_url = site_url
         self.always_prod = always_prod
         self.sites = None
+        # Used by the no-init-db functionality
         if extra_containers:
             self.extra_containers = extra_containers
         else:
@@ -218,7 +220,6 @@ class Environment(object):
             prof.write('source /usr/lib/ckan/bin/activate\n')
 
     def _preload_image(self):
-        # pylint: disable=no-self-use
         """
         Return the preloaded ckan src and venv image name
         """
@@ -739,7 +740,8 @@ class Environment(object):
                 '/run/test.ini:/project/ckan/test-core.ini:ro'] +
             link_params
             + (['--link', self._get_container_name('datapusher') + ':datapusher']
-               if self.needs_datapusher() else []) +
+               if self.needs_datapusher() and
+               container_running(self._get_container_name('datapusher')) else []) +
             ['--hostname', self.name,
             'datacats/web', '/scripts/shell.sh'] + command)
 

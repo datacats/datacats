@@ -345,6 +345,10 @@ def remove_container(name, force=False):
         return False
 
 
+def container_running(name):
+    return inspect_container(name)
+
+
 def inspect_container(name):
     """
     Wrapper for docker inspect_container
