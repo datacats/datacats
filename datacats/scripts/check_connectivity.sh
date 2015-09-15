@@ -1,5 +1,5 @@
 #!/bin/bash
-wget -q --spider https://pypi.python.org/simple || {
+wget -q --spider -T 5 https://pypi.python.org/simple || {
 echo $"Couldn't connect to PyPi. Is your DNS configured correctly?";
 echo;
 echo "If you're using boot2docker, try restarting the VM:";

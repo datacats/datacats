@@ -30,6 +30,8 @@ datacats init -n site1
 datacats migrate -y -r 1 site1
 datacats migrate -y -r 2 site1
 datacats init site1 -s two -n
+datacats install --clean site1
+datacats shell site1 cat /usr/lib/ckan/bin/ckanapi
 datacats start -s two site1
 [ -e ~/.datacats/site1/sites/primary/postgres ]
 [ $(datacats --version | wc -l) == 1 ]
