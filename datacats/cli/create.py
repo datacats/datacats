@@ -8,7 +8,7 @@ import sys
 from os.path import abspath
 
 from datacats.environment import Environment
-from datacats.cli.install import install_all
+from datacats.cli.install import install_all, clean_pyc
 from datacats.error import DatacatsError
 from datacats.docker import is_boot2docker
 
@@ -127,6 +127,7 @@ Options:
     print 'Resetting...'
     environment.stop_supporting_containers()
     environment.stop_ckan()
+    clean_pyc(environment)
     # Save the port.
     saved_port = environment.port
     environment.purge_data([opts['--site']], never_delete=True)

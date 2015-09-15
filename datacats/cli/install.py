@@ -5,8 +5,8 @@
 # See LICENSE.txt or http://www.fsf.org/licensing/licenses/agpl-3.0.html
 
 import sys
-from os import listdir
-from os.path import isdir, exists
+from os import listdir, walk, remove
+from os.path import isdir, exists, join
 from datacats.docker import container_logs
 
 from clint.textui import colored
@@ -49,10 +49,23 @@ Default: '.'
                 })
 
 
+def clean_pyc(environment, quiet=False):
+    if not quiet:
+        print 'Cleaning environment {} of pyc files...'.format(environment.name)
+
+    for root, _, files in walk(environment.target):
+        for f in files:
+            if f.endswith('.pyc'):
+                remove(join(root, f))
+
+
 def install_all(environment, clean, verbose=False, quiet=False):
     logs = check_connectivity()
     if logs.strip():
         raise DatacatsError(logs)
+
+    if clean:
+        clean_pyc(environment, quiet)
 
     srcdirs = set()
     reqdirs = set()
