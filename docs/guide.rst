@@ -64,9 +64,9 @@ In Ubuntu, version Ubuntu Saucy 13.10 or higher is sufficient.
 
 OSX
 ###
-You will need `boot2docker`_, the standard way to get Docker running on your Mac.
+You will need `docker-machine`_, the standard way to get Docker running on your Mac.
 
-.. _boot2docker: https://docs.docker.com/installation/mac/
+.. docker-machine: https://docs.docker.com/installation/mac/
 
 .. _`Install datacats command line tool`:
 
@@ -257,6 +257,31 @@ the extension directory and run the command from there: ::
 
     cd ckanext-archiver/
     datacats paster archiver clean
+
+Developing on CKAN using DataCats
+---------------------------------
+In this section, we will provide you with some tips on how to develop on CKAN
+itself using datacats.
+
+The first datacats feature that allows for easy development of CKAN is the ease
+of setting up a fully installed and ready-to-go debuggable instance of the master
+branch: ::
+
+    datacats create --ckan=master ckandev
+    cd ckandev/ckan
+    git pull
+    datacats reload
+
+You will now be able to edit the ckandev/ckan directory and see your changes
+instantly reflected in your CKAN instance (which you can open with the
+datacats open command).
+
+Another feature we provide to make development easier is an interactive shell
+function for our reload and create commands (this assumes the previous
+commands were run). The interactive option allows you to see the output
+directly from CKAN in your shell: ::
+
+    datacats reload --interactive ckandev
 
 Multisite
 ---------
