@@ -17,7 +17,7 @@ datacats create site2 -n --ckan $1
 #datacats tweak --add-redis site1
 datacats reload site1
 #[ "$(docker ps | grep datacats_redis_site1_primary | wc -l)" == 1 ]
-[ "$(cat ~/.datacats/site1/sites/primary/run/development.ini | egrep 127.0.0.1 | wc -l)" == 0 ]
+[ "$(cat ~/.datacats/site1/sites/primary/run/development.ini | egrep 127.0.0.1 | wc -l | xargs)" == 0 ]
 datacats purge -y site1
 [ "$(echo `datacats list`)" == "site2" ]
 datacats init site1 -n
