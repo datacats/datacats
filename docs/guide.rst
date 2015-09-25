@@ -122,6 +122,8 @@ Create a datacats environment. Open a shell and run: ::
 
     datacats create catstown
 
+.. image:: overview.png
+
 Once done, a datacats source directory is created for you called
 ``catstown``.
 You will be prompted to create an admin password for your site. You can
@@ -266,10 +268,12 @@ which can be applied to all commands that make sense to operate on a single
 site (currently all commands excluding ``migrate``, ``pull``, ``less``, and
 ``install``). By default, datacats will operate on a site named 'primary'.
 
-For example, to initialize a site with the name 'devel' under a pre-existing
-environment called 'testtown', you could run the following command: ::
+For example, to initialize a site with the name 'sandbox' under a pre-existing
+environment called 'catstown', you could run the following command: ::
 
-    datacats init -s devel testtown
+    datacats init -s sandbox catstown
+
+.. image:: overview-sites.png
 
 This would create all the necessary containers and folders for the site and
 begin running it on an appropriate (non-conflicting) port.
