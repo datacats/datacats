@@ -118,7 +118,7 @@ You will still need to download the necessary Docker images as described above.
 Getting Started
 ---------------
 
-Create a CKAN development environment. Open a shell and run: ::
+Create a datacats environment. Open a shell and run: ::
 
     datacats create catstown
 
@@ -133,9 +133,9 @@ To open that address in a web browser at any time, you can run: ::
 
 .. note::
 
-    All ``datacats`` commands work without having to specify the project to run
-    them on, as long as you are within a datacats environment directory or any sub-
-    directory. For the above command, we could as well have ran: ::
+    All ``datacats`` commands work without having to specify the environment
+    to run them on, as long as you are within a datacats source directory
+    or any sub-directory. For the above command, we could as well have ran: ::
 
         cd catstown/
         datacats open
@@ -164,8 +164,8 @@ deploying CKAN customize it in some way. Many forms of customization, such as
 ``ckanext-catstowntheme`` extension gives you a very basic skeleton which you
 can use to get started.
 
-The ``development.ini`` file holds all the configuration options for your CKAN
-environment. All of these options are described here_. Open this file and find a
+The ``development.ini`` file holds all the configuration options for CKAN.
+All of these options are described here_. Open this file and find a
 line that starts with ``ckan.plugins``. It will look something like this: ::
 
     ckan.plugins = datastore text_preview recline_preview catstown_theme
@@ -179,7 +179,7 @@ Extensions & Customization
 To see how this works, let us install another extension into our environment.
 A good one to use is pages_, which adds a simple CMS to CKAN so we can add
 custom content pages to our site. First, clone the pages source code into your
-environment. In the ``catstown/`` environment directory, run: ::
+source directory. In the ``catstown/`` source directory, run: ::
 
     git clone git@github.com:ckan/ckanext-pages.git
 
@@ -197,7 +197,7 @@ Next, install this extension into your environment by running: ::
 
     datacats install
 
-The install command will iterate through your environment directory and install
+The install command will iterate through your source directory and install
 all your extensions. After this is complete, we need to open the ``development.ini``
 file again and add the pages extension to our list of installed extensions: ::
 
@@ -264,8 +264,7 @@ single environment. This means that there can exist several discrete data
 catalogues based on the same CKAN source. This is done using the -s switch,
 which can be applied to all commands that make sense to operate on a single
 site (currently all commands excluding ``migrate``, ``pull``, ``less``, and
-``install``). By default, datacats will operate on a site named 'primary',
-to maintain sane defaults.
+``install``). By default, datacats will operate on a site named 'primary'.
 
 For example, to initialize a site with the name 'devel' under a pre-existing
 environment called 'testtown', you could run the following command: ::

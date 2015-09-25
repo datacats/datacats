@@ -7,9 +7,9 @@ Install Docker_. Then, in a shell, run:  ::
     datacats pull
     datacats create myckan
 
-This will create a new CKAN dev environment, with all the source code
-in the **myckan** directory. You can now start using it. To open your new
-environment in a browser, run: ::
+This will create a new datacats source directory **myckan** and start
+serving the site.
+You can now start using it. To open your new site in a browser, run: ::
 
     datacats open myckan
 
