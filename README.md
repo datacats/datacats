@@ -5,7 +5,7 @@
 
 
 datacats uses Docker to give you fully self-contained [CKAN](http://ckan.org) dev environments on
-any platform, along with a command to deploy that exact environment to the cloud.
+any platform, and easy deployment to any host.
 
 
 ## Install
@@ -94,9 +94,10 @@ Refresh your browser window to use the new features.
 
 ## Deploy your environment
 
-Deploy your customized CKAN site to the DataCats.com cloud service.
-```
-datacats deploy --create
-```
+To deploy your customized CKAN site copy your source directory to
+your target host with rsync then run:
 
-Follow the prompts and your site will be live in minutes.
+```
+datacats init --image-only
+datacats start --production --address=<IP-address>
+```
