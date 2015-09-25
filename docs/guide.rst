@@ -211,19 +211,13 @@ see a button in the top toolbar that will let you create custom content pages.
 
 Deploying
 ---------
-To deploy your brand new CKAN instance to the DataCats.com managed cloud, simply run: ::
+To deploy your datacats instance just rsync your source directory to the
+target and run: ::
 
-    datacats deploy --create
+    datacats init
 
-This will create a new deployment with all your settings and installed extensions,
-as well as the correct CKAN version.
-
-If you prefer to use your own server, you can still deploy CKAN using datacats.
-This is outside of the scope for this documentation, but the
-process is similar to following this guide, with some minor but important changes.
-You will want to make sure your CKAN is running a production web server,
-you will need to set up DNS and, optionally, emails, backups, logs and other
-miscellaneous items. If you plan to go this route, you should understand a bit
+You will need to set up DNS and, optionally, emails, backups, logs and other
+miscellaneous items. To understand a bit
 more about how datacats works under-the-hood. See :doc:`docker`
 
 Shell Access
