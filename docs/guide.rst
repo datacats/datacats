@@ -122,11 +122,12 @@ Create a CKAN development environment. Open a shell and run: ::
 
     datacats create catstown
 
-Once done, a CKAN source directory is created for you in the directory ``catstown``.
-You will be prompted to create an admin password for your instance. You can
-use this password to log into your CKAN site.A message will also appear in your
-prompt at the end of the create command, with the address of where your CKAN
-instance is running. To open that address easily at any time, you can always run: ::
+Once done, a datacats source directory is created for you called
+``catstown``.
+You will be prompted to create an admin password for your site. You can
+use this password to log into your CKAN site. The address of your CKAN
+site will be printed.
+To open that address in a web browser at any time, you can run: ::
 
     datacats open catstown
 
@@ -139,7 +140,7 @@ instance is running. To open that address easily at any time, you can always run
         cd catstown/
         datacats open
 
-Let's see what is inside our new environment directory. ``cd`` into the directory
+Let's see what is inside our new source directory. ``cd`` into the directory
 and take a look at the file structure. You should see something like this: ::
 
     catstown/
@@ -211,13 +212,17 @@ see a button in the top toolbar that will let you create custom content pages.
 
 Deploying
 ---------
-To deploy your datacats instance just rsync your source directory to the
-target and run: ::
+To deploy your datacats site just rsync your source directory to the
+target host, then in the target source directory run: ::
 
-    datacats init
+    datacats init --image-only
 
-You will need to set up DNS and, optionally, emails, backups, logs and other
-miscellaneous items. To understand a bit
+You can start your new site in production mode with: ::
+
+    datacats start --production --address=<IP-address>
+
+You will need to set up DNS and, emails, logs etc.
+To understand a bit
 more about how datacats works under-the-hood. See :doc:`docker`
 
 Shell Access
@@ -227,9 +232,9 @@ To run an interactive shell within your CKAN environment, run: ::
     datacats shell catstown
 
 Where ``catstown`` is your datacats environment name. The shell will immediately
-drop you inside your project directory, and it will activate the ``virtualenv``.
+drop you inside your source directory, and it will activate the ``virtualenv``.
 The shell is useful if you want to run admin ``paster`` tasks such as database
-migrations, or you simply want to poke around your CKAN instance.
+migrations, or you simply want to poke around your CKAN site.
 
 Paster Commands
 ---------------
