@@ -29,7 +29,6 @@ Usage:
   datacats stop [-r] [-s NAME] [ENVIRONMENT]
 
 Options:
-  -r --remote        Stop DataCats.com cloud instance
   -s --site=NAME    Specify a site to stop. [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
@@ -55,7 +54,6 @@ Options:
   -i --interactive      Calls out to docker via the command line, allowing
                         for interactivity with the web image.
   -p --production       Start with apache and debug=false
-  -r --remote           Start DataCats.com cloud instance
   -s --site=NAME        Specify a site to start [default: primary]
   --syslog              Log to the syslog
   --site-url SITE_URL   The site_url to use in API responses. Defaults to old setting or
@@ -91,7 +89,6 @@ Options:
   -b --background       Don't wait for response from web server
   --no-watch            Do not automatically reload templates and .py files on change
   -p --production       Reload with apache and debug=false
-  -r --remote           Reload DataCats.com cloud instance
   -s --site=NAME        Specify a site to reload [default: primary]
   --syslog              Log to the syslog
 
@@ -151,7 +148,6 @@ Usage:
 
 Options:
   -q --quiet         Echo only the web URL or nothing if not running
-  -r --remote        Information about DataCats.com cloud instance
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -218,7 +214,6 @@ Options:
   --datapusher       Show logs for datapusher instead of web logs
   --postgres         Show postgres database logs instead of web logs
   -f --follow        Follow logs instead of exiting immediately
-  -r --remote        Retrieve logs from DataCats.com cloud instance
   --solr             Show solr search logs instead of web logs
   -t --timestamps    Add timestamps to log lines
   -s --site=NAME     Specify a site for logs if needed [default: primary]
@@ -257,7 +252,6 @@ Usage:
   datacats open [-r] [-s NAME] [ENVIRONMENT]
 
 Options:
-  -r --remote        Open DataCats.com cloud instance address
   -s --site=NAME     Choose a site to open [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.

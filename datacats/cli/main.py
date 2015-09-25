@@ -13,7 +13,6 @@ Usage:
 
 The datacats commands available are:
   create      Create a new environment
-  deploy      Deploy environment to production DataCats.com cloud service
   info        Display information about environment and running containers
   init        Initialize a purged environment or copied environment directory
   install     Install or reinstall Python packages within this environment
@@ -151,7 +150,6 @@ def _parse_arguments(args):
 
     opts = docopt(command_fn.__doc__, args, version=__version__)
 
-    _option_not_yet_implemented(opts, '--remote')
     return command_fn, opts
 
 
@@ -213,13 +211,6 @@ def _subcommand_arguments(args):
         return command, args[:i] + ['--'] + args[i:]
 
     return command, args
-
-
-def _option_not_yet_implemented(opts, name):
-    if name not in opts or not opts[name]:
-        return
-    raise DatacatsError(
-        "\'{0}\' option is not implemented yet. \n".format(name))
 
 
 if __name__ == '__main__':

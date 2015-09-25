@@ -9,10 +9,6 @@ create
 ------
 .. program-output:: datacats help create
 
-deploy
-------
-.. program-output:: datacats help deploy
-
 info
 ----
 .. program-output:: datacats help info
