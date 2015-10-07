@@ -67,7 +67,6 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
         site_name, start_web, create_sysadmin, address, log_syslog=False,
         datapusher=True, quiet=False, site_url=None, interactive=False,
         init_db=True):
-    raw_input('Wait for debugger...')
 
     if not init_db:
         print 'Since the database will not be initialized, we will not copy datapusher.'

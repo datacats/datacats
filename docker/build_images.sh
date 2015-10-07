@@ -10,6 +10,9 @@ set -e
 
 HERE="$(cd "$(dirname "$(dirname "$0")")" && pwd)"
 
+docker rmi -f postgres:9.3 || true
+docker build -t postgres:9.3 -f postgres/Dockerfile-postgres postgres/ 
+
 docker build -t datacats/solr solr/
 docker build -t datacats/postgres postgres/
 docker build -t datacats/web web/
