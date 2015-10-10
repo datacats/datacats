@@ -542,6 +542,7 @@ class Environment(object):
                     log_syslog=log_syslog
                     )
             else:
+                # FIXME: share more code with interactive_shell
                 if is_boot2docker():
                     switches = ['--volumes-from',
                                 self._get_container_name('pgdata'), '--volumes-from',
