@@ -19,8 +19,7 @@ from ConfigParser import (SafeConfigParser, Error as ConfigParserError)
 from datacats import task, scripts
 from datacats.docker import (web_command, run_container, remove_container,
                              inspect_container, is_boot2docker,
-                             docker_host, container_logs, APIError,
-                             container_running)
+                             docker_host, container_logs, APIError)
 from datacats.template import ckan_extension_template
 from datacats.network import wait_for_service_available, ServiceTimeout
 from datacats.password import generate_password
@@ -743,6 +742,10 @@ class Environment(object):
             link_params.append('--link')
             link_params.append(link + ':' + links[link])
 
+        if 'datapusher' in self.containers_running():
+            link_params.append('--link')
+            link_params.append(self._get_container_name('datapusher') + ':datapusher')
+
         # FIXME: consider switching this to dockerpty
         # using subprocess for docker client's interactive session
         return subprocess.call([
@@ -758,10 +761,7 @@ class Environment(object):
             '-v', self.sitedir + '/run/run.ini:/project/development.ini:ro',
             '-v', self.sitedir +
                 '/run/test.ini:/project/ckan/test-core.ini:ro'] +
-            link_params
-            + (['--link', self._get_container_name('datapusher') + ':datapusher']
-               if self.needs_datapusher() and
-               container_running(self._get_container_name('datapusher')) else []) +
+            link_params +
             ['--hostname', self.name,
             'datacats/web', '/scripts/shell.sh'] + command)
 
