@@ -21,7 +21,8 @@ def install(environment, opts):
     """Install or reinstall Python packages within this environment
 
 Usage:
-  datacats install [-cq] [--address=IP] [ENVIRONMENT]
+  datacats install [-q] [--address=IP] [ENVIRONMENT [PACKAGE ...]]
+  datacats install -c [q] [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP          The address to bind to when reloading after install
@@ -32,7 +33,8 @@ ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
     environment.require_data()
-    install_all(environment, opts['--clean'], verbose=not opts['--quiet'])
+    install_all(environment, opts['--clean'], verbose=not opts['--quiet'],
+        packages=opts['PACKAGE'])
 
     for site in environment.sites:
         environment = Environment.load(environment.name, site)
@@ -60,7 +62,7 @@ def clean_pyc(environment, quiet=False):
                 remove(join(root, f))
 
 
-def install_all(environment, clean, verbose=False, quiet=False):
+def install_all(environment, clean, verbose=False, quiet=False, packages=None):
     logs = check_connectivity()
     if logs.strip():
         raise DatacatsError(logs)
@@ -76,13 +78,19 @@ def install_all(environment, clean, verbose=False, quiet=False):
             continue
         if not exists(fulld + '/setup.py'):
             continue
+        if packages and d not in packages:
+            continue
         srcdirs.add(d)
         if (exists(fulld + '/requirements.txt') or
                 exists(fulld + '/pip-requirements.txt')):
             reqdirs.add(d)
+
     try:
-        srcdirs.remove('ckan')
-        reqdirs.remove('ckan')
+        if not packages or 'ckan' in packages:
+            srcdirs.remove('ckan')
+            reqdirs.remove('ckan')
+            srcdirs = ['ckan'] + sorted(srcdirs)
+            reqdirs = ['ckan'] + sorted(reqdirs)
     except KeyError:
         raise DatacatsError('ckan not found in environment directory')
 
@@ -90,7 +98,7 @@ def install_all(environment, clean, verbose=False, quiet=False):
         environment.clean_virtualenv()
         environment.install_extra()
 
-    for s in ['ckan'] + sorted(srcdirs):
+    for s in srcdirs:
         if verbose:
             print colored.yellow('Installing ' + s + '\n')
         elif not quiet:
@@ -98,7 +106,7 @@ def install_all(environment, clean, verbose=False, quiet=False):
         environment.install_package_develop(s, sys.stdout if verbose and not quiet else None)
         if verbose and not quiet:
             print
-    for s in ['ckan'] + sorted(reqdirs):
+    for s in reqdirs:
         if verbose:
             print colored.yellow('Installing ' + s + ' requirements' + '\n')
         elif not quiet:
