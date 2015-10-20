@@ -53,8 +53,8 @@ except TLSParameterError:
 
 def _machine_check_connectivity():
     """
-    This method calls to docker-machine on the command line and 
-    makes sure that it is up and ready. 
+    This method calls to docker-machine on the command line and
+    makes sure that it is up and ready.
 
     Potential improvements to be made:
         - Support multiple machine names (run a `docker-machine ls` and then
