@@ -444,7 +444,7 @@ def create_virtualenv(srcdir, datadir, preload_image, get_container_name):
 
 def create_source(srcdir, preload_image, datapusher=False):
     """
-    Copy ckan source, datapusher source (optional), who.ini and schema.xml
+    Copy ckan source, datapusher source (optional), who.ini and schema.xml, development.ini
     from preload image into srcdir
     """
     try:
@@ -457,6 +457,10 @@ def create_source(srcdir, preload_image, datapusher=False):
                 command='/bin/cp -a /project/datapusher /project_target/datapusher',
                 rw={srcdir: '/project_target'},
                 image=preload_image)
+        docker.web_command(
+            command='/bin/cp -a /project/development.ini /project_target/development.ini',
+            rw={srcdir: '/project_target'},
+            image=preload_image)
         shutil.copy(
             srcdir + '/ckan/ckan/config/who.ini',
             srcdir)

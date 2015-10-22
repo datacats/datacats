@@ -5,9 +5,11 @@ MAINTAINER boxkite
 ENV CKAN_HOME /usr/lib/ckan
 ENV BRANCH master
 
-RUN virtualenv $CKAN_HOME && \
-    mkdir -p $CKAN_HOME /project /var/www/storage && \
-    chown -R www-data:www-data /var/www && \
+RUN virtualenv $CKAN_HOME && mkdir -p $CKAN_HOME /project /var/www/storage
+
+COPY development.ini /project/development.ini
+
+RUN chown -R www-data:www-data /var/www && \
     git clone --branch $BRANCH https://github.com/ckan/ckan /project/ckan && \
     git clone --branch stable --depth 1 https://github.com/ckan/datapusher /project/datapusher && \
     $CKAN_HOME/bin/pip install -r /project/ckan/requirements.txt && \

@@ -292,17 +292,6 @@ class Environment(object):
             command='/bin/chown -R www-data: /var/www/storage',
             rw={self.sitedir + '/files': '/var/www/storage'})
 
-    def create_ckan_ini(self):
-        """
-        Use make-config to generate an initial development.ini file
-        """
-        self.run_command(
-            command='/scripts/run_as_user.sh /usr/lib/ckan/bin/paster make-config'
-            ' ckan /project/development.ini',
-            rw_project=True,
-            ro={scripts.get_script_path('run_as_user.sh'): '/scripts/run_as_user.sh'},
-            )
-
     def update_ckan_ini(self, skin=True):
         """
         Use config-tool to update development.ini with our environment settings
@@ -312,19 +301,11 @@ class Environment(object):
         command = [
             '/usr/lib/ckan/bin/paster', '--plugin=ckan', 'config-tool',
             '/project/development.ini', '-e',
-            'sqlalchemy.url = postgresql://<hidden>',
-            'ckan.datastore.read_url = postgresql://<hidden>',
-            'ckan.datastore.write_url = postgresql://<hidden>',
-            'ckan.datapusher.url = http://datapusher:8800',
-            'solr_url = http://solr:8080/solr',
-            'ckan.storage_path = /var/www/storage',
             'ckan.plugins = datastore resource_proxy text_view ' +
             ('datapusher ' if exists(self.target + '/datapusher') else '')
             + 'recline_grid_view recline_graph_view'
             + (' {0}_theme'.format(self.name) if skin else ''),
             'ckan.site_title = ' + self.name,
-            'ckan.site_logo =',
-            'ckan.auth.create_user_via_web = false',
             ]
         self.run_command(command=command, rw_project=True)
 
@@ -449,17 +430,18 @@ class Environment(object):
                 continue
             break
 
-    def _create_run_ini(self, port, production, output='development.ini',
-                        source='development.ini', override_site_url=True):
+    def _create_run_ini(self, port, production, output=None,
+                        source='secrets.ini', override_site_url=True):
         """
         Create run/development.ini in datadir with debug and site_url overridden
         and with correct db passwords inserted
         """
         cp = SafeConfigParser()
-        try:
-            cp.read([self.target + '/' + source])
-        except ConfigParserError:
-            raise DatacatsError('Error reading development.ini')
+        if source:
+            try:
+                cp.read([self.target + '/' + source])
+            except ConfigParserError:
+                raise DatacatsError('Error reading development.ini')
 
         cp.set('DEFAULT', 'debug', 'false' if production else 'true')
 
@@ -525,7 +507,7 @@ class Environment(object):
                   **ro)
         rw = {
             self.sitedir + '/files': '/var/www/storage',
-            self.sitedir + '/run/development.ini': '/project/development.ini'
+            self.sitedir + '/run/secrets.ini': '/project/secrets.ini'
             }
         try:
             if not interactive:
