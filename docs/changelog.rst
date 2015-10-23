@@ -1,6 +1,24 @@
 Change Log
 ==========
 
+1.2.0
+-----
+
+2015-10-23
+
+- added support for docker-machine, dropped support for boot2docker
+- reload, init, create: new --interactive option to have paster
+  serve or apache run in the foreground for easier debugging
+- install: allow installing individual packages and requirements
+- install, reset: now cleans pyc files for fewer issues when switching
+  ckan versions
+- shell: fix for check that datapusher container is running
+- docs: add instructions for deploying environments to any host
+- create: experimental --no-initdb to skip db initialization so
+  that db can be created from a backup instead
+- web image now has postgres client installed for restoring databases
+  and easier debugging
+
 1.1.0
 -----
 
