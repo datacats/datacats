@@ -34,9 +34,11 @@ from datacats.error import (DatacatsError,
 
 DOCKER_FAIL_STRING = '''Failed to connect to Docker. This could be because \
 your machine does not have a high enough Docker version (we require 1.16), \
-or because your docker-machine is not initialized.
+or because your docker-machine is not initialized (or it is unreachable \
+because its environment settings aren't set).
 
-The simplest way to install Docker is to do wget http://get.docker.io | sh.
+The simplest way to install Docker (on Linux) is to do \
+wget http://get.docker.io | sh.
 
 The simplest way to create and start a docker-machine VM is to run \
 "docker-machine create dev && docker-machine start dev",\
