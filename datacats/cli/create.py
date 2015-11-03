@@ -8,7 +8,7 @@ import sys
 from os.path import abspath
 
 from datacats.environment import Environment
-from datacats.cli.install import install_all
+from datacats.cli.install import install_all, clean_pyc
 from datacats.error import DatacatsError
 from datacats.docker import is_boot2docker
 
@@ -24,17 +24,20 @@ def create(opts):
     """Create a new environment
 
 Usage:
-  datacats create [-bin] [-s NAME] [--address=IP] [--syslog] [--ckan=CKAN_VERSION]
-                  [--no-datapusher] [--site-url SITE_URL] ENVIRONMENT_DIR [PORT]
+  datacats create [-bin] [--interactive] [-s NAME] [--address=IP] [--syslog]
+                  [--ckan=CKAN_VERSION] [--no-datapusher] [--site-url SITE_URL]
+                  [--no-init-db] ENVIRONMENT_DIR [PORT]
 
 Options:
   --address=IP            Address to listen on (Linux-only)
   --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION [default: 2.3]
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
+  --interactive           Doesn't detach from the web container
+  --no-datapusher         Don't install/enable ckanext-datapusher
+  --no-init-db            Don't initialize the database. Useful for importing CKANs.
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME          Pick a site to create [default: primary]
-  --no-datapusher         Don't install/enable ckanext-datapusher
   --site-url SITE_URL     The site_url to use in API responses (e.g. http://example.org:{port}/)
   --syslog                Log to the syslog
 
@@ -55,12 +58,19 @@ part of this path will be used as the environment name.
         log_syslog=opts['--syslog'],
         datapusher=not opts['--no-datapusher'],
         site_url=opts['--site-url'],
+        interactive=opts['--interactive'],
+        init_db=not opts['--no-init-db'],
         )
 
 
 def create_environment(environment_dir, port, ckan_version, create_skin,
         site_name, start_web, create_sysadmin, address, log_syslog=False,
-        datapusher=True, quiet=False, site_url=None):
+        datapusher=True, quiet=False, site_url=None, interactive=False,
+        init_db=True):
+
+    if not init_db:
+        print 'Since the database will not be initialized, we will not copy datapusher.'
+        datapusher = False
     environment = Environment.new(environment_dir, ckan_version, site_name,
                                   address=address, port=port)
 
@@ -98,7 +108,8 @@ def create_environment(environment_dir, port, ckan_version, create_skin,
             write('\n')
 
         return finish_init(environment, start_web, create_sysadmin,
-                           log_syslog=log_syslog, site_url=site_url)
+                           log_syslog=log_syslog, site_url=site_url,
+                           interactive=interactive, init_db=init_db)
     except:
         # Make sure that it doesn't get printed right after the dots
         # by printing a newline
@@ -113,9 +124,10 @@ def reset(environment, opts):
 database and recreate the administrator account.
 
 Usage:
-  datacats reset [-yn] [-s NAME] [ENVIRONMENT]
+  datacats reset [-iyn] [-s NAME] [ENVIRONMENT]
 
 Options:
+  -i --interactive        Don't detach from the web container
   -s --site=NAME          The site to reset [default: primary]
   -y --yes                Respond yes to all questions
   -n --no-sysadmin        Don't prompt for a sysadmin password"""
@@ -127,6 +139,7 @@ Options:
     print 'Resetting...'
     environment.stop_supporting_containers()
     environment.stop_ckan()
+    clean_pyc(environment)
     # Save the port.
     saved_port = environment.port
     environment.purge_data([opts['--site']], never_delete=True)
@@ -137,6 +150,8 @@ Options:
         '--syslog': None,
         '--address': None,
         '--image-only': False,
+        '--interactive': opts['--interactive'],
+        '--no-init-db': False,
         '--no-sysadmin': opts['--no-sysadmin'],
         '--site-url': None
         }, no_install=True)
@@ -146,12 +161,14 @@ def init(opts, no_install=False, quiet=False):
     """Initialize a purged environment or copied environment directory
 
 Usage:
-  datacats init [-in] [--syslog] [-s NAME] [--address=IP]
-                [--site-url SITE_URL] [ENVIRONMENT_DIR [PORT]]
+  datacats init [-in] [--syslog] [-s NAME] [--address=IP] [--interactive]
+                [--site-url SITE_URL] [ENVIRONMENT_DIR [PORT]] [--no-init-db]
 
 Options:
   --address=IP            Address to listen on (Linux-only)
+  --interactive           Don't detach from the web container
   -i --image-only         Create the environment but don't start containers
+  --no-init-db            Don't initialize the database. Useful for importing other CKANs
   -n --no-sysadmin        Don't prompt for an initial sysadmin user account
   -s --site=NAME          Pick a site to initialize [default: primary]
   --site-url SITE_URL     The site_url to use in API responses (e.g. http://example.org:{port}/)
@@ -168,6 +185,8 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
     create_sysadmin = not opts['--no-sysadmin']
     site_name = opts['--site']
     site_url = opts['--site-url']
+    interactive = opts['--interactive']
+    init_db = not opts['--no-init-db']
 
     environment_dir = abspath(environment_dir or '.')
     log_syslog = opts['--syslog']
@@ -214,21 +233,28 @@ ENVIRONMENT_DIR is an existing datacats environment directory. Defaults to '.'
 
     return finish_init(environment, start_web, create_sysadmin,
                        log_syslog=log_syslog, do_install=not no_install,
-                       quiet=quiet, site_url=site_url)
+                       quiet=quiet, site_url=site_url, interactive=interactive,
+                       init_db=init_db)
 
 
 def finish_init(environment, start_web, create_sysadmin, log_syslog=False,
-                do_install=True, quiet=False, site_url=None):
+                do_install=True, quiet=False, site_url=None, interactive=False,
+                init_db=True):
     """
     Common parts of create and init: Install, init db, start site, sysadmin
     """
+    if not init_db:
+        start_web = False
+        create_sysadmin = False
+
     if do_install:
         install_all(environment, False, verbose=False, quiet=quiet)
 
-    if not quiet:
-        write('Initializing database')
-    environment.install_postgis_sql()
-    environment.ckan_db_init()
+    if init_db:
+        if not quiet:
+            write('Initializing database')
+        environment.install_postgis_sql()
+        environment.ckan_db_init()
     if not quiet:
         write('\n')
 
@@ -242,7 +268,7 @@ def finish_init(environment, start_web, create_sysadmin, log_syslog=False,
 
     if start_web:
         environment.start_ckan(log_syslog=log_syslog)
-        if not quiet:
+        if not quiet and not interactive:
             write('Starting web server at {0} ...\n'.format(
                 environment.web_address()))
 

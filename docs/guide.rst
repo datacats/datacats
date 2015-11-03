@@ -64,9 +64,9 @@ In Ubuntu, version Ubuntu Saucy 13.10 or higher is sufficient.
 
 OSX
 ###
-You will need `boot2docker`_, the standard way to get Docker running on your Mac.
+You will need `docker-machine`_, the standard way to get Docker running on your Mac.
 
-.. _boot2docker: https://docs.docker.com/installation/mac/
+.. docker-machine: https://docs.docker.com/installation/mac/
 
 .. _`Install datacats command line tool`:
 
@@ -118,28 +118,31 @@ You will still need to download the necessary Docker images as described above.
 Getting Started
 ---------------
 
-Create a CKAN development environment. Open a shell and run: ::
+Create a datacats environment. Open a shell and run: ::
 
     datacats create catstown
 
-Once done, a CKAN source directory is created for you in the directory ``catstown``.
-You will be prompted to create an admin password for your instance. You can
-use this password to log into your CKAN site.A message will also appear in your
-prompt at the end of the create command, with the address of where your CKAN
-instance is running. To open that address easily at any time, you can always run: ::
+.. image:: overview.png
+
+Once done, a datacats source directory is created for you called
+``catstown``.
+You will be prompted to create an admin password for your site. You can
+use this password to log into your CKAN site. The address of your CKAN
+site will be printed.
+To open that address in a web browser at any time, you can run: ::
 
     datacats open catstown
 
 .. note::
 
-    All ``datacats`` commands work without having to specify the project to run
-    them on, as long as you are within a datacats environment directory or any sub-
-    directory. For the above command, we could as well have ran: ::
+    All ``datacats`` commands work without having to specify the environment
+    to run them on, as long as you are within a datacats source directory
+    or any sub-directory. For the above command, we could as well have ran: ::
 
         cd catstown/
         datacats open
 
-Let's see what is inside our new environment directory. ``cd`` into the directory
+Let's see what is inside our new source directory. ``cd`` into the directory
 and take a look at the file structure. You should see something like this: ::
 
     catstown/
@@ -163,8 +166,8 @@ deploying CKAN customize it in some way. Many forms of customization, such as
 ``ckanext-catstowntheme`` extension gives you a very basic skeleton which you
 can use to get started.
 
-The ``development.ini`` file holds all the configuration options for your CKAN
-environment. All of these options are described here_. Open this file and find a
+The ``development.ini`` file holds all the configuration options for CKAN.
+All of these options are described here_. Open this file and find a
 line that starts with ``ckan.plugins``. It will look something like this: ::
 
     ckan.plugins = datastore text_preview recline_preview catstown_theme
@@ -178,7 +181,7 @@ Extensions & Customization
 To see how this works, let us install another extension into our environment.
 A good one to use is pages_, which adds a simple CMS to CKAN so we can add
 custom content pages to our site. First, clone the pages source code into your
-environment. In the ``catstown/`` environment directory, run: ::
+source directory. In the ``catstown/`` source directory, run: ::
 
     git clone git@github.com:ckan/ckanext-pages.git
 
@@ -196,7 +199,7 @@ Next, install this extension into your environment by running: ::
 
     datacats install
 
-The install command will iterate through your environment directory and install
+The install command will iterate through your source directory and install
 all your extensions. After this is complete, we need to open the ``development.ini``
 file again and add the pages extension to our list of installed extensions: ::
 
@@ -211,19 +214,17 @@ see a button in the top toolbar that will let you create custom content pages.
 
 Deploying
 ---------
-To deploy your brand new CKAN instance to the DataCats.com managed cloud, simply run: ::
+To deploy your datacats site just rsync your source directory to the
+target host, then in the target source directory run: ::
 
-    datacats deploy --create
+    datacats init --image-only
 
-This will create a new deployment with all your settings and installed extensions,
-as well as the correct CKAN version.
+You can start your new site in production mode with: ::
 
-If you prefer to use your own server, you can still deploy CKAN using datacats.
-This is outside of the scope for this documentation, but the
-process is similar to following this guide, with some minor but important changes.
-You will want to make sure your CKAN is running a production web server,
-you will need to set up DNS and, optionally, emails, backups, logs and other
-miscellaneous items. If you plan to go this route, you should understand a bit
+    datacats start --production --address=<IP-address>
+
+You will need to set up DNS and, emails, logs etc.
+To understand a bit
 more about how datacats works under-the-hood. See :doc:`docker`
 
 Shell Access
@@ -233,9 +234,9 @@ To run an interactive shell within your CKAN environment, run: ::
     datacats shell catstown
 
 Where ``catstown`` is your datacats environment name. The shell will immediately
-drop you inside your project directory, and it will activate the ``virtualenv``.
+drop you inside your source directory, and it will activate the ``virtualenv``.
 The shell is useful if you want to run admin ``paster`` tasks such as database
-migrations, or you simply want to poke around your CKAN instance.
+migrations, or you simply want to poke around your CKAN site.
 
 Paster Commands
 ---------------
@@ -258,6 +259,31 @@ the extension directory and run the command from there: ::
     cd ckanext-archiver/
     datacats paster archiver clean
 
+Developing on CKAN using DataCats
+---------------------------------
+In this section, we will provide you with some tips on how to develop on CKAN
+itself using datacats.
+
+The first datacats feature that allows for easy development of CKAN is the ease
+of setting up a fully installed and ready-to-go debuggable instance of the master
+branch: ::
+
+    datacats create --ckan=master ckandev
+    cd ckandev/ckan
+    git pull
+    datacats reload
+
+You will now be able to edit the ckandev/ckan directory and see your changes
+instantly reflected in your CKAN instance (which you can open with the
+datacats open command).
+
+Another feature we provide to make development easier is an interactive shell
+function for our reload and create commands (this assumes the previous
+commands were run). The interactive option allows you to see the output
+directly from CKAN in your shell: ::
+
+    datacats reload --interactive ckandev
+
 Multisite
 ---------
 As of version 1.0.0, datacats has support for having multiple "sites" under a
@@ -265,13 +291,14 @@ single environment. This means that there can exist several discrete data
 catalogues based on the same CKAN source. This is done using the -s switch,
 which can be applied to all commands that make sense to operate on a single
 site (currently all commands excluding ``migrate``, ``pull``, ``less``, and
-``install``). By default, datacats will operate on a site named 'primary',
-to maintain sane defaults.
+``install``). By default, datacats will operate on a site named 'primary'.
 
-For example, to initialize a site with the name 'devel' under a pre-existing
-environment called 'testtown', you could run the following command: ::
+For example, to initialize a site with the name 'sandbox' under a pre-existing
+environment called 'catstown', you could run the following command: ::
 
-    datacats init -s devel testtown
+    datacats init -s sandbox catstown
+
+.. image:: overview-sites.png
 
 This would create all the necessary containers and folders for the site and
 begin running it on an appropriate (non-conflicting) port.

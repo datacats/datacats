@@ -17,7 +17,7 @@ datacats create site2 -n --ckan $1
 #datacats tweak --add-redis site1
 datacats reload site1
 #[ "$(docker ps | grep datacats_redis_site1_primary | wc -l)" == 1 ]
-[ "$(cat ~/.datacats/site1/sites/primary/run/development.ini | egrep 127.0.0.1 | wc -l)" == 0 ]
+[ "$(cat ~/.datacats/site1/sites/primary/run/development.ini | egrep 127.0.0.1 | wc -l | xargs)" == 0 ]
 datacats purge -y site1
 [ "$(echo `datacats list`)" == "site2" ]
 datacats init site1 -n
@@ -30,6 +30,10 @@ datacats init -n site1
 datacats migrate -y -r 1 site1
 datacats migrate -y -r 2 site1
 datacats init site1 -s two -n
+datacats install --clean site1
+datacats shell site1 cat /usr/lib/ckan/bin/ckanapi
 datacats start -s two site1
 [ -e ~/.datacats/site1/sites/primary/postgres ]
 [ $(datacats --version | wc -l) == 1 ]
+docker stop datacats_datapusher_site1_two
+datacats shell -s two site1 echo hello without datapusher

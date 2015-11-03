@@ -6,9 +6,10 @@
 
 from __future__ import absolute_import
 
+import sys
+
 from datacats.scripts import get_script_path
 from os import environ, devnull
-from requests.packages.urllib3.exceptions import InsecureRequestWarning, InsecurePlatformWarning
 import json
 import subprocess
 import tempfile
@@ -25,7 +26,7 @@ from warnings import warn
 from docker import Client
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.utils import kwargs_from_env, compare_version, create_host_config, LogConfig
-from docker.errors import APIError
+from docker.errors import APIError, TLSParameterError
 from requests import ConnectionError
 
 from datacats.error import (DatacatsError,
@@ -51,44 +52,49 @@ def get_api_version(*versions):
 # Lazy instantiation of _docker
 _docker = None
 
-_docker_kwargs = kwargs_from_env()
+try:
+    _docker_kwargs = kwargs_from_env()
+except TLSParameterError:
+    print ('Please create your docker-machine VM with the command'
+           ' "docker-machine create --driver=virtualbox dev"')
+    exit(1)
+
+
+def _machine_check_connectivity():
+    """
+    This method calls to docker-machine on the command line and
+    makes sure that it is up and ready.
+
+    Potential improvements to be made:
+        - Support multiple machine names (run a `docker-machine ls` and then
+        see which machines are active. Use a priority list)
+    """
+    with open(devnull, 'w') as devnull_f:
+        try:
+            status = subprocess.check_output(
+                ['docker-machine', 'status', 'dev'],
+                stderr=devnull_f).strip()
+            if status == 'Stopped':
+                raise DatacatsError('Please start your docker-machine '
+                                    'VM with "docker-machine start dev"')
+
+            # XXX HACK: This exists because of
+            #           http://github.com/datacats/datacats/issues/63,
+            # as a temporary fix.
+            if 'tls' in _docker_kwargs:
+                # It will print out messages to the user otherwise.
+                _docker_kwargs['tls'].assert_hostname = False
+        except subprocess.CalledProcessError:
+            raise DatacatsError('Please create a docker-machine with '
+                                '"docker-machine start dev"')
 
 
 def _get_docker():
     global _docker
-    # HACK: We determine from commands if we're boot2docker
-    # Needed cause this method is called from is_boot2docker...
-    boot2docker = False
-    if not _docker:
-        # First, check if boot2docker is powered on.
-        try:
-            with open(devnull, 'w') as devnull_f:
-                status = subprocess.check_output(
-                    ['boot2docker', 'status'],
-                    # Don't show boot2docker message
-                    # to the user... it's ugly!
-                    stderr=devnull_f
-                    ).strip()
-            if status == 'poweroff':
-                raise DatacatsError('boot2docker is not powered on.'
-                                    ' Please run "boot2docker up".')
-            boot2docker = True
-        except OSError:
-            # We're on Linux, or boot2docker isn't installed.
-            pass
-        except subprocess.CalledProcessError:
-            raise DatacatsError('You have not created your boot2docker VM. '
-                                'Please run "boot2docker init" to do so.')
 
-        # XXX HACK: This exists because of
-        #           http://github.com/datacats/datacats/issues/63,
-        # as a temporary fix.
-        if 'tls' in _docker_kwargs and boot2docker:
-            import warnings
-            # It will print out messages to the user otherwise.
-            warnings.filterwarnings("ignore", category=InsecureRequestWarning)
-            warnings.filterwarnings("ignore", category=InsecurePlatformWarning)
-            _docker_kwargs['tls'].verify = False
+    if not _docker:
+        if sys.platform.startswith('darwin'):
+            _machine_check_connectivity()
 
         # Create the Docker client
         version_client = Client(version=MINIMUM_API_VERSION, **_docker_kwargs)

@@ -7,14 +7,14 @@ own you wish to share, please submit a pull request.
 
 Run an interactive Paster Shell
 -------------------------------
-Anywhere within your datacats environment directory, run::
+Anywhere within a datacats source directory, run::
 
     datacats shell . paster --plugin=pylons shell
 
 Run Celery tasks
 ----------------
 If you have an extension that is using Celery, make sure that the extension is
-installed in your environment with ``datacats install``. You can then run a
+installed with ``datacats install``. You can then run a
 container with a celery daemon like this: ::
 
     datacats paster celeryd
@@ -23,7 +23,7 @@ Cleaning the database doesn't work.
 -----------------------------------
 When running the command ``paster db clean``, the command will freeze as it is
 blocked from cleaning the database if CKAN is connected to the db (`see issue`_)
-. To get around this, stop the ``web`` docker container for your environment
+. To get around this, stop the ``web`` docker container for your site
 first, then issue the command, and reload datacats: ::
 
     docker stop datacats_web_myckan
@@ -50,7 +50,7 @@ copy of the CKAN source. By default datacats only checks out a shallow copy of
 the CKAN github repo. This can cause minor headaches if you are planning on
 contributing your code changes to core CKAN.
 
-In the ``/ckan`` directory of your datacats environment, run the following git
+In the ``/ckan`` directory of your datacats source directory, run the following git
 command: ::
 
     git fetch --unshallow
@@ -60,7 +60,7 @@ boot2docker - Upgrading or Recovering from failures
 Sometimes you will need to upgrade boot2docker. Or, you may encounter a problem
 where the boot2docker VM is unreachable or otherwise broken. Whatever the case,
 if you had to delete the boot2docker VM and create a new one, follow these steps
-to get your CKAN environments up and running again:
+to get your CKAN sites up and running again:
 
 - First, you will need to pull the CKAN docker images again: ::
 

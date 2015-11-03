@@ -29,7 +29,6 @@ Usage:
   datacats stop [-r] [-s NAME] [ENVIRONMENT]
 
 Options:
-  -r --remote        Stop DataCats.com cloud instance
   -s --site=NAME    Specify a site to stop. [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
@@ -44,16 +43,17 @@ def start(environment, opts):
 
 Usage:
   datacats start [-b] [--site-url SITE_URL] [-p|--no-watch] [-s NAME]
-                 [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
+                 [-i] [--syslog] [--address=IP] [ENVIRONMENT [PORT]]
   datacats start -r [-b] [--site-url SITE_URL] [-s NAME] [--syslog]
-                 [--address=IP] [ENVIRONMENT]
+                 [-i] [--address=IP] [ENVIRONMENT]
 
 Options:
   --address=IP          Address to listen on (Linux-only)
   -b --background       Don't wait for response from web server
   --no-watch            Do not automatically reload templates and .py files on change
+  -i --interactive      Calls out to docker via the command line, allowing
+                        for interactivity with the web image.
   -p --production       Start with apache and debug=false
-  -r --remote           Start DataCats.com cloud instance
   -s --site=NAME        Specify a site to start [default: primary]
   --syslog              Log to the syslog
   --site-url SITE_URL   The site_url to use in API responses. Defaults to old setting or
@@ -76,24 +76,28 @@ def reload_(environment, opts):
 
 Usage:
   datacats reload [-b] [-p|--no-watch] [--syslog] [-s NAME] [--site-url=SITE_URL]
-                            [--address=IP] [ENVIRONMENT [PORT]]
+                            [-i] [--address=IP] [ENVIRONMENT [PORT]]
   datacats reload -r [-b] [--syslog] [-s NAME] [--address=IP] [--site-url=SITE_URL]
-                            [ENVIRONMENT]
+                            [-i] [ENVIRONMENT]
 
 Options:
   --address=IP          Address to listen on (Linux-only)
+  -i --interactive      Calls out to docker via the command line, allowing
+                        for interactivity with the web image.
   --site-url=SITE_URL   The site_url to use in API responses. Can use Python template syntax
                         to insert the port and address (e.g. http://example.org:{port}/)
   -b --background       Don't wait for response from web server
   --no-watch            Do not automatically reload templates and .py files on change
   -p --production       Reload with apache and debug=false
-  -r --remote           Reload DataCats.com cloud instance
   -s --site=NAME        Specify a site to reload [default: primary]
   --syslog              Log to the syslog
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
 """
+    if opts['--interactive']:
+        # We can't wait for the server if we're tty'd
+        opts['--background'] = True
     if opts['--address'] and is_boot2docker():
         raise DatacatsError('Cannot specify address on boot2docker.')
     environment.require_data()
@@ -123,7 +127,8 @@ Default: '.'
     environment.start_ckan(
         production=opts['--production'],
         paster_reload=not opts['--no-watch'],
-        log_syslog=opts['--syslog'],)
+        log_syslog=opts['--syslog'],
+        interactive=opts['--interactive'])
     write('Starting web server at {0} ...'.format(environment.web_address()))
     if opts['--background']:
         write('\n')
@@ -143,7 +148,6 @@ Usage:
 
 Options:
   -q --quiet         Echo only the web URL or nothing if not running
-  -r --remote        Information about DataCats.com cloud instance
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
 Default: '.'
@@ -210,7 +214,6 @@ Options:
   --datapusher       Show logs for datapusher instead of web logs
   --postgres         Show postgres database logs instead of web logs
   -f --follow        Follow logs instead of exiting immediately
-  -r --remote        Retrieve logs from DataCats.com cloud instance
   --solr             Show solr search logs instead of web logs
   -t --timestamps    Add timestamps to log lines
   -s --site=NAME     Specify a site for logs if needed [default: primary]
@@ -249,7 +252,6 @@ Usage:
   datacats open [-r] [-s NAME] [ENVIRONMENT]
 
 Options:
-  -r --remote        Open DataCats.com cloud instance address
   -s --site=NAME     Choose a site to open [default: primary]
 
 ENVIRONMENT may be an environment name or a path to an environment directory.
