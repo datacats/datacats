@@ -34,12 +34,13 @@ from datacats.error import (DatacatsError,
 
 DOCKER_FAIL_STRING = '''Failed to connect to Docker. This could be because \
 your machine does not have a high enough Docker version (we require 1.16), \
-or because your boot2docker VM is not initialized.
+or because your docker-machine is not initialized.
 
 The simplest way to install Docker is to do wget http://get.docker.io | sh.
 
-The simplest way to create and start a boot2docker VM is to run boot2docker init && boot2docker up,\
-then to add the line "eval '$(boot2docker shellinit)'" to your .bashrc file.'''
+The simplest way to create and start a docker-machine VM is to run \
+"docker-machine create dev && docker-machine start dev",\
+then to add the line "eval '$(docker-machine env dev)'" to your .bashrc file.'''
 MINIMUM_API_VERSION = '1.16'
 
 
