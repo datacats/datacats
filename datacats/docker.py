@@ -17,6 +17,7 @@ from urlparse import urlparse
 from functools import cmp_to_key
 from warnings import warn
 
+
 # XXX our fixes on top of fixes to work with docker-py and docker
 # incompatibilities are approaching the level of superstition.
 # let's hope docker calms down a bit so we can clean this out
@@ -31,6 +32,17 @@ from requests import ConnectionError
 from datacats.error import (DatacatsError,
         WebCommandError, PortAllocatedError)
 
+DOCKER_FAIL_STRING = '''Failed to connect to Docker. This could be because \
+your machine does not have a high enough Docker version (we require 1.16), \
+or because your docker-machine is not initialized (or it is unreachable \
+because its environment settings aren't set).
+
+The simplest way to install Docker (on Linux) is to do \
+wget http://get.docker.io | sh.
+
+The simplest way to create and start a docker-machine VM is to run \
+"docker-machine create dev && docker-machine start dev",\
+then to add the line "eval '$(docker-machine env dev)'" to your .bashrc file.'''
 MINIMUM_API_VERSION = '1.16'
 
 
@@ -92,10 +104,15 @@ def _get_docker():
         try:
             api_version = version_client.version()['ApiVersion']
         except ConnectionError:
-            # workaround for connection issue when old version specified
-            # on some clients
-            version_client = Client(**_docker_kwargs)
-            api_version = version_client.version()['ApiVersion']
+            try:
+                # workaround for connection issue when old version specified
+                # on some clients
+                version_client = Client(**_docker_kwargs)
+                api_version = version_client.version()['ApiVersion']
+            except:
+                raise DatacatsError(DOCKER_FAIL_STRING)
+        except:
+            raise DatacatsError(DOCKER_FAIL_STRING)
 
         version = get_api_version(DEFAULT_DOCKER_API_VERSION, api_version)
         _docker = Client(version=version, **_docker_kwargs)
