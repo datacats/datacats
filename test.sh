@@ -35,3 +35,5 @@ datacats shell site1 cat /usr/lib/ckan/bin/ckanapi
 datacats start -s two site1
 [ -e ~/.datacats/site1/sites/primary/postgres ]
 [ $(datacats --version | wc -l) == 1 ]
+docker stop datacats_datapusher_site1_two
+datacats shell -s two site1 echo hello without datapusher
