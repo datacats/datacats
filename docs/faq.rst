@@ -74,3 +74,18 @@ to get your CKAN sites up and running again:
 - Finally, initialize the environment: ::
 
     datacats init
+
+Remove obsolete Docker images
+-----------------------------
+Building Docker images locally will retain the image snapshots and eventually 
+raise a "Docker APIError 500: no space left on device".
+
+To free up hard drive space, remove only the obsolete docker images with::
+
+  rmi $(docker images -q)
+
+Remember that the user running this command must be in the ``docker`` group.
+``rmi`` will only remove images which are not currently running as containers.
+This step is largely risk-free, as you can restore any images by simply pulling 
+or building them again - only local modifications to images can be lost.
+
