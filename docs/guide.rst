@@ -20,6 +20,7 @@ Install datacats
 Getting datacats ready for work involves three parts:
 
 - `Install Docker`_
+- `Create a virtualenv environment`_
 - `Install datacats command line tool`_
 - `Download the necessary Docker containers`_
 
@@ -40,6 +41,20 @@ Detailed OS-specific reference on how to do that is available at the
 .. _Installation Instructions section on Docker site: https://docs.docker.com/installation/#installation
 
 Here is the quick OS-specific summary that is sufficient in most cases:
+
+
+.. _Create a virtualenv environment:
+
+Create a virtualenv environment:
+""""""""""""""""""""""""""""""""
+We recommend you use datacats inside a virtualenv environment. To install 
+`virtualenv`_ run the following in your shell: ::
+
+    pip install virtualenv
+    virtualenv myckan
+    . myckan/bin/activate
+
+.. _virtualenv: http://virtualenv.readthedocs.org/en/latest/index.html
 
 Linux
 #####
@@ -66,13 +81,14 @@ OSX
 ###
 You will need `docker-machine`_, the standard way to get Docker running on your Mac.
 
-.. docker-machine: https://docs.docker.com/installation/mac/
+.. _docker-machine: https://docs.docker.com/installation/mac/
 
 .. _`Install datacats command line tool`:
 
 Install datacats
 """""""""""""""""""""
-The easiest way to install datacats is with ``pip``. In your shell run: ::
+The easiest way to install datacats is with ``pip``. Making sure your virtualenv
+is activated, in your shell run the following: ::
 
     pip install datacats
 

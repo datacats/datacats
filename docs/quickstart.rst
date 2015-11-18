@@ -3,6 +3,9 @@ Quickstart
 
 Install Docker_. Then, in a shell, run:  ::
 
+    pip install virtualenv
+    virtualenv myckan
+    . myckan/bin/activate
     pip install datacats
     datacats pull
     datacats create myckan
