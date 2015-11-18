@@ -75,6 +75,22 @@ to get your CKAN sites up and running again:
 
     datacats init
 
+Modify local Docker images
+--------------------------
+When developing or troubleshooting, it might be desirable to modify local 
+Docker containers. Note, this is not part of the normal workflow and should
+not be necessary in day-to-day deployment and use.
+
+First, pull the all the latest images with ``datacats pull -a``. 
+Next, run each command separately on the desired container, e.g.::
+
+  docker run datacats/web apt-get install -y some-extra-package
+  docker ps -lq
+  6f51fba7febb
+  docker commit 6f51fba7febb datacats/web
+
+This will persist until you ``datacats pull`` again.
+
 Remove obsolete Docker images
 -----------------------------
 Building Docker images locally will retain the image snapshots and eventually 
