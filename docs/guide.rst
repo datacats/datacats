@@ -77,6 +77,14 @@ Linux kernel version 3.10 or higher.
 Updating your Linux distribution to the more recent version should address that.
 In Ubuntu, version Ubuntu Saucy 13.10 or higher is sufficient.
 
+Remember to add your user to the ``docker`` group to allow running Docker commands
+without sudo::
+
+ sudo usermod -aG docker USERNAME
+
+The tell-tale indicator is that Docker commands like ``docker ps`` fail with a 
+permission error, while ``sudo docker ps`` still works.
+
 OSX
 ###
 You will need `docker-machine`_, the standard way to get Docker running on your Mac.
