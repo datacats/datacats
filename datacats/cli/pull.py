@@ -12,15 +12,14 @@ from datacats.error import DatacatsError
 
 IMAGES = [
     'datacats/web',
-    'datacats/ckan:2.3',
+    'datacats/ckan:2.4',
     'datacats/postgres',
     'datacats/solr'
     ]
 
 EXTRA_IMAGES = [
     'datacats/lessc',
-    'datacats/ckan:latest',
-    'datacats/ckan:2.4'
+    'datacats/ckan:latest'
     ]
 
 
