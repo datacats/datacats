@@ -30,7 +30,7 @@ Usage:
 
 Options:
   --address=IP            Address to listen on (Linux-only)
-  --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION [default: 2.3]
+  --ckan=CKAN_VERSION     Use CKAN version CKAN_VERSION [default: 2.4]
   -b --bare               Bare CKAN site with no example extension
   -i --image-only         Create the environment but don't start containers
   --interactive           Doesn't detach from the web container
