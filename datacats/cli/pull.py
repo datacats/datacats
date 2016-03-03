@@ -11,7 +11,7 @@ from datacats.docker import pull_stream
 from datacats.error import DatacatsError
 
 IMAGES = [
-    'datacats/web',
+    'datacats/web:latest',
     'datacats/ckan:2.4',
     'datacats/postgres',
     'datacats/solr'
