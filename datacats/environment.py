@@ -485,6 +485,7 @@ class Environment(object):
                'postgresql://ckan_datastore_readwrite:{0}@db:5432/ckan_datastore'
                .format(self.passwords['DATASTORE_RW_PASSWORD']))
         cp.set('app:main', 'solr_url', 'http://solr:8080/solr')
+        cp.set('app:main', 'ckan.redis.url', 'http://redis:6379')
         cp.set('app:main', 'beaker.session.secret', self.passwords['BEAKER_SESSION_SECRET'])
 
         if not isdir(self.sitedir + '/run'):
