@@ -25,7 +25,7 @@ from warnings import warn
 
 from docker import Client
 from docker.constants import DEFAULT_DOCKER_API_VERSION
-from docker.utils import kwargs_from_env, compare_version, create_host_config, LogConfig
+from docker.utils import kwargs_from_env, compare_version, LogConfig
 from docker.errors import APIError, TLSParameterError
 from requests import ConnectionError
 
@@ -186,13 +186,11 @@ def web_command(command, ro=None, rw=None, links=None,
         command=command,
         volumes=binds_to_volumes(binds),
         detach=False,
-        host_config=create_host_config(binds=binds),
+        host_config=_get_docker().create_host_config(binds=binds, volumes_from=volumes_from, links=links),
         entrypoint=entrypoint)
     _get_docker().start(
         container=c['Id'],
-        links=links,
-        binds=binds,
-        volumes_from=volumes_from)
+        )
     if stream_output:
         for output in _get_docker().attach(
                 c['Id'], stdout=True, stderr=True, stream=True):
@@ -274,7 +272,7 @@ def run_container(name, image, command=None, environment=None,
         log_config = LogConfig(
             type=LogConfig.types.SYSLOG,
             config={'syslog-tag': name})
-    host_config = create_host_config(binds=binds, log_config=log_config)
+    host_config = _get_docker().create_host_config(binds=binds, log_config=log_config, links=links, volumes_from=volumes_from, port_bindings=port_bindings)
 
     c = _get_docker().create_container(
         name=name,
@@ -290,10 +288,7 @@ def run_container(name, image, command=None, environment=None,
     try:
         _get_docker().start(
             container=c['Id'],
-            links=links,
-            binds=binds,
-            volumes_from=volumes_from,
-            port_bindings=port_bindings)
+        )
     except APIError as e:
         if 'address already in use' in e.explanation:
             try:
